@@ -13,7 +13,7 @@ To enhance financial awareness, the platform generates **Reports**, offering bot
 
 **User registration & Accounts**: Users can register to the financial management system
 
-**Financial Expense/Income entries**: Users can insert recurring or non-recurring finacial records that belong to various categories
+**Financial Expense/Income entries**: Users can insert recurring or non-recurring financial records that belong to various categories
 
 **Piggy Bank Creation**: Users can create one or multiple personal piggy banks that serve as dedicated saving accounts
 
@@ -44,7 +44,7 @@ A user can add Expense or Income entries to the system, which can be either fixe
 - Transportation
 - Salary
 - Dividents
-- Passive Income
+- PassiveIncome
 - Others  
 
 **Income** entries can belong to the following categories:
