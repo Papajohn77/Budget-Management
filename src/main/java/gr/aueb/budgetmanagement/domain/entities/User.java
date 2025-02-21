@@ -2,12 +2,15 @@ package gr.aueb.budgetmanagement.domain.entities;
 
 import java.util.Objects;
 
+import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
@@ -27,6 +30,9 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Savings savings;
 
     public Long getId() {
         return id;
@@ -54,6 +60,17 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Savings getSavings() {
+        return savings;
+    }
+
+    void setSavings(Savings savings) {
+        if (this.savings != null) {
+            throw new SavingsAlreadyExistsException("User already has a savings account");
+        }
+        this.savings = savings;
     }
 
     @Override

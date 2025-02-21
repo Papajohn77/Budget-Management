@@ -19,7 +19,7 @@ class EmailAddressTest {
         "user@domain-name.com",
         "123@domain.com"
     })
-    void constructor_WithValidEmails(String validEmail) {
+    void constructorWithValidEmails(String validEmail) {
         assertDoesNotThrow(() -> new EmailAddress(validEmail));
     }
 
@@ -38,7 +38,7 @@ class EmailAddressTest {
         "test@domain.c", // TLD too short
         "test@domain.commission" // TLD too long
     })
-    void constructor_WithInvalidEmails(String invalidEmail) {
+    void constructorWithInvalidEmails(String invalidEmail) {
         assertThrows(
             InvalidEmailAddressException.class,
             () -> new EmailAddress(invalidEmail)
@@ -46,7 +46,7 @@ class EmailAddressTest {
     }
 
     @Test
-    void constructor_WithNullEmail_ShouldThrowException() {
+    void constructorWithNullEmail() {
         assertThrows(
             InvalidEmailAddressException.class,
             () -> new EmailAddress(null)
@@ -54,7 +54,7 @@ class EmailAddressTest {
     }
 
     @Test
-    void equals_hashCode_WithSameEmail() {
+    void equalsAndHashCodeWithSameEmail() {
         String email = "test@example.com";
         EmailAddress email1 = new EmailAddress(email);
         EmailAddress email2 = new EmailAddress(email);
@@ -64,7 +64,7 @@ class EmailAddressTest {
     }
 
     @Test
-    void equals_hashCode_WithDifferentEmail() {
+    void equalsAndHashCodeWithDifferentEmail() {
         EmailAddress email1 = new EmailAddress("test1@example.com");
         EmailAddress email2 = new EmailAddress("test2@example.com");
 

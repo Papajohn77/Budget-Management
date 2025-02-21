@@ -24,10 +24,14 @@ public class EmailAddress {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
+
         EmailAddress email = (EmailAddress) o;
         return value.equals(email.value);
     }
