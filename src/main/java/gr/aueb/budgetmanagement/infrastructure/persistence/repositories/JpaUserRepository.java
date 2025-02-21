@@ -1,5 +1,8 @@
 package gr.aueb.budgetmanagement.infrastructure.persistence.repositories;
 
+import java.util.List;
+import java.util.Optional;
+
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
@@ -29,5 +32,14 @@ public class JpaUserRepository implements UserRepository {
         return em.createQuery("SELECT COUNT(u) FROM User u WHERE u.email = :email", Long.class)
             .setParameter("email", email)
             .getSingleResult() > 0;
+    }
+
+    @Override
+    public Optional<User> findByEmail(EmailAddress email) {
+        List<User> results = em.createQuery("SELECT u FROM User u WHERE u.email = :email", User.class)
+            .setParameter("email", email)
+            .getResultList();
+
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 }

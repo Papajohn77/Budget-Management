@@ -40,7 +40,6 @@ class UserRegistrationServiceTest {
         
         userRepository = new JpaUserRepository(entityManager);
         passwordEncoder = new BCryptPasswordEncoder();
-        
         userRegistrationService = new UserRegistrationService(userRepository, passwordEncoder);
     }
 
