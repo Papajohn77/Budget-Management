@@ -64,10 +64,10 @@ class JpaUserRepositoryTest {
     }
 
     private User createTestUser() {
-        User user = new User();
-        user.setUsername("testuser");
-        user.setEmail(new EmailAddress("test@example.com"));
-        user.setPassword("hashedPassword123");
-        return user;
+        return User.create(
+            "testuser",
+            new EmailAddress("test@example.com"),
+            "hashedPassword123"
+        );
     }
 }

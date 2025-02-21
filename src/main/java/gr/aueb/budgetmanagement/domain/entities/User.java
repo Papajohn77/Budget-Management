@@ -2,6 +2,7 @@ package gr.aueb.budgetmanagement.domain.entities;
 
 import java.util.Objects;
 
+import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import jakarta.persistence.CascadeType;
@@ -34,6 +35,31 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Savings savings;
 
+    protected User() {
+
+    }
+
+    public static User create(String username, EmailAddress email, String password) {
+        if (username == null || username.trim().isEmpty()) {
+            throw new InvalidDomainArgumentException("Username cannot be null or empty");
+        }
+
+        if (email == null) {
+            throw new InvalidDomainArgumentException("Email cannot be null");
+        }
+
+        if (password == null || password.trim().isEmpty()) {
+            throw new InvalidDomainArgumentException("Password cannot be null or empty");
+        }
+
+        User user = new User();
+        user.username = username;
+        user.email = email;
+        user.password = password;
+        Savings.createFor(user);
+        return user;
+    }
+
     public Long getId() {
         return id;
     }
@@ -42,24 +68,12 @@ public class User {
         return username;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public EmailAddress getEmail() {
         return email;
     }
 
-    public void setEmail(EmailAddress email) {
-        this.email = email;
-    }
-
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public Savings getSavings() {

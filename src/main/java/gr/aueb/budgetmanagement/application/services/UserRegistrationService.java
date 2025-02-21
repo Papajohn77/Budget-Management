@@ -35,12 +35,11 @@ public class UserRegistrationService {
             throw new EmailAlreadyExistsException("Email already exists: " + command.email());
         }
 
-        User user = new User();
-        user.setUsername(command.username());
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password.getValue()));
-
-        Savings.createFor(user);
+        User user = User.create(
+            command.username(),
+            email,
+            passwordEncoder.encode(password.getValue())
+        );
 
         userRepository.save(user);
 

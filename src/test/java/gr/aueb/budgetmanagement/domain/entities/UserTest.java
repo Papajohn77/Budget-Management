@@ -11,12 +11,11 @@ class UserTest {
     @Test
     void shouldNotAllowMultipleSavingsAccounts() {
         // Arrange
-        User user = new User();
-        user.setUsername("testuser");
-        user.setEmail(new EmailAddress("test@example.com"));
-        user.setPassword("hashedPassword");
-        
-        Savings.createFor(user);
+        User user = User.create(
+            "testuser",
+            new EmailAddress("test@example.com"),
+            "hashedPassword123"
+        );
 
         // Act & Assert
         assertThrows(

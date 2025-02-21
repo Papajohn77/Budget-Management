@@ -49,10 +49,11 @@ class AuthenticationServiceTest {
     }
 
     private void createTestUser() {
-        User user = new User();
-        user.setUsername(TEST_USERNAME);
-        user.setEmail(new EmailAddress(TEST_EMAIL));
-        user.setPassword(passwordEncoder.encode(TEST_PASSWORD));
+        User user = User.create(
+            TEST_USERNAME,
+            new EmailAddress(TEST_EMAIL),
+            passwordEncoder.encode(TEST_PASSWORD)
+        );
         entityManager.persist(user);
     }
 
