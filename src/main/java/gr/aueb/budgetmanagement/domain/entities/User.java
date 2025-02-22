@@ -1,7 +1,10 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
@@ -13,6 +16,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -36,6 +40,9 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Savings savings;
+
+    @ManyToMany(mappedBy = "members")
+    private Set<Group> groups = new HashSet<>();
 
     protected User() {
 
@@ -95,6 +102,10 @@ public class User {
             throw new SavingsAlreadyExistsException("User already has a savings account");
         }
         this.savings = savings;
+    }
+
+    public Set<Group> getGroups() {
+        return Collections.unmodifiableSet(groups);
     }
 
     @Override
