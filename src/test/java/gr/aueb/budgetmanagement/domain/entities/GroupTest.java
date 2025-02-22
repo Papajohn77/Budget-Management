@@ -4,13 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.math.BigDecimal;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
+import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
 class GroupTest {
     private static final String TEST_USERNAME = "testuser";
@@ -84,7 +87,7 @@ class GroupTest {
     }
 
     @Test
-    void addMember_WhenMemberAlreadyExists_ShouldNotDuplicate() {
+    void addMemberWhenMemberAlreadyExistsShouldNotDuplicate() {
         Group group = Group.create("Test Group", admin);
 
         group.addMember(admin);
@@ -103,11 +106,65 @@ class GroupTest {
         );
     }
 
+    @Test
+    void addPiggyBankShouldAddToGroup() {
+        Group group = Group.create("Test Group", admin);
+        GroupPiggyBank piggyBank = createGroupPiggyBank(group);
+
+        assertTrue(group.getPiggyBanks().contains(piggyBank));
+        assertEquals(1, group.getPiggyBanks().size());
+    }
+
+    @Test
+    void addPiggyBankWithNullPiggyBank() {
+        // Arrange
+        Group group = Group.create("Test Group", admin);
+
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class,
+            () -> group.addPiggyBank(null)
+        );
+    }
+
+    @Test
+    void addPiggyBankTwiceShouldNotDuplicate() {
+        // Arrange
+        Group group = Group.create("Test Group", admin);
+        GroupPiggyBank piggyBank = createGroupPiggyBank(group);
+
+        // Act
+        group.addPiggyBank(piggyBank); // Adding again
+
+        // Assert
+        assertEquals(1, group.getPiggyBanks().size());
+    }
+
+    @Test
+    void getPiggyBanksShouldReturnUnmodifiableSet() {
+        Group group = Group.create("Test Group", admin);
+        Set<GroupPiggyBank> piggyBanks = group.getPiggyBanks();
+
+        assertThrows(
+            UnsupportedOperationException.class,
+            () -> piggyBanks.add(new GroupPiggyBank())
+        );
+    }
+
     private User createNonAdminUser() {
         return User.create(
             "nonadmin",
             new EmailAddress("nonadmin@example.com"),
             TEST_PASSWORD
+        );
+    }
+
+    private GroupPiggyBank createGroupPiggyBank(Group group) {
+        return GroupPiggyBank.create(
+            "Test Piggy Bank",
+            new Money(new BigDecimal("100.00")),
+            ExpenseCategory.OTHER,
+            group
         );
     }
 }
