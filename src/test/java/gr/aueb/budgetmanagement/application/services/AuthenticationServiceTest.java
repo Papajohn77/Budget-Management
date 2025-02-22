@@ -38,6 +38,8 @@ class AuthenticationServiceTest {
         userRepository = new JpaUserRepository(entityManager);
         passwordEncoder = new BCryptPasswordEncoder();
         authenticationService = new AuthenticationService(userRepository, passwordEncoder);
+
+        createTestUser();
     }
 
     @AfterEach
@@ -59,8 +61,6 @@ class AuthenticationServiceTest {
 
     @Test
     void testSuccessfulAuthentication() {
-        createTestUser();
-
         AuthenticateUserCommand command = new AuthenticateUserCommand(
             TEST_EMAIL,
             TEST_PASSWORD
@@ -71,8 +71,6 @@ class AuthenticationServiceTest {
 
     @Test
     void testAuthenticationWithNonexistentEmail() {
-        createTestUser();
-
         AuthenticateUserCommand command = new AuthenticateUserCommand(
             "nonexistent@example.com",
             TEST_PASSWORD
@@ -86,8 +84,6 @@ class AuthenticationServiceTest {
 
     @Test
     void testAuthenticationWithWrongPassword() {
-        createTestUser();
-
         AuthenticateUserCommand command = new AuthenticateUserCommand(
             TEST_EMAIL,
             "WrongPassword123!@#"

@@ -42,4 +42,10 @@ public class JpaUserRepository implements UserRepository {
 
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
+
+    @Override
+    public Optional<User> findById(Long id) {
+        User user = em.find(User.class, id);
+        return Optional.ofNullable(user);
+    }
 }

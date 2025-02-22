@@ -6,6 +6,7 @@ import gr.aueb.budgetmanagement.application.ports.PasswordEncoder;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
+import jakarta.validation.Valid;
 
 public class AuthenticationService {
     private final UserRepository userRepository;
@@ -16,7 +17,7 @@ public class AuthenticationService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public void authenticate(AuthenticateUserCommand command) {
+    public void authenticate(@Valid AuthenticateUserCommand command) {
         EmailAddress email = new EmailAddress(command.email());
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));

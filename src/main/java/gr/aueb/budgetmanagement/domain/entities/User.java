@@ -1,10 +1,12 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import java.time.LocalDate;
 import java.util.Objects;
 
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
+import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -58,6 +60,14 @@ public class User {
         user.password = password;
         Savings.createFor(user);
         return user;
+    }
+
+    public SavingsOperation allocateSavings(Money amount, LocalDate date) {
+        return savings.allocate(amount, date);
+    }
+
+    public SavingsOperation deallocateSavings(Money amount, LocalDate date) {
+        return savings.deallocate(amount, date);
     }
 
     public Long getId() {

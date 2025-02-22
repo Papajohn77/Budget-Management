@@ -1,8 +1,11 @@
 package gr.aueb.budgetmanagement.infrastructure.persistence.repositories;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +64,47 @@ class JpaUserRepositoryTest {
 
         assertTrue(repository.existsByEmail(user.getEmail()));
         assertFalse(repository.existsByEmail(new EmailAddress("nonexistent@example.com")));
+    }
+
+    @Test
+    void testFindByEmailExistingUser() {
+        User user = createTestUser();
+        repository.save(user);
+        
+        Optional<User> found = repository.findByEmail(user.getEmail());
+        
+        assertTrue(found.isPresent());
+        assertEquals(user.getEmail(), found.get().getEmail());
+        assertEquals(user.getUsername(), found.get().getUsername());
+    }
+
+    @Test
+    void testFindByEmailNonexistentUser() {
+        EmailAddress nonexistentEmail = new EmailAddress("nonexistent@example.com");
+        Optional<User> found = repository.findByEmail(nonexistentEmail);
+        
+        assertFalse(found.isPresent());
+    }
+
+    @Test
+    void testFindByIdExistingUser() {
+        User user = createTestUser();
+        repository.save(user);
+        
+        Optional<User> found = repository.findById(user.getId());
+        
+        assertTrue(found.isPresent());
+        assertEquals(user.getId(), found.get().getId());
+        assertEquals(user.getEmail(), found.get().getEmail());
+        assertEquals(user.getUsername(), found.get().getUsername());
+    }
+
+    @Test
+    void testFindByIdNonexistentUser() {
+        Long nonexistentId = 999L;
+        Optional<User> found = repository.findById(nonexistentId);
+        
+        assertFalse(found.isPresent());
     }
 
     private User createTestUser() {

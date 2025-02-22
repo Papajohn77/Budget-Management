@@ -3,7 +3,6 @@ package gr.aueb.budgetmanagement.application.services;
 import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
 import gr.aueb.budgetmanagement.application.dto.RegisteredUserDTO;
 import gr.aueb.budgetmanagement.application.ports.PasswordEncoder;
-import gr.aueb.budgetmanagement.domain.entities.Savings;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.EmailAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.UsernameAlreadyExistsException;
