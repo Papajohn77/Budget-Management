@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -114,6 +116,28 @@ class JpaGroupRepositoryTest {
        // Assert
        assertTrue(exists);
    }
+
+    @Test
+    void testFindByIdExistingGroup() {
+        Group group = Group.create("Test Group", user);
+        groupRepository.save(group);
+        
+        Optional<Group> found = groupRepository.findById(group.getId());
+        
+        assertTrue(found.isPresent());
+        assertEquals(group.getId(), found.get().getId());
+        assertEquals(group.getName(), found.get().getName());
+        assertEquals(group.getAdmin(), found.get().getAdmin());
+        assertTrue(found.get().getMembers().contains(user));
+    }
+
+    @Test
+    void testFindByIdNonexistentUser() {
+        Long nonexistentId = 999L;
+        Optional<Group> found = groupRepository.findById(nonexistentId);
+        
+        assertFalse(found.isPresent());
+    }
 
     private User createTestUser() {
         return User.create(

@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
@@ -33,6 +34,9 @@ public class Group {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
+
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<GroupPiggyBank> piggyBanks = new HashSet<>();
 
     @ManyToMany
     @JoinTable(
@@ -83,5 +87,16 @@ public class Group {
             throw new InvalidDomainArgumentException("User cannot be null");
         }
         members.add(user);
+    }
+
+    public Set<GroupPiggyBank> getPiggyBanks() {
+        return Collections.unmodifiableSet(piggyBanks);
+    }
+
+    void addPiggyBank(GroupPiggyBank piggyBank) {
+        if (piggyBank == null) {
+            throw new InvalidDomainArgumentException("PiggyBank cannot be null");
+        }
+        piggyBanks.add(piggyBank);
     }
 }

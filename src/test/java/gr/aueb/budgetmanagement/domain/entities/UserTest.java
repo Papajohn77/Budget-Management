@@ -3,15 +3,19 @@ package gr.aueb.budgetmanagement.domain.entities;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
+import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
@@ -110,6 +114,55 @@ class UserTest {
         assertEquals(
             amount.getValue().subtract(deallocationAmount.getValue()), 
             user.getSavings().getCurrentAmount().getValue()
+        );
+    }
+
+    @Test
+    void addPiggyBankShouldAddToUser() {
+        PersonalPiggyBank piggyBank = createPersonalPiggyBank(user);
+
+        assertTrue(user.getPiggyBanks().contains(piggyBank));
+        assertEquals(1, user.getPiggyBanks().size());
+    }
+
+    @Test
+    void addPiggyBankWithNullPiggyBank() {
+        assertThrows(
+            InvalidDomainArgumentException.class,
+            () -> user.addPiggyBank(null)
+        );
+    }
+
+    @Test
+    void addPiggyBankTwiceShouldNotDuplicate() {
+        // Arrange
+        PersonalPiggyBank piggyBank = createPersonalPiggyBank(user);
+
+        // Act
+        user.addPiggyBank(piggyBank); // Adding again
+
+        // Assert
+        assertEquals(1, user.getPiggyBanks().size());
+    }
+
+    @Test
+    void getPiggyBanksShouldReturnUnmodifiableSet() {
+        // Arrange
+        Set<PersonalPiggyBank> piggyBanks = user.getPiggyBanks();
+
+        // Act & Assert
+        assertThrows(
+            UnsupportedOperationException.class,
+            () -> piggyBanks.add(new PersonalPiggyBank())
+        );
+    }
+
+    private PersonalPiggyBank createPersonalPiggyBank(User user) {
+        return PersonalPiggyBank.create(
+            "Test Piggy Bank",
+            new Money(new BigDecimal("100.00")),
+            ExpenseCategory.OTHER,
+            user
         );
     }
 }

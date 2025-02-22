@@ -17,6 +17,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -43,6 +44,9 @@ public class User {
 
     @ManyToMany(mappedBy = "members")
     private Set<Group> groups = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PersonalPiggyBank> piggyBanks = new HashSet<>();
 
     protected User() {
 
@@ -106,6 +110,17 @@ public class User {
 
     public Set<Group> getGroups() {
         return Collections.unmodifiableSet(groups);
+    }
+
+    public Set<PersonalPiggyBank> getPiggyBanks() {
+        return Collections.unmodifiableSet(piggyBanks);
+    }
+
+    void addPiggyBank(PersonalPiggyBank piggyBank) {
+        if (piggyBank == null) {
+            throw new InvalidDomainArgumentException("PiggyBank cannot be null");
+        }
+        piggyBanks.add(piggyBank);
     }
 
     @Override

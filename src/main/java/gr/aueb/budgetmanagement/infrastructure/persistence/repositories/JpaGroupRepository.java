@@ -1,19 +1,21 @@
 package gr.aueb.budgetmanagement.infrastructure.persistence.repositories;
 
+import java.util.Optional;
+
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
 import jakarta.persistence.EntityManager;
 
 public class JpaGroupRepository implements GroupRepository {
-    private final EntityManager entityManager;
+    private final EntityManager em;
 
-    public JpaGroupRepository(EntityManager entityManager) {
-        this.entityManager = entityManager;
+    public JpaGroupRepository(EntityManager em) {
+        this.em = em;
     }
 
     @Override
     public void save(Group group) {
-        entityManager.persist(group);
+        em.persist(group);
     }
 
     @Override
@@ -26,9 +28,15 @@ public class JpaGroupRepository implements GroupRepository {
             AND m.id = :userId
         """;
 
-        return entityManager.createQuery(jpql, Boolean.class)
+        return em.createQuery(jpql, Boolean.class)
             .setParameter("name", name)
             .setParameter("userId", userId)
             .getSingleResult();
+    }
+
+    @Override
+    public Optional<Group> findById(Long id) {
+        Group group = em.find(Group.class, id);
+        return Optional.ofNullable(group);
     }
 }
