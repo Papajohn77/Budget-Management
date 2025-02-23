@@ -1,11 +1,13 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -119,6 +121,39 @@ class PiggyBankTest {
                 )
             );
         }
+
+        @Test
+        void personalPiggyBankShouldAuthorizeOwner() {
+            // Arrange
+            PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+                VALID_NAME,
+                VALID_TARGET,
+                VALID_CATEGORY,
+                user
+            );
+
+            // Assert
+            assertTrue(piggyBank.isAuthorizedUser(user));
+        }
+
+        @Test
+        void personalPiggyBankShouldNotAuthorizeOtherUser() {
+            // Arrange
+            PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+                VALID_NAME,
+                VALID_TARGET,
+                VALID_CATEGORY,
+                user
+            );
+            User otherUser = User.create(
+                "otheruser",
+                new EmailAddress("other@example.com"),
+                "hashedPassword123"
+            );
+
+            // Assert
+            assertFalse(piggyBank.isAuthorizedUser(otherUser));
+        }
     }
 
     @Nested
@@ -195,7 +230,7 @@ class PiggyBankTest {
         }
 
         @Test
-        void create_WithNullGroup_ShouldThrowException() {
+        void createWithNullGroup() {
             // Act & Assert
             assertThrows(InvalidDomainArgumentException.class, () -> 
                 GroupPiggyBank.create(
@@ -204,6 +239,80 @@ class PiggyBankTest {
                     VALID_CATEGORY,
                     null
                 )
+            );
+        }
+
+        @Test
+        void groupPiggyBankShouldAuthorizeGroupMember() {
+            // Arrange
+            GroupPiggyBank piggyBank = GroupPiggyBank.create(
+                VALID_NAME,
+                VALID_TARGET,
+                VALID_CATEGORY,
+                group
+            );
+
+            // Assert
+            assertTrue(piggyBank.isAuthorizedUser(user));
+        }
+
+        @Test
+        void groupPiggyBankShouldNotAuthorizeNonMember() {
+            // Arrange
+            GroupPiggyBank piggyBank = GroupPiggyBank.create(
+                VALID_NAME,
+                VALID_TARGET,
+                VALID_CATEGORY,
+                group
+            );
+            User nonMember = User.create(
+                "nonmember",
+                new EmailAddress("nonmember@example.com"),
+                "hashedPassword123"
+            );
+
+            // Assert
+            assertFalse(piggyBank.isAuthorizedUser(nonMember));
+        }
+    }
+
+    @Nested
+    class PiggyBankAllocationTest {
+        @Test
+        void addAllocationShouldMaintainBidirectionalRelationship() {
+            // Arrange
+            PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+                VALID_NAME,
+                VALID_TARGET,
+                VALID_CATEGORY,
+                user
+            );
+            PiggyBankAllocation allocation = PiggyBankAllocation.create(
+                new Money(BigDecimal.valueOf(100)),
+                LocalDate.now(),
+                piggyBank,
+                user
+            );
+
+            // Assert
+            assertTrue(piggyBank.getAllocations().contains(allocation));
+            assertEquals(1, piggyBank.getAllocations().size());
+        }
+
+        @Test
+        void addNullAllocationShouldThrowException() {
+            // Arrange
+            PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+                VALID_NAME,
+                VALID_TARGET,
+                VALID_CATEGORY,
+                user
+            );
+
+            // Act & Assert
+            assertThrows(
+                InvalidDomainArgumentException.class,
+                () -> piggyBank.addAllocation(null)
             );
         }
     }

@@ -1,9 +1,13 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
@@ -15,6 +19,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
@@ -37,6 +42,9 @@ public abstract class PiggyBank {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ExpenseCategory category;
+
+    @OneToMany(mappedBy = "piggyBank", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PiggyBankAllocation> allocations = new HashSet<>();
 
     protected PiggyBank() {
 
@@ -75,4 +83,17 @@ public abstract class PiggyBank {
     public ExpenseCategory getCategory() {
         return category;
     }
+
+    public Set<PiggyBankAllocation> getAllocations() {
+        return Collections.unmodifiableSet(allocations);
+    }
+
+    void addAllocation(PiggyBankAllocation allocation) {
+        if (allocation == null) {
+            throw new InvalidDomainArgumentException("Allocation cannot be null");
+        }
+        allocations.add(allocation);
+    }
+
+    public abstract boolean isAuthorizedUser(User user);
 }
