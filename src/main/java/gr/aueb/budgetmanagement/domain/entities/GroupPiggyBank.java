@@ -42,4 +42,9 @@ public class GroupPiggyBank extends PiggyBank {
     public boolean isAuthorizedUser(User user) {
         return this.group.getMembers().contains(user);
     }
+
+    @Override
+    public boolean canBeDissolvedBy(User user) {
+        return this.group.getAdmin().equals(user);
+    }
 }

@@ -42,4 +42,9 @@ public class PersonalPiggyBank extends PiggyBank {
     public boolean isAuthorizedUser(User user) {
         return this.user.equals(user);
     }
+
+    @Override
+    public boolean canBeDissolvedBy(User user) {
+        return this.user.equals(user);
+    }
 }

@@ -2,6 +2,7 @@ package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.CreateGroupPiggyBankCommand;
 import gr.aueb.budgetmanagement.application.commands.CreatePersonalPiggyBankCommand;
+import gr.aueb.budgetmanagement.application.commands.DissolvePiggyBankCommand;
 import gr.aueb.budgetmanagement.application.dto.CreatedGroupPiggyBankDTO;
 import gr.aueb.budgetmanagement.application.dto.CreatedPersonalPiggyBankDTO;
 import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
@@ -9,11 +10,13 @@ import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.GroupPiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBank;
+import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.domain.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.domain.repositories.UserRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 
 public class PiggyBankService {
     private final UserRepository userRepository;
@@ -80,5 +83,20 @@ public class PiggyBankService {
             piggyBank.getCategory(),
             group.getId()
         );
+    }
+
+    @Transactional
+    public void dissolvePiggyBank(@Valid DissolvePiggyBankCommand command) {
+        User user = userRepository.findById(command.userId())
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
+
+        PiggyBank piggyBank = piggyBankRepository.findById(command.piggyBankId())
+            .orElseThrow(() -> new NotFoundException("Piggy bank not found with id: " + command.piggyBankId()));
+
+        if (!piggyBank.canBeDissolvedBy(user)) {
+            throw new ForbiddenException("User is not authorized to dissolve this piggy bank");
+        }
+
+        piggyBankRepository.delete(piggyBank);
     }
 }
