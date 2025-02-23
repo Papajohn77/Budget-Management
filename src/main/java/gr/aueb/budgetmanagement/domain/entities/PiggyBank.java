@@ -96,4 +96,5 @@ public abstract class PiggyBank {
     }
 
     public abstract boolean isAuthorizedUser(User user);
+    public abstract boolean canBeDissolvedBy(User user);
 }

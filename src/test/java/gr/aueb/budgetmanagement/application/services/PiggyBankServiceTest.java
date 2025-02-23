@@ -2,9 +2,11 @@ package gr.aueb.budgetmanagement.application.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,9 +14,12 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.CreateGroupPiggyBankCommand;
 import gr.aueb.budgetmanagement.application.commands.CreatePersonalPiggyBankCommand;
+import gr.aueb.budgetmanagement.application.commands.DissolvePiggyBankCommand;
 import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.domain.entities.Group;
+import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
+import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
@@ -188,6 +193,134 @@ class PiggyBankServiceTest {
         assertThrows(
             ForbiddenException.class,
             () -> piggyBankService.createGroupPiggyBank(command)
+        );
+    }
+
+    @Test
+    void testDissolvePersonalPiggyBank() {
+        // Arrange
+        CreatePersonalPiggyBankCommand createCommand = new CreatePersonalPiggyBankCommand(
+            PIGGY_BANK_NAME,
+            new Money(TARGET_AMOUNT),
+            ExpenseCategory.OTHER,
+            user.getId()
+        );
+        var created = piggyBankService.createPersonalPiggyBank(createCommand);
+
+        PiggyBankAllocation allocation = PiggyBankAllocation.create(
+            new Money(BigDecimal.valueOf(500)),
+            LocalDate.now(),
+            piggyBankRepository.findById(created.id()).orElseThrow(),
+            user
+        );
+        entityManager.persist(allocation);
+
+        // Act
+        DissolvePiggyBankCommand dissolveCommand = new DissolvePiggyBankCommand(
+            created.id(),
+            user.getId()
+        );
+        piggyBankService.dissolvePiggyBank(dissolveCommand);
+
+        // Assert
+        assertNull(entityManager.find(PiggyBank.class, created.id()));
+        assertNull(entityManager.find(PiggyBankAllocation.class, allocation.getId()));
+    }
+
+    @Test
+    void testDissolveGroupPiggyBank() {
+        // Arrange
+        CreateGroupPiggyBankCommand createCommand = new CreateGroupPiggyBankCommand(
+            PIGGY_BANK_NAME,
+            new Money(TARGET_AMOUNT),
+            ExpenseCategory.OTHER,
+            group.getId(),
+            user.getId()
+        );
+        var created = piggyBankService.createGroupPiggyBank(createCommand);
+        
+        // Add allocation
+        PiggyBankAllocation allocation = PiggyBankAllocation.create(
+            new Money(BigDecimal.valueOf(500)),
+            LocalDate.now(),
+            piggyBankRepository.findById(created.id()).orElseThrow(),
+            user
+        );
+        entityManager.persist(allocation);
+
+        // Act
+        DissolvePiggyBankCommand dissolveCommand = new DissolvePiggyBankCommand(
+            created.id(),
+            user.getId()
+        );
+        piggyBankService.dissolvePiggyBank(dissolveCommand);
+
+        // Assert
+        assertNull(entityManager.find(PiggyBank.class, created.id()));
+        assertNull(entityManager.find(PiggyBankAllocation.class, allocation.getId()));
+    }
+
+    @Test
+    void testDissolvePiggyBankPiggyBankNotFound() {
+        DissolvePiggyBankCommand command = new DissolvePiggyBankCommand(999L, user.getId());
+        assertThrows(
+            NotFoundException.class,
+            () -> piggyBankService.dissolvePiggyBank(command)
+        );
+    }
+
+    @Test
+    void testDissolvePersonalPiggyBankNotOwner() {
+        // Arrange
+        CreatePersonalPiggyBankCommand createCommand = new CreatePersonalPiggyBankCommand(
+            PIGGY_BANK_NAME,
+            new Money(TARGET_AMOUNT),
+            ExpenseCategory.OTHER,
+            user.getId()
+        );
+        var created = piggyBankService.createPersonalPiggyBank(createCommand);
+
+        User otherUser = User.create(
+            "other", 
+            new EmailAddress("other@example.com"), 
+            "hashedPassword123"
+        );
+        entityManager.persist(otherUser);
+
+        // Act & Assert
+        DissolvePiggyBankCommand dissolveCommand = new DissolvePiggyBankCommand(created.id(), otherUser.getId());
+        assertThrows(
+            ForbiddenException.class,
+            () -> piggyBankService.dissolvePiggyBank(dissolveCommand)
+        );
+    }
+
+    @Test
+    void testDissolveGroupPiggyBankNotAdmin() {
+        // Arrange
+        CreateGroupPiggyBankCommand createCommand = new CreateGroupPiggyBankCommand(
+            PIGGY_BANK_NAME,
+            new Money(TARGET_AMOUNT),
+            ExpenseCategory.OTHER,
+            group.getId(),
+            user.getId()
+        );
+        var created = piggyBankService.createGroupPiggyBank(createCommand);
+
+        User nonAdmin = User.create(
+            "nonadmin", 
+            new EmailAddress("nonadmin@example.com"), 
+            "hashedPassword123"
+        );
+        entityManager.persist(nonAdmin);
+
+        group.addMember(nonAdmin);
+
+        // Act & Assert
+        DissolvePiggyBankCommand dissolveCommand = new DissolvePiggyBankCommand(created.id(), nonAdmin.getId());
+        assertThrows(
+            ForbiddenException.class,
+            () -> piggyBankService.dissolvePiggyBank(dissolveCommand)
         );
     }
 }

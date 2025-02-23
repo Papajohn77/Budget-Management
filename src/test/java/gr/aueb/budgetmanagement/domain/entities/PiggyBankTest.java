@@ -154,6 +154,39 @@ class PiggyBankTest {
             // Assert
             assertFalse(piggyBank.isAuthorizedUser(otherUser));
         }
+
+        @Test
+        void personalPiggyBankShouldBeDissolvedByOwner() {
+            // Arrange
+            PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+                VALID_NAME,
+                VALID_TARGET,
+                VALID_CATEGORY,
+                user
+            );
+
+            // Assert
+            assertTrue(piggyBank.canBeDissolvedBy(user));
+        }
+
+        @Test
+        void personalPiggyBankShouldNotBeDissolvedByOtherUser() {
+            // Arrange
+            PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+                VALID_NAME,
+                VALID_TARGET,
+                VALID_CATEGORY,
+                user
+            );
+            User otherUser = User.create(
+                "otheruser",
+                new EmailAddress("other@example.com"),
+                "hashedPassword123"
+            );
+
+            // Assert
+            assertFalse(piggyBank.canBeDissolvedBy(otherUser));
+        }
     }
 
     @Nested
@@ -273,6 +306,40 @@ class PiggyBankTest {
 
             // Assert
             assertFalse(piggyBank.isAuthorizedUser(nonMember));
+        }
+
+        @Test
+        void groupPiggyBankShouldBeDissolvedByAdmin() {
+            // Arrange
+            GroupPiggyBank piggyBank = GroupPiggyBank.create(
+                VALID_NAME,
+                VALID_TARGET,
+                VALID_CATEGORY,
+                group
+            );
+
+            // Assert
+            assertTrue(piggyBank.canBeDissolvedBy(user));
+        }
+
+        @Test
+        void groupPiggyBankShouldNotBeDissolvedByMember() {
+            // Arrange
+            GroupPiggyBank piggyBank = GroupPiggyBank.create(
+                VALID_NAME,
+                VALID_TARGET,
+                VALID_CATEGORY,
+                group
+            );
+            User member = User.create(
+                "member",
+                new EmailAddress("member@example.com"),
+                "hashedPassword123"
+            );
+            group.addMember(member);
+
+            // Assert
+            assertFalse(piggyBank.canBeDissolvedBy(member));
         }
     }
 
