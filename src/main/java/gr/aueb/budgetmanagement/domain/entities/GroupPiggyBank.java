@@ -37,4 +37,9 @@ public class GroupPiggyBank extends PiggyBank {
     public Group getGroup() {
         return group;
     }
+
+    @Override
+    public boolean isAuthorizedUser(User user) {
+        return this.group.getMembers().contains(user);
+    }
 }
