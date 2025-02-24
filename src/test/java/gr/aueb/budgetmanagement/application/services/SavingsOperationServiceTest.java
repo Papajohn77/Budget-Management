@@ -19,9 +19,7 @@ import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
-import gr.aueb.budgetmanagement.domain.repositories.SavingsOperationRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaSavingsOperationRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
@@ -37,7 +35,6 @@ class SavingsOperationServiceTest {
     private EntityManager entityManager;
     private EntityTransaction transaction;
     private UserRepository userRepository;
-    private SavingsOperationRepository savingsOperationRepository;
     private SavingsOperationService savingsOperationService;
     private User user;
 
@@ -48,8 +45,7 @@ class SavingsOperationServiceTest {
         transaction.begin();
 
         userRepository = new JpaUserRepository(entityManager);
-        savingsOperationRepository = new JpaSavingsOperationRepository(entityManager);
-        savingsOperationService = new SavingsOperationService(userRepository, savingsOperationRepository);
+        savingsOperationService = new SavingsOperationService(userRepository);
 
         createTestUser();
     }
