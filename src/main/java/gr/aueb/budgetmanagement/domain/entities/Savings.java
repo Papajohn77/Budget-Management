@@ -45,8 +45,10 @@ public class Savings {
         return savings;
     }
 
-    public SavingsOperation allocate(Money amount, LocalDate date) {        
-        return SavingsOperation.create(amount, date, SavingsOperationType.ALLOCATION, this);
+    public SavingsOperation allocate(Money amount, LocalDate date) {
+        SavingsOperation savingsOperation = SavingsOperation.create(amount, date, SavingsOperationType.ALLOCATION, this);
+        operations.add(savingsOperation);
+        return savingsOperation;
     }
 
     public SavingsOperation deallocate(Money amount, LocalDate date) {
@@ -55,7 +57,9 @@ public class Savings {
             throw new InsufficientSavingsException("Insufficient savings balance");
         }
         
-        return SavingsOperation.create(amount, date, SavingsOperationType.DEALLOCATION, this);
+        SavingsOperation savingsOperation = SavingsOperation.create(amount, date, SavingsOperationType.DEALLOCATION, this);
+        operations.add(savingsOperation);
+        return savingsOperation;
     }
 
     void addOperation(SavingsOperation operation) {
