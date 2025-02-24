@@ -42,7 +42,7 @@ class UserTest {
 
     @Test
     void shouldNotAllowMultipleSavingsAccounts() {
-        Savings savings = Savings.createFor(user);
+        Savings savings = Savings.create(user);
         assertThrows(
             SavingsAlreadyExistsException.class, 
             () -> user.setSavings(savings)
