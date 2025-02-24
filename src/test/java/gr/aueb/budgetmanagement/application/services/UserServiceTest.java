@@ -10,10 +10,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.application.commands.AuthenticateUserCommand;
 import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
 import gr.aueb.budgetmanagement.application.dto.RegisteredUserDTO;
+import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Savings;
+import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.EmailAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidEmailAddressException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidPasswordException;
@@ -25,13 +28,15 @@ import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
-class UserRegistrationServiceTest {
+class UserServiceTest {
+    private static final String TEST_USERNAME = "testuser";
+    private static final String TEST_EMAIL = "test@example.com";
     private static final String TEST_PASSWORD = "Test123!@#";
 
     private EntityManager entityManager;
     private EntityTransaction transaction;
     private UserRepository userRepository;
-    private UserRegistrationService userRegistrationService;
+    private UserService userService;
     private PasswordHasher passwordHasher;
 
     @BeforeEach
@@ -42,7 +47,7 @@ class UserRegistrationServiceTest {
         
         userRepository = new JpaUserRepository(entityManager);
         passwordHasher = new BCryptPasswordEncoder();
-        userRegistrationService = new UserRegistrationService(userRepository, passwordHasher);
+        userService = new UserService(userRepository, passwordHasher);
     }
 
     @AfterEach
@@ -65,7 +70,7 @@ class UserRegistrationServiceTest {
         );
 
         // Act
-        RegisteredUserDTO result = userRegistrationService.registerUser(command);
+        RegisteredUserDTO result = userService.registerUser(command);
 
         // Assert
         assertNotNull(result);
@@ -112,11 +117,11 @@ class UserRegistrationServiceTest {
 
         // Act & Assert
         assertDoesNotThrow(
-            () -> userRegistrationService.registerUser(firstUser)
+            () -> userService.registerUser(firstUser)
         );
         assertThrows(
             UsernameAlreadyExistsException.class, 
-            () -> userRegistrationService.registerUser(duplicateUsername))
+            () -> userService.registerUser(duplicateUsername))
         ;
     }
 
@@ -136,11 +141,11 @@ class UserRegistrationServiceTest {
 
         // Act & Assert
         assertDoesNotThrow(
-            () -> userRegistrationService.registerUser(firstUser)
+            () -> userService.registerUser(firstUser)
         );
         assertThrows(
             EmailAlreadyExistsException.class, 
-            () -> userRegistrationService.registerUser(duplicateEmail)
+            () -> userService.registerUser(duplicateEmail)
         );
     }
 
@@ -156,7 +161,7 @@ class UserRegistrationServiceTest {
         // Act & Assert
         assertThrows(
             InvalidEmailAddressException.class, 
-            () -> userRegistrationService.registerUser(invalidEmail)
+            () -> userService.registerUser(invalidEmail)
         );
     }
 
@@ -172,7 +177,7 @@ class UserRegistrationServiceTest {
         // Act & Assert
         assertThrows(
             InvalidPasswordException.class, 
-            () -> userRegistrationService.registerUser(weakPassword)
+            () -> userService.registerUser(weakPassword)
         );
     }
 
@@ -189,7 +194,7 @@ class UserRegistrationServiceTest {
         );
 
         // Act
-        RegisteredUserDTO result = userRegistrationService.registerUser(command);
+        RegisteredUserDTO result = userService.registerUser(command);
 
         // Assert
         String storedPassword = entityManager.createQuery(
@@ -200,5 +205,57 @@ class UserRegistrationServiceTest {
             .getSingleResult();
 
         assertTrue(passwordHasher.verifyPassword(rawPassword, storedPassword));
+    }
+
+    @Test
+    void testSuccessfulAuthentication() {
+        createTestUser();
+
+        AuthenticateUserCommand command = new AuthenticateUserCommand(
+            TEST_EMAIL,
+            TEST_PASSWORD
+        );
+
+        assertDoesNotThrow(() -> userService.authenticate(command));
+    }
+
+    @Test
+    void testAuthenticationWithNonexistentEmail() {
+        createTestUser();
+
+        AuthenticateUserCommand command = new AuthenticateUserCommand(
+            "nonexistent@example.com",
+            TEST_PASSWORD
+        );
+
+        assertThrows(
+            InvalidCredentialsException.class,
+            () -> userService.authenticate(command)
+        );
+    }
+
+    @Test
+    void testAuthenticationWithWrongPassword() {
+        createTestUser();
+
+        AuthenticateUserCommand command = new AuthenticateUserCommand(
+            TEST_EMAIL,
+            "WrongPassword123!@#"
+        );
+
+        assertThrows(
+            InvalidCredentialsException.class,
+            () -> userService.authenticate(command)
+        );
+    }
+
+    private void createTestUser() {
+        User user = User.create(
+            TEST_USERNAME,
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            passwordHasher
+        );
+        entityManager.persist(user);
     }
 }
