@@ -7,21 +7,15 @@ import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.SavingsOperation;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.repositories.SavingsOperationRepository;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
 public class SavingsOperationService {
     private final UserRepository userRepository;
-    private final SavingsOperationRepository savingsOperationRepository;
 
-    public SavingsOperationService(
-        UserRepository userRepository,
-        SavingsOperationRepository savingsOperationRepository
-    ) {
+    public SavingsOperationService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.savingsOperationRepository = savingsOperationRepository;
     }
 
     @Transactional
@@ -34,7 +28,7 @@ public class SavingsOperationService {
             command.date()
         );
 
-        savingsOperationRepository.save(operation);
+        userRepository.save(user);
 
         return new SavingsOperationDTO(
             operation.getId(),
@@ -55,7 +49,7 @@ public class SavingsOperationService {
             command.date()
         );
 
-        savingsOperationRepository.save(operation);
+        userRepository.save(user);
 
         return new SavingsOperationDTO(
             operation.getId(),
