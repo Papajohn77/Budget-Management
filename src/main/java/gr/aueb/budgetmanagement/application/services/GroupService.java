@@ -6,16 +6,12 @@ import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
-import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
 import jakarta.validation.Valid;
 
 public class GroupService {
-    private final GroupRepository groupRepository;
     private final UserRepository userRepository;
 
-    public GroupService(GroupRepository groupRepository, UserRepository userRepository) {
-        this.groupRepository = groupRepository;
+    public GroupService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -23,13 +19,9 @@ public class GroupService {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
-        if (groupRepository.existsByNameAndMemberId(command.name(), user.getId())) {
-            throw new GroupAlreadyExistsException("Group with name '" + command.name() + "' already exists for this user");
-        }
+        Group group = user.createGroup(command.name());
 
-        Group group = Group.create(command.name(), user);
-
-        groupRepository.save(group);
+        userRepository.save(user);
 
         return new CreatedGroupDTO(
             group.getId(),

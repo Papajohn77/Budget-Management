@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
+import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
@@ -117,6 +118,66 @@ class UserTest {
             amount.getValue().subtract(deallocationAmount.getValue()), 
             user.getSavings().getCurrentAmount().getValue()
         );
+    }
+
+    @Test
+    void createGroupShouldAddGroupToUserGroups() {
+        // Act
+        String groupName = "Test Group";
+        Group group = user.createGroup(groupName);
+        
+        // Assert
+        assertNotNull(group);
+        assertEquals(groupName, group.getName());
+        assertEquals(user, group.getAdmin());
+        assertTrue(user.getGroups().contains(group));
+        assertEquals(1, user.getGroups().size());
+    }
+
+    @Test
+    void createGroupWithDuplicateNameShouldThrowException() {
+        // Arrange
+        String groupName = "Test Group";
+        user.createGroup(groupName);
+        
+        // Act & Assert
+        assertThrows(
+            GroupAlreadyExistsException.class,
+            () -> user.createGroup(groupName)
+        );
+    }
+
+    @Test
+    void createGroupShouldAddUserAsMember() {
+        // Act
+        Group group = user.createGroup("Test Group");
+        
+        // Assert
+        assertTrue(group.getMembers().contains(user));
+    }
+
+    @Test
+    void getGroupsShouldReturnUnmodifiableSet() {
+        // Arrange
+        Set<Group> groups = user.getGroups();
+        
+        // Act & Assert
+        assertThrows(
+            UnsupportedOperationException.class,
+            () -> groups.add(new Group())
+        );
+    }
+
+    @Test
+    void userCanCreateMultipleGroupsWithDifferentNames() {
+        // Act
+        Group group1 = user.createGroup("Group 1");
+        Group group2 = user.createGroup("Group 2");
+        
+        // Assert
+        assertEquals(2, user.getGroups().size());
+        assertTrue(user.getGroups().contains(group1));
+        assertTrue(user.getGroups().contains(group2));
     }
 
     @Test

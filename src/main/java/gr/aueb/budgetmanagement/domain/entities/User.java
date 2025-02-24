@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
@@ -51,8 +52,7 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecurringExpense> recurringExpenses = new HashSet<>();
 
-
-    @ManyToMany(mappedBy = "members")
+    @ManyToMany(mappedBy = "members", cascade = CascadeType.ALL)
     private Set<Group> groups = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -88,6 +88,19 @@ public class User {
 
     public SavingsOperation deallocateSavings(Money amount, LocalDate date) {
         return savings.deallocate(amount, date);
+    }
+
+    public Group createGroup(String name) {
+        boolean groupAlreadyExists = groups.stream()
+            .anyMatch(group -> group.getName().equals(name));
+
+        if (groupAlreadyExists) {
+            throw new GroupAlreadyExistsException("Group with name '" + name + "' already exists for this user");
+        }
+
+        Group group = Group.create(name, this);
+        groups.add(group);
+        return group;
     }
 
     public Long getId() {
@@ -167,5 +180,4 @@ public class User {
     public int hashCode() {
         return Objects.hash(username, email);
     }
-
 }
