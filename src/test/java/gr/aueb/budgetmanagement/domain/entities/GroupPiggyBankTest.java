@@ -11,17 +11,20 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class GroupPiggyBankTest {
+    private static final String TEST_PASSWORD = "Test123!@#";
+
     @Test
     void createGroupPiggyBankShouldEstablishBidirectionalRelationship() {
         // Arrange
         User admin = User.create(
             "admin", 
-            new EmailAddress("admin@example.com"), 
-            "hashedPassword123"
+            "admin@example.com", 
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         Group group = Group.create("testgroup", admin);
 

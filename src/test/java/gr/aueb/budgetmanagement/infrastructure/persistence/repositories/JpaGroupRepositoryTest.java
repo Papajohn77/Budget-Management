@@ -13,12 +13,14 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
+import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
 class JpaGroupRepositoryTest {
+   private static final String TEST_PASSWORD = "Test123!@#";
+
    private EntityManager entityManager;
    private EntityTransaction transaction;
    private JpaUserRepository userRepository;
@@ -142,15 +144,18 @@ class JpaGroupRepositoryTest {
     private User createTestUser() {
         return User.create(
             "testuser",
-            new EmailAddress("test@example.com"),
-            "hashedPassword123"
+            "test@example.com",
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
     }
 
     private User createOtherTestUser() {
         return User.create(
             "otheruser", 
-            new EmailAddress("other@example.com"), 
-            "hashedPassword123");
+            "other@example.com", 
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
+        );
     }
 }

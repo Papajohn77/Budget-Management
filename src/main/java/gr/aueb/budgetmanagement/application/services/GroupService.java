@@ -3,11 +3,11 @@ package gr.aueb.budgetmanagement.application.services;
 import gr.aueb.budgetmanagement.application.commands.CreateGroupCommand;
 import gr.aueb.budgetmanagement.application.dto.CreatedGroupDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
-import gr.aueb.budgetmanagement.domain.repositories.UserRepository;
 import jakarta.validation.Valid;
 
 public class GroupService {

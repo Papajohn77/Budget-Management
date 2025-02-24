@@ -1,6 +1,8 @@
 package gr.aueb.budgetmanagement.application.services;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,12 +15,11 @@ import gr.aueb.budgetmanagement.application.commands.AllocateSavingsCommand;
 import gr.aueb.budgetmanagement.application.commands.DeallocateSavingsCommand;
 import gr.aueb.budgetmanagement.application.dto.SavingsOperationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
 import gr.aueb.budgetmanagement.domain.repositories.SavingsOperationRepository;
-import gr.aueb.budgetmanagement.domain.repositories.UserRepository;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaSavingsOperationRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
@@ -29,7 +30,7 @@ import jakarta.persistence.EntityTransaction;
 class SavingsOperationServiceTest {
     private static final String TEST_USERNAME = "testuser";
     private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "password";
+    private static final String TEST_PASSWORD = "Test123!@#";
     private static final LocalDate TODAY = LocalDate.now();
     private static final BigDecimal AMOUNT = new BigDecimal("100.00");
 
@@ -38,7 +39,6 @@ class SavingsOperationServiceTest {
     private UserRepository userRepository;
     private SavingsOperationRepository savingsOperationRepository;
     private SavingsOperationService savingsOperationService;
-    private BCryptPasswordEncoder passwordEncoder;
     private User user;
 
     @BeforeEach
@@ -50,7 +50,6 @@ class SavingsOperationServiceTest {
         userRepository = new JpaUserRepository(entityManager);
         savingsOperationRepository = new JpaSavingsOperationRepository(entityManager);
         savingsOperationService = new SavingsOperationService(userRepository, savingsOperationRepository);
-        passwordEncoder = new BCryptPasswordEncoder();
 
         createTestUser();
     }
@@ -66,8 +65,9 @@ class SavingsOperationServiceTest {
     private void createTestUser() {
         user = User.create(
             TEST_USERNAME,
-            new EmailAddress(TEST_EMAIL),
-            passwordEncoder.encode(TEST_PASSWORD)
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         entityManager.persist(user);
     }

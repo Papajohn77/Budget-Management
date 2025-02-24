@@ -4,12 +4,12 @@ import gr.aueb.budgetmanagement.application.commands.AllocateToPiggyBankCommand;
 import gr.aueb.budgetmanagement.application.dto.PiggyBankAllocationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.repositories.PiggyBankAllocationRepository;
 import gr.aueb.budgetmanagement.domain.repositories.PiggyBankRepository;
-import gr.aueb.budgetmanagement.domain.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 

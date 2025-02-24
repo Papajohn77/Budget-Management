@@ -8,8 +8,10 @@ import java.util.Set;
 
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
+import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import gr.aueb.budgetmanagement.domain.valueobjects.Password;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -52,25 +54,24 @@ public class User {
 
     }
 
-    public static User create(String username, EmailAddress email, String password) {
+    public static User create(String username, String email, String rawPassword, PasswordHasher passwordHasher) {
         if (username == null || username.trim().isEmpty()) {
             throw new InvalidDomainArgumentException("Username cannot be null or empty");
         }
-
-        if (email == null) {
-            throw new InvalidDomainArgumentException("Email cannot be null");
-        }
-
-        if (password == null || password.trim().isEmpty()) {
-            throw new InvalidDomainArgumentException("Password cannot be null or empty");
-        }
+        EmailAddress emailAddress = new EmailAddress(email);
+        Password password = new Password(rawPassword);
+        String hashedPassword = passwordHasher.hashPassword(password.getValue());
 
         User user = new User();
         user.username = username;
-        user.email = email;
-        user.password = password;
+        user.email = emailAddress;
+        user.password = hashedPassword;
         Savings.createFor(user);
         return user;
+    }
+
+    public boolean verifyPassword(String rawPassword, PasswordHasher passwordHasher) {
+        return passwordHasher.verifyPassword(rawPassword, this.password);
     }
 
     public SavingsOperation allocateSavings(Money amount, LocalDate date) {

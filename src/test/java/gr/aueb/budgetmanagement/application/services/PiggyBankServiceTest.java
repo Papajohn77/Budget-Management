@@ -17,6 +17,7 @@ import gr.aueb.budgetmanagement.application.commands.CreatePersonalPiggyBankComm
 import gr.aueb.budgetmanagement.application.commands.DissolvePiggyBankCommand;
 import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
@@ -24,20 +25,19 @@ import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.domain.repositories.PiggyBankRepository;
-import gr.aueb.budgetmanagement.domain.repositories.UserRepository;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaGroupRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaPiggyBankRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
+import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
 class PiggyBankServiceTest {
     private static final String TEST_USERNAME = "testuser";
     private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "password";
+    private static final String TEST_PASSWORD = "Test123!@#";
     private static final String TEST_GROUP_NAME = "testgroup";
     private static final BigDecimal TARGET_AMOUNT = new BigDecimal("1000.00");
     private static final String PIGGY_BANK_NAME = "Test Piggy Bank";
@@ -77,8 +77,9 @@ class PiggyBankServiceTest {
     private void createTestUser() {
         user = User.create(
             TEST_USERNAME,
-            new EmailAddress(TEST_EMAIL),
-            TEST_PASSWORD
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         entityManager.persist(user);
     }
@@ -179,7 +180,12 @@ class PiggyBankServiceTest {
 
     @Test
     void testCreateGroupPiggyBankNotAdmin() {
-        User nonAdmin = User.create("other", new EmailAddress("other@example.com"), "password");
+        User nonAdmin = User.create(
+            "other", 
+            "other@example.com", 
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
+        );
         entityManager.persist(nonAdmin);
 
         CreateGroupPiggyBankCommand command = new CreateGroupPiggyBankCommand(
@@ -282,8 +288,9 @@ class PiggyBankServiceTest {
 
         User otherUser = User.create(
             "other", 
-            new EmailAddress("other@example.com"), 
-            "hashedPassword123"
+            "other@example.com", 
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         entityManager.persist(otherUser);
 
@@ -309,8 +316,9 @@ class PiggyBankServiceTest {
 
         User nonAdmin = User.create(
             "nonadmin", 
-            new EmailAddress("nonadmin@example.com"), 
-            "hashedPassword123"
+            "nonadmin@example.com", 
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         entityManager.persist(nonAdmin);
 

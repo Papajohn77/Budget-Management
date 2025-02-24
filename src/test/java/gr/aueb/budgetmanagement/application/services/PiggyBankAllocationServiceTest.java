@@ -15,6 +15,7 @@ import gr.aueb.budgetmanagement.application.commands.AllocateToPiggyBankCommand;
 import gr.aueb.budgetmanagement.application.dto.PiggyBankAllocationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.GroupPiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBank;
@@ -23,20 +24,19 @@ import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.repositories.PiggyBankAllocationRepository;
 import gr.aueb.budgetmanagement.domain.repositories.PiggyBankRepository;
-import gr.aueb.budgetmanagement.domain.repositories.UserRepository;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaPiggyBankAllocationRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaPiggyBankRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
+import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
 class PiggyBankAllocationServiceTest {
     private static final String TEST_USERNAME = "testuser";
     private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "password";
+    private static final String TEST_PASSWORD = "Test123!@#";
     private static final LocalDate TODAY = LocalDate.now();
     private static final BigDecimal AMOUNT = new BigDecimal("100.00");
     
@@ -81,8 +81,9 @@ class PiggyBankAllocationServiceTest {
     private void createTestEntities() {
         user = User.create(
             TEST_USERNAME,
-            new EmailAddress(TEST_EMAIL),
-            TEST_PASSWORD
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         entityManager.persist(user);
 
@@ -193,8 +194,9 @@ class PiggyBankAllocationServiceTest {
         // Arrange
         User unauthorizedUser = User.create(
             "unauthorized",
-            new EmailAddress("unauthorized@example.com"),
-            "hashedPassword123"
+            "unauthorized@example.com",
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         entityManager.persist(unauthorizedUser);
 
@@ -217,8 +219,9 @@ class PiggyBankAllocationServiceTest {
         // Arrange
         User nonMember = User.create(
             "nonmember",
-            new EmailAddress("nonmember@example.com"),
-            "password"
+            "nonmember@example.com",
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         entityManager.persist(nonMember);
 

@@ -2,9 +2,9 @@ package gr.aueb.budgetmanagement.infrastructure.security;
 
 import org.mindrot.jbcrypt.BCrypt;
 
-import gr.aueb.budgetmanagement.application.ports.PasswordEncoder;
+import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 
-public class BCryptPasswordEncoder implements PasswordEncoder {
+public class BCryptPasswordEncoder implements PasswordHasher {
     private final int logRounds;
 
     public BCryptPasswordEncoder() {
@@ -12,12 +12,12 @@ public class BCryptPasswordEncoder implements PasswordEncoder {
     }
 
     @Override
-    public String encode(String rawPassword) {
+    public String hashPassword(String rawPassword) {
         return BCrypt.hashpw(rawPassword, BCrypt.gensalt(logRounds));
     }
 
     @Override
-    public boolean matches(String rawPassword, String hashedPassword) {
+    public boolean verifyPassword(String rawPassword, String hashedPassword) {
         return BCrypt.checkpw(rawPassword, hashedPassword);
     }
 }
