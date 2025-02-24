@@ -7,12 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 class BCryptPasswordEncoderTest {
+    private static final String TEST_PASSWORD = "Test123!@#";
+
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     @Test
     void testPasswordEncoding() {
-        String rawPassword = "Test123!@#";
-        String encodedPassword = encoder.encode(rawPassword);
+        String rawPassword = TEST_PASSWORD;
+        String encodedPassword = encoder.hashPassword(rawPassword);
 
         assertNotEquals(rawPassword, encodedPassword);
         assertTrue(encodedPassword.startsWith("$2a$"));
@@ -20,21 +22,21 @@ class BCryptPasswordEncoderTest {
 
     @Test
     void testPasswordMatching() {
-        String rawPassword = "Test123!@#";
-        String encodedPassword = encoder.encode(rawPassword);
+        String rawPassword = TEST_PASSWORD;
+        String encodedPassword = encoder.hashPassword(rawPassword);
 
-        assertTrue(encoder.matches(rawPassword, encodedPassword));
-        assertFalse(encoder.matches("WrongPassword123!@#", encodedPassword));
+        assertTrue(encoder.verifyPassword(rawPassword, encodedPassword));
+        assertFalse(encoder.verifyPassword("WrongPassword123!@#", encodedPassword));
     }
 
     @Test
     void testDifferentHashesForSamePassword() {
-        String password = "Test123!@#";
-        String firstHash = encoder.encode(password);
-        String secondHash = encoder.encode(password);
+        String password = TEST_PASSWORD;
+        String firstHash = encoder.hashPassword(password);
+        String secondHash = encoder.hashPassword(password);
 
         assertNotEquals(firstHash, secondHash);
-        assertTrue(encoder.matches(password, firstHash));
-        assertTrue(encoder.matches(password, secondHash));
+        assertTrue(encoder.verifyPassword(password, firstHash));
+        assertTrue(encoder.verifyPassword(password, secondHash));
     }
 }

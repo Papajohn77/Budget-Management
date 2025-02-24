@@ -11,7 +11,7 @@ import gr.aueb.budgetmanagement.application.commands.AuthenticateUserCommand;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
+import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
@@ -27,7 +27,7 @@ class AuthenticationServiceTest {
     private EntityTransaction transaction;
     private UserRepository userRepository;
     private AuthenticationService authenticationService;
-    private BCryptPasswordEncoder passwordEncoder;
+    private PasswordHasher passwordHasher;
 
     @BeforeEach
     void setUp() {
@@ -36,8 +36,8 @@ class AuthenticationServiceTest {
         transaction.begin();
 
         userRepository = new JpaUserRepository(entityManager);
-        passwordEncoder = new BCryptPasswordEncoder();
-        authenticationService = new AuthenticationService(userRepository, passwordEncoder);
+        passwordHasher = new BCryptPasswordEncoder();
+        authenticationService = new AuthenticationService(userRepository, passwordHasher);
 
         createTestUser();
     }
@@ -53,8 +53,9 @@ class AuthenticationServiceTest {
     private void createTestUser() {
         User user = User.create(
             TEST_USERNAME,
-            new EmailAddress(TEST_EMAIL),
-            passwordEncoder.encode(TEST_PASSWORD)
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            passwordHasher
         );
         entityManager.persist(user);
     }

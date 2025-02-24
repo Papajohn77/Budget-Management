@@ -18,7 +18,7 @@ import gr.aueb.budgetmanagement.domain.exceptions.EmailAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidEmailAddressException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidPasswordException;
 import gr.aueb.budgetmanagement.domain.exceptions.UsernameAlreadyExistsException;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
+import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
@@ -26,11 +26,13 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
 class UserRegistrationServiceTest {
+    private static final String TEST_PASSWORD = "Test123!@#";
+
     private EntityManager entityManager;
     private EntityTransaction transaction;
     private UserRepository userRepository;
     private UserRegistrationService userRegistrationService;
-    private BCryptPasswordEncoder passwordEncoder;
+    private PasswordHasher passwordHasher;
 
     @BeforeEach
     void setUp() {
@@ -39,8 +41,8 @@ class UserRegistrationServiceTest {
         transaction.begin();
         
         userRepository = new JpaUserRepository(entityManager);
-        passwordEncoder = new BCryptPasswordEncoder();
-        userRegistrationService = new UserRegistrationService(userRepository, passwordEncoder);
+        passwordHasher = new BCryptPasswordEncoder();
+        userRegistrationService = new UserRegistrationService(userRepository, passwordHasher);
     }
 
     @AfterEach
@@ -59,7 +61,7 @@ class UserRegistrationServiceTest {
         RegisterUserCommand command = new RegisterUserCommand(
             username,
             email,
-            "Test123!@#"
+            TEST_PASSWORD
         );
 
         // Act
@@ -100,12 +102,12 @@ class UserRegistrationServiceTest {
         RegisterUserCommand firstUser = new RegisterUserCommand(
             "testuser",
             "test1@example.com",
-            "Test123!@#"
+            TEST_PASSWORD
         );
         RegisterUserCommand duplicateUsername = new RegisterUserCommand(
             "testuser",
             "test2@example.com",
-            "Test123!@#"
+            TEST_PASSWORD
         );
 
         // Act & Assert
@@ -124,12 +126,12 @@ class UserRegistrationServiceTest {
         RegisterUserCommand firstUser = new RegisterUserCommand(
             "user1",
             "test@example.com",
-            "Test123!@#"
+            TEST_PASSWORD
         );
         RegisterUserCommand duplicateEmail = new RegisterUserCommand(
             "user2",
             "test@example.com",
-            "Test123!@#"
+            TEST_PASSWORD
         );
 
         // Act & Assert
@@ -148,7 +150,7 @@ class UserRegistrationServiceTest {
         RegisterUserCommand invalidEmail = new RegisterUserCommand(
             "testuser",
             "invalid-email",
-            "Test123!@#"
+            TEST_PASSWORD
         );
 
         // Act & Assert
@@ -179,7 +181,7 @@ class UserRegistrationServiceTest {
         // Arrange
         String username = "testuser";
         String email = "test@example.com";
-        String rawPassword = "Test123!@#";
+        String rawPassword = TEST_PASSWORD;
         RegisterUserCommand command = new RegisterUserCommand(
             username,
             email,
@@ -197,6 +199,6 @@ class UserRegistrationServiceTest {
             .setParameter("id", result.id())
             .getSingleResult();
 
-        assertTrue(passwordEncoder.matches(rawPassword, storedPassword));
+        assertTrue(passwordHasher.verifyPassword(rawPassword, storedPassword));
     }
 }

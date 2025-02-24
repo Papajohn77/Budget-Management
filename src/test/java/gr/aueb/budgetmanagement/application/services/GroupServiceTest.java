@@ -2,8 +2,8 @@ package gr.aueb.budgetmanagement.application.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,12 +12,10 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.application.commands.CreateGroupCommand;
 import gr.aueb.budgetmanagement.application.dto.CreatedGroupDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
-import gr.aueb.budgetmanagement.application.ports.PasswordEncoder;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaGroupRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
@@ -28,14 +26,13 @@ import jakarta.persistence.EntityTransaction;
 class GroupServiceTest {
     private static final String TEST_USERNAME = "testuser";
     private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "password";
+    private static final String TEST_PASSWORD = "Test123!@#";
 
     private EntityManager entityManager;
     private EntityTransaction transaction;
     private JpaUserRepository userRepository;
     private JpaGroupRepository groupRepository;
     private GroupService groupService;
-    private PasswordEncoder passwordEncoder;
     private User user;
 
     @BeforeEach
@@ -47,7 +44,6 @@ class GroupServiceTest {
         userRepository = new JpaUserRepository(entityManager);
         groupRepository = new JpaGroupRepository(entityManager);
         groupService = new GroupService(groupRepository, userRepository);
-        passwordEncoder = new BCryptPasswordEncoder();
 
         createTestUser();
     }
@@ -62,9 +58,11 @@ class GroupServiceTest {
 
     private void createTestUser() {
         user = User.create(
-                TEST_USERNAME,
-                new EmailAddress(TEST_EMAIL),
-                passwordEncoder.encode(TEST_PASSWORD));
+            TEST_USERNAME,
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
+        );
         entityManager.persist(user);
     }
 

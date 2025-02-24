@@ -15,10 +15,11 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class PiggyBankTest {
+    private static final String TEST_PASSWORD = "Test123!@#";
     private static final String VALID_NAME = "My Piggy Bank";
     private static final Money VALID_TARGET = new Money(BigDecimal.valueOf(1000));
     private static final ExpenseCategory VALID_CATEGORY = ExpenseCategory.OTHER;
@@ -30,8 +31,9 @@ class PiggyBankTest {
     void setUp() {
         user = User.create(
             "testuser", 
-            new EmailAddress("test@example.com"), 
-            "hashedPassword123"
+            "test@example.com", 
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         group = Group.create("testgroup", user);
     }
@@ -147,8 +149,9 @@ class PiggyBankTest {
             );
             User otherUser = User.create(
                 "otheruser",
-                new EmailAddress("other@example.com"),
-                "hashedPassword123"
+                "other@example.com",
+                TEST_PASSWORD,
+                new BCryptPasswordEncoder()
             );
 
             // Assert
@@ -180,8 +183,9 @@ class PiggyBankTest {
             );
             User otherUser = User.create(
                 "otheruser",
-                new EmailAddress("other@example.com"),
-                "hashedPassword123"
+                "other@example.com",
+                TEST_PASSWORD,
+                new BCryptPasswordEncoder()
             );
 
             // Assert
@@ -300,8 +304,9 @@ class PiggyBankTest {
             );
             User nonMember = User.create(
                 "nonmember",
-                new EmailAddress("nonmember@example.com"),
-                "hashedPassword123"
+                "nonmember@example.com",
+                TEST_PASSWORD,
+                new BCryptPasswordEncoder()
             );
 
             // Assert
@@ -333,8 +338,9 @@ class PiggyBankTest {
             );
             User member = User.create(
                 "member",
-                new EmailAddress("member@example.com"),
-                "hashedPassword123"
+                "member@example.com",
+                TEST_PASSWORD,
+                new BCryptPasswordEncoder()
             );
             group.addMember(member);
 

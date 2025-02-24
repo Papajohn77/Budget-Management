@@ -12,13 +12,13 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class GroupTest {
     private static final String TEST_USERNAME = "testuser";
     private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "hashedPassword123";
+    private static final String TEST_PASSWORD = "Test123!@#";
 
     private User admin;
 
@@ -26,8 +26,9 @@ class GroupTest {
     void setUp() {
         admin = User.create(
             TEST_USERNAME,
-            new EmailAddress(TEST_EMAIL),
-            TEST_PASSWORD
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
     }
 
@@ -154,8 +155,9 @@ class GroupTest {
     private User createNonAdminUser() {
         return User.create(
             "nonadmin",
-            new EmailAddress("nonadmin@example.com"),
-            TEST_PASSWORD
+            "nonadmin@example.com",
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
     }
 

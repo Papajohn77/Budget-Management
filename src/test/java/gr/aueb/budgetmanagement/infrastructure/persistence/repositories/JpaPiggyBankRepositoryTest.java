@@ -21,13 +21,15 @@ import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
+import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
 class JpaPiggyBankRepositoryTest {
+    private static final String TEST_PASSWORD = "Test123!@#";
+
     private EntityManager entityManager;
     private EntityTransaction transaction;
     private JpaPiggyBankRepository repository;
@@ -162,8 +164,9 @@ class JpaPiggyBankRepositoryTest {
     private User createTestUser() {
         User user = User.create(
             "testuser",
-            new EmailAddress("test@example.com"),
-            "hashedPassword123"
+            "test@example.com",
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
 
         entityManager.persist(user);
