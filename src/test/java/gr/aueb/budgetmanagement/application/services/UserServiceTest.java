@@ -13,14 +13,13 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.application.commands.AuthenticateUserCommand;
 import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
 import gr.aueb.budgetmanagement.application.dto.RegisteredUserDTO;
+import gr.aueb.budgetmanagement.application.exceptions.AlreadyExistsException;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Savings;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.exceptions.EmailAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidEmailAddressException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidPasswordException;
-import gr.aueb.budgetmanagement.domain.exceptions.UsernameAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
@@ -120,7 +119,7 @@ class UserServiceTest {
             () -> userService.registerUser(firstUser)
         );
         assertThrows(
-            UsernameAlreadyExistsException.class, 
+            AlreadyExistsException.class, 
             () -> userService.registerUser(duplicateUsername))
         ;
     }
@@ -144,7 +143,7 @@ class UserServiceTest {
             () -> userService.registerUser(firstUser)
         );
         assertThrows(
-            EmailAlreadyExistsException.class, 
+                AlreadyExistsException.class, 
             () -> userService.registerUser(duplicateEmail)
         );
     }
