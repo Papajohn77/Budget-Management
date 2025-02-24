@@ -12,12 +12,12 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
 import gr.aueb.budgetmanagement.application.dto.RegisteredUserDTO;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Savings;
 import gr.aueb.budgetmanagement.domain.exceptions.EmailAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidEmailAddressException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidPasswordException;
 import gr.aueb.budgetmanagement.domain.exceptions.UsernameAlreadyExistsException;
-import gr.aueb.budgetmanagement.domain.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
@@ -55,9 +55,10 @@ class UserRegistrationServiceTest {
     void testSuccessfulUserRegistration() {
         // Arrange
         String username = "testuser";
+        String email = "test@example.com";
         RegisterUserCommand command = new RegisterUserCommand(
             username,
-            "test@example.com",
+            email,
             "Test123!@#"
         );
 
@@ -72,7 +73,7 @@ class UserRegistrationServiceTest {
 
         // Verify user was persisted
         assertTrue(userRepository.existsByUsername(username));
-        assertTrue(userRepository.existsByEmail(new EmailAddress("test@example.com")));
+        assertTrue(userRepository.existsByEmail(email));
 
         // Verify Savings was created as part of user registration
         Long userId = entityManager.createQuery(

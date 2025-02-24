@@ -3,10 +3,10 @@ package gr.aueb.budgetmanagement.application.services;
 import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
 import gr.aueb.budgetmanagement.application.dto.RegisteredUserDTO;
 import gr.aueb.budgetmanagement.application.ports.PasswordEncoder;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.EmailAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.UsernameAlreadyExistsException;
-import gr.aueb.budgetmanagement.domain.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Password;
 import jakarta.transaction.Transactional;
@@ -30,7 +30,7 @@ public class UserRegistrationService {
             throw new UsernameAlreadyExistsException("Username already exists: " + command.username());
         }
 
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(command.email())) {
             throw new EmailAlreadyExistsException("Email already exists: " + command.email());
         }
 

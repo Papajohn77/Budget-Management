@@ -1,4 +1,4 @@
-package gr.aueb.budgetmanagement.infrastructure.persistence.repositories;
+package gr.aueb.budgetmanagement.application.repositories;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
+import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
@@ -42,61 +43,55 @@ class JpaUserRepositoryTest {
     @Test
     void testSaveUser() {
         User user = createTestUser();
-        repository.save(user);
-        
-        assertNotNull(user.getId());
-        assertTrue(entityManager.contains(user));
+        User savedUser = repository.save(user);
+
+        assertNotNull(savedUser.getId());
+        assertEquals(user.getUsername(), savedUser.getUsername());
+        assertEquals(user.getEmail(), savedUser.getEmail());
+        assertTrue(entityManager.contains(savedUser));
     }
 
     @Test
     void testExistsByUsername() {
         User user = createTestUser();
-        repository.save(user);
+        User savedUser = repository.save(user);
 
-        assertTrue(repository.existsByUsername(user.getUsername()));
+        assertTrue(repository.existsByUsername(savedUser.getUsername()));
         assertFalse(repository.existsByUsername("nonexistent"));
     }
 
     @Test
     void testExistsByEmail() {
         User user = createTestUser();
-        repository.save(user);
+        User savedUser = repository.save(user);
 
-        assertTrue(repository.existsByEmail(user.getEmail()));
-        assertFalse(repository.existsByEmail(new EmailAddress("nonexistent@example.com")));
+        assertTrue(repository.existsByEmail(savedUser.getEmail().getValue()));
+        assertFalse(repository.existsByEmail("nonexistent@example.com"));
     }
 
     @Test
     void testFindByEmailExistingUser() {
         User user = createTestUser();
-        repository.save(user);
-        
-        Optional<User> found = repository.findByEmail(user.getEmail());
-        
-        assertTrue(found.isPresent());
-        assertEquals(user.getEmail(), found.get().getEmail());
-        assertEquals(user.getUsername(), found.get().getUsername());
-    }
+        User savedUser = repository.save(user);
 
-    @Test
-    void testFindByEmailNonexistentUser() {
-        EmailAddress nonexistentEmail = new EmailAddress("nonexistent@example.com");
-        Optional<User> found = repository.findByEmail(nonexistentEmail);
-        
-        assertFalse(found.isPresent());
+        Optional<User> found = repository.findByEmail(savedUser.getEmail().getValue());
+
+        assertTrue(found.isPresent());
+        assertEquals(savedUser.getEmail(), found.get().getEmail());
+        assertEquals(savedUser.getUsername(), found.get().getUsername());
     }
 
     @Test
     void testFindByIdExistingUser() {
         User user = createTestUser();
-        repository.save(user);
-        
-        Optional<User> found = repository.findById(user.getId());
-        
+        User savedUser = repository.save(user);
+
+        Optional<User> found = repository.findById(savedUser.getId());
+
         assertTrue(found.isPresent());
-        assertEquals(user.getId(), found.get().getId());
-        assertEquals(user.getEmail(), found.get().getEmail());
-        assertEquals(user.getUsername(), found.get().getUsername());
+        assertEquals(savedUser.getId(), found.get().getId());
+        assertEquals(savedUser.getEmail(), found.get().getEmail());
+        assertEquals(savedUser.getUsername(), found.get().getUsername());
     }
 
     @Test

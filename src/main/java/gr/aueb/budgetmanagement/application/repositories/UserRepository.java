@@ -1,0 +1,13 @@
+package gr.aueb.budgetmanagement.application.repositories;
+
+import java.util.Optional;
+
+import gr.aueb.budgetmanagement.domain.entities.User;
+
+public interface UserRepository {
+    User save(User user);
+    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
+    Optional<User> findByEmail(String email);
+    Optional<User> findById(Long id);
+}
