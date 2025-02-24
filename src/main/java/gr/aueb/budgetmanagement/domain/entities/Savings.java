@@ -42,7 +42,6 @@ public class Savings {
     public static Savings createFor(User user) {
         Savings savings = new Savings();
         savings.user = user;
-        user.setSavings(savings);
         return savings;
     }
 

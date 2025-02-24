@@ -66,7 +66,7 @@ public class User {
         user.username = username;
         user.email = emailAddress;
         user.password = hashedPassword;
-        Savings.createFor(user);
+        user.savings = Savings.createFor(user);
         return user;
     }
 
