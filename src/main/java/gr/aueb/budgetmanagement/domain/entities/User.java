@@ -1,15 +1,17 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
-import java.awt.*;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
+import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
+import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
@@ -58,6 +60,9 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PersonalPiggyBank> piggyBanks = new HashSet<>();
 
+    @OneToMany(mappedBy = "invitee", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Invitation> invitations = new HashSet<>();
+    
     protected User() {
 
     }
@@ -159,6 +164,43 @@ public class User {
 
     public Set<RecurringExpense> getRecurringExpenses() {
         return Collections.unmodifiableSet(recurringExpenses);
+    }
+
+    public Set<Invitation> getInvitations() {
+        return Collections.unmodifiableSet(invitations);
+    }
+
+    void addInvitation(Invitation invitation) {
+        if (invitation == null) {
+            throw new InvalidDomainArgumentException("Invitation cannot be null");
+        }
+        invitations.add(invitation);
+    }
+
+    private boolean hasAlreadyBeenInvitedTo(Group group) {
+        return invitations.stream()
+            .anyMatch(invitation -> invitation.getGroup().equals(group));
+    }
+
+    public Invitation sendInvitationTo(User invitee, Group group) {
+        if (group.getAdmin() != this) {
+            throw new UnauthorizedOperationException("Only the group admin can send invitations");
+        }
+        if (invitee.hasAlreadyBeenInvitedTo(group)) {
+            throw new InvitationAlreadyExistsException("Invitation already exists");
+        }
+        return Invitation.create(group, invitee);
+    }
+
+    public Invitation respondTοInvitation(Invitation invitation, InvitationResponseOperationType operationType) {
+        if (!invitations.contains(invitation)) {
+            throw new UnauthorizedOperationException("User cannot respond to invitation");
+        }
+        switch (operationType) {
+            case ACCEPT -> invitation.accept();
+            case REJECT -> invitation.reject();
+        }
+        return invitation;
     }
 
     @Override
