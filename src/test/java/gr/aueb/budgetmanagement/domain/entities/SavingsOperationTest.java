@@ -46,7 +46,6 @@ class SavingsOperationTest {
         assertEquals(SavingsOperationType.ALLOCATION, operation.getOperation());
         assertEquals(savings, operation.getSavings());
         assertEquals(user, operation.getUser());
-        assertTrue(savings.getOperations().contains(operation));
     }
 
     @Test

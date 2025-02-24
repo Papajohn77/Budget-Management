@@ -75,7 +75,6 @@ public class SavingsOperation {
         savingsOperation.operation = operation;
         savingsOperation.savings = savings;
         savingsOperation.user = savings.getUser();
-        savings.addOperation(savingsOperation);
         return savingsOperation;
     }
 

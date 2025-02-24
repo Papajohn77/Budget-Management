@@ -8,6 +8,7 @@ import java.util.List;
 
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
+import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -39,15 +40,20 @@ public class Savings {
 
     }
 
-    public static Savings createFor(User user) {
+    public static Savings create(User user) {
+        if (user == null) {
+            throw new InvalidDomainArgumentException("Amount cannot be null");
+        }
+
         Savings savings = new Savings();
         savings.user = user;
-        user.setSavings(savings);
         return savings;
     }
 
-    public SavingsOperation allocate(Money amount, LocalDate date) {        
-        return SavingsOperation.create(amount, date, SavingsOperationType.ALLOCATION, this);
+    public SavingsOperation allocate(Money amount, LocalDate date) {
+        SavingsOperation savingsOperation = SavingsOperation.create(amount, date, SavingsOperationType.ALLOCATION, this);
+        operations.add(savingsOperation);
+        return savingsOperation;
     }
 
     public SavingsOperation deallocate(Money amount, LocalDate date) {
@@ -56,7 +62,9 @@ public class Savings {
             throw new InsufficientSavingsException("Insufficient savings balance");
         }
         
-        return SavingsOperation.create(amount, date, SavingsOperationType.DEALLOCATION, this);
+        SavingsOperation savingsOperation = SavingsOperation.create(amount, date, SavingsOperationType.DEALLOCATION, this);
+        operations.add(savingsOperation);
+        return savingsOperation;
     }
 
     void addOperation(SavingsOperation operation) {
