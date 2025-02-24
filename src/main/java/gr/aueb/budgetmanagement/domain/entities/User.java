@@ -1,5 +1,6 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import java.awt.*;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
@@ -43,6 +44,13 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Savings savings;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Expense> expenses = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RecurringExpense> recurringExpenses = new HashSet<>();
+
 
     @ManyToMany(mappedBy = "members")
     private Set<Group> groups = new HashSet<>();
@@ -124,6 +132,22 @@ public class User {
         piggyBanks.add(piggyBank);
     }
 
+    public void addExpense(Expense expense) {
+        expenses.add(expense);
+    }
+
+    public void addRecurringExpense(RecurringExpense recurringExpense) {
+        recurringExpenses.add(recurringExpense);
+    }
+
+    public Set<Expense> getExpenses() {
+        return Collections.unmodifiableSet(expenses);
+    }
+
+    public Set<RecurringExpense> getRecurringExpenses() {
+        return Collections.unmodifiableSet(recurringExpenses);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -143,4 +167,5 @@ public class User {
     public int hashCode() {
         return Objects.hash(username, email);
     }
+
 }
