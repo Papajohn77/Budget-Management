@@ -33,7 +33,7 @@ public class RespondToInvitationService {
         Invitation invitation = invitationRepository.findById(invitationId)
             .orElseThrow(() -> new NotFoundException("Invitation not found"));
 
-        responder.respondTοInvitation(invitation, command.response());
+        responder.respondToInvitation(invitation, command.response());
 
         invitationRepository.save(invitation);
 
