@@ -54,7 +54,17 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecurringExpense> recurringExpenses = new HashSet<>();
 
+<<<<<<< Updated upstream
     @ManyToMany(mappedBy = "members", cascade = CascadeType.ALL)
+=======
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Income> incomes = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RecurringIncome> recurringIncomes = new HashSet<>();
+
+    @ManyToMany(mappedBy = "members")
+>>>>>>> Stashed changes
     private Set<Group> groups = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -166,6 +176,7 @@ public class User {
         return Collections.unmodifiableSet(recurringExpenses);
     }
 
+<<<<<<< Updated upstream
     public Set<Invitation> getInvitations() {
         return Collections.unmodifiableSet(invitations);
     }
@@ -201,6 +212,20 @@ public class User {
             case REJECT -> invitation.reject();
         }
         return invitation;
+=======
+    public void addIncome(Income income) {
+        incomes.add(income);
+    }
+
+    public void addRecurringIncome(RecurringIncome recurringIncome) {
+        recurringIncomes.add(recurringIncome);
+    }
+    public Set<Income> getIncomes() {
+        return Collections.unmodifiableSet(incomes);
+    }
+    public Set<RecurringIncome> getRecurringIncomes() {
+        return Collections.unmodifiableSet(recurringIncomes);
+>>>>>>> Stashed changes
     }
 
     @Override

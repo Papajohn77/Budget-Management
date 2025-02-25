@@ -1,12 +1,12 @@
 package gr.aueb.budgetmanagement.application.commands;
 
-import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
+import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import java.time.LocalDate;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record CreateRecurringExpenseCommand(
+public record CreateRecurringIncomeCommand(
         @NotNull(message = "User ID cannot be null")
         Long userId,
 
@@ -17,7 +17,7 @@ public record CreateRecurringExpenseCommand(
         Money amount,
 
         @NotNull(message = "Category cannot be null")
-        ExpenseCategory category,
+        IncomeCategory category,
 
         @NotNull(message = "Start date cannot be null")
         LocalDate startDate,
