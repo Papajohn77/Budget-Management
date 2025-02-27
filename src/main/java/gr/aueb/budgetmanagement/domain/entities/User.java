@@ -54,6 +54,12 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecurringExpense> recurringExpenses = new HashSet<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Income> incomes = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RecurringIncome> recurringIncomes = new HashSet<>();
+
     @ManyToMany(mappedBy = "members", cascade = CascadeType.ALL)
     private Set<Group> groups = new HashSet<>();
 
@@ -192,7 +198,7 @@ public class User {
         return Invitation.create(group, invitee);
     }
 
-    public Invitation respondTοInvitation(Invitation invitation, InvitationResponseOperationType operationType) {
+    public Invitation respondToInvitation(Invitation invitation, InvitationResponseOperationType operationType) {
         if (!invitations.contains(invitation)) {
             throw new UnauthorizedOperationException("User cannot respond to invitation");
         }
@@ -201,6 +207,22 @@ public class User {
             case REJECT -> invitation.reject();
         }
         return invitation;
+    }
+
+    public void addIncome(Income income) {
+        incomes.add(income);
+    }
+
+    public void addRecurringIncome(RecurringIncome recurringIncome) {
+        recurringIncomes.add(recurringIncome);
+    }
+
+    public Set<Income> getIncomes() {
+        return Collections.unmodifiableSet(incomes);
+    }
+
+    public Set<RecurringIncome> getRecurringIncomes() {
+        return Collections.unmodifiableSet(recurringIncomes);
     }
 
     @Override

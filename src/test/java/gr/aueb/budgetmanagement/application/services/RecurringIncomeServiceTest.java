@@ -11,15 +11,15 @@ import java.time.LocalDate;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
+import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import gr.aueb.budgetmanagement.application.commands.CreateRecurringExpenseCommand;
-import gr.aueb.budgetmanagement.application.dto.CreatedRecurringExpenseDTO;
+import gr.aueb.budgetmanagement.application.commands.CreateRecurringIncomeCommand;
+import gr.aueb.budgetmanagement.application.dto.CreatedRecurringIncomeDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
-import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
+import gr.aueb.budgetmanagement.domain.entities.RecurringIncome;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
@@ -28,17 +28,17 @@ import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
-class RecurringExpenseServiceTest {
+class RecurringIncomeServiceTest {
     private static final String TEST_USERNAME = "testuser";
     private static final String TEST_EMAIL = "test@example.com";
     private static final String TEST_PASSWORD = "Test123!@#";
-    private static final ExpenseCategory VALID_CATEGORY = ExpenseCategory.FOOD;
+    private static final IncomeCategory VALID_CATEGORY = IncomeCategory.SALARY;
     private static final Money VALID_MONEY = new Money(new BigDecimal("9.99"));
 
     private EntityManager entityManager;
     private EntityTransaction transaction;
     private JpaUserRepository userRepository;
-    private RecurringExpenseService recurringExpenseService;
+    private RecurringIncomeService recurringIncomeService;
     private PasswordHasher passwordHasher;
     private User user;
 
@@ -49,7 +49,7 @@ class RecurringExpenseServiceTest {
         transaction.begin();
 
         userRepository = new JpaUserRepository(entityManager);
-        recurringExpenseService = new RecurringExpenseService(userRepository);
+        recurringIncomeService = new RecurringIncomeService(userRepository);
         passwordHasher = new BCryptPasswordEncoder();
 
         createTestUser();
@@ -74,13 +74,13 @@ class RecurringExpenseServiceTest {
     }
 
     @Test
-    void createRecurringExpense_WithValidData() {
+    void createRecurringIncome_WithValidData() {
         // Arrange
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
-        CreateRecurringExpenseCommand command = new CreateRecurringExpenseCommand(
+        CreateRecurringIncomeCommand command = new CreateRecurringIncomeCommand(
                 user.getId(),
-                "Netflix Subscription",
+                "Monthly Salary",
                 VALID_MONEY,
                 VALID_CATEGORY,
                 startDate,
@@ -88,46 +88,45 @@ class RecurringExpenseServiceTest {
         );
 
         // Act
-        CreatedRecurringExpenseDTO result = recurringExpenseService.createRecurringExpense(command);
+        CreatedRecurringIncomeDTO result = recurringIncomeService.createRecurringIncome(command);
 
         // Assert
         assertNotNull(result.id());
-        assertEquals("Netflix Subscription", result.name());
+        assertEquals("Monthly Salary", result.name());
         assertEquals(VALID_MONEY, result.amount());
         assertEquals(VALID_CATEGORY, result.category());
         assertEquals(startDate, result.startDate());
         assertEquals(endDate, result.endDate());
-        //assertFalse(result.stopped());
 
-        // Verify the recurring expense was saved in the database
+        // Verify the recurring income was saved in the database
         User updatedUser = entityManager.find(User.class, user.getId());
         assertNotNull(updatedUser);
 
-        RecurringExpense savedExpense = null;
-        for (RecurringExpense expense : updatedUser.getRecurringExpenses()) {
-            if (expense.getId().equals(result.id())) {
-                savedExpense = expense;
+        RecurringIncome savedIncome = null;
+        for (RecurringIncome income : updatedUser.getRecurringIncomes()) {
+            if (income.getId().equals(result.id())) {
+                savedIncome = income;
                 break;
             }
         }
 
-        assertNotNull(savedExpense);
-        assertEquals("Netflix Subscription", savedExpense.getName());
-        assertEquals(VALID_MONEY, savedExpense.getAmount());
-        assertEquals(VALID_CATEGORY, savedExpense.getCategory());
-        assertEquals(startDate, savedExpense.getStartDate());
-        assertEquals(endDate, savedExpense.getEndDate());
-        assertFalse(savedExpense.isStopped());
+        assertNotNull(savedIncome);
+        assertEquals("Monthly Salary", savedIncome.getName());
+        assertEquals(VALID_MONEY, savedIncome.getAmount());
+        assertEquals(VALID_CATEGORY, savedIncome.getCategory());
+        assertEquals(startDate, savedIncome.getStartDate());
+        assertEquals(endDate, savedIncome.getEndDate());
+        assertFalse(savedIncome.isStopped());
     }
 
     @Test
-    void createRecurringExpense_WithNonExistentUser() {
+    void createRecurringIncome_WithNonExistentUser() {
         // Arrange
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
-        CreateRecurringExpenseCommand command = new CreateRecurringExpenseCommand(
+        CreateRecurringIncomeCommand command = new CreateRecurringIncomeCommand(
                 999L,
-                "Gym Membership",
+                "Freelance Payment",
                 VALID_MONEY,
                 VALID_CATEGORY,
                 startDate,
@@ -137,16 +136,16 @@ class RecurringExpenseServiceTest {
         // Act & Assert
         assertThrows(
                 NotFoundException.class,
-                () -> recurringExpenseService.createRecurringExpense(command)
+                () -> recurringIncomeService.createRecurringIncome(command)
         );
     }
 
     @Test
-    void createRecurringExpense_WithInvalidCommand() {
+    void createRecurringIncome_WithInvalidCommand() {
         // Arrange - Create command with empty name
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
-        CreateRecurringExpenseCommand command = new CreateRecurringExpenseCommand(
+        CreateRecurringIncomeCommand command = new CreateRecurringIncomeCommand(
                 user.getId(),
                 "", // Empty name should be invalid
                 VALID_MONEY,
@@ -155,21 +154,21 @@ class RecurringExpenseServiceTest {
                 endDate
         );
 
-        // Act & Assert - Assuming RecurringExpense.create() validates the name
+        // Act & Assert - Assuming RecurringIncome.create() validates the name
         assertThrows(
                 InvalidDomainArgumentException.class,
-                () -> recurringExpenseService.createRecurringExpense(command)
+                () -> recurringIncomeService.createRecurringIncome(command)
         );
     }
 
     @Test
-    void createRecurringExpense_WithInvalidDateRange() {
+    void createRecurringIncome_WithInvalidDateRange() {
         // Arrange - Create command with end date before start date
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.minusMonths(1); // End date before start date
-        CreateRecurringExpenseCommand command = new CreateRecurringExpenseCommand(
+        CreateRecurringIncomeCommand command = new CreateRecurringIncomeCommand(
                 user.getId(),
-                "Netflix Subscription",
+                "Bonus Payment",
                 VALID_MONEY,
                 VALID_CATEGORY,
                 startDate,
@@ -178,7 +177,7 @@ class RecurringExpenseServiceTest {
 
         assertThrows(
                 Exception.class,
-                () -> recurringExpenseService.createRecurringExpense(command)
+                () -> recurringIncomeService.createRecurringIncome(command)
         );
     }
 }
