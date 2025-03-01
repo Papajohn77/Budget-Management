@@ -47,6 +47,9 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Savings savings;
 
+    @ManyToMany(mappedBy = "members", cascade = CascadeType.ALL)
+    private Set<Group> groups = new HashSet<>();
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Expense> expenses = new HashSet<>();
 
@@ -58,9 +61,6 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecurringIncome> recurringIncomes = new HashSet<>();
-
-    @ManyToMany(mappedBy = "members", cascade = CascadeType.ALL)
-    private Set<Group> groups = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PersonalPiggyBank> piggyBanks = new HashSet<>();
@@ -88,18 +88,6 @@ public class User {
         return user;
     }
 
-    public boolean verifyPassword(String rawPassword, PasswordHasher passwordHasher) {
-        return passwordHasher.verifyPassword(rawPassword, this.password);
-    }
-
-    public SavingsOperation allocateSavings(Money amount, LocalDate date) {
-        return savings.allocate(amount, date);
-    }
-
-    public SavingsOperation deallocateSavings(Money amount, LocalDate date) {
-        return savings.deallocate(amount, date);
-    }
-
     public Long getId() {
         return id;
     }
@@ -112,8 +100,8 @@ public class User {
         return email;
     }
 
-    public String getPassword() {
-        return password;
+    public boolean verifyPassword(String rawPassword, PasswordHasher passwordHasher) {
+        return passwordHasher.verifyPassword(rawPassword, this.password);
     }
 
     public Savings getSavings() {
@@ -127,8 +115,48 @@ public class User {
         this.savings = savings;
     }
 
+    public SavingsOperation allocateSavings(Money amount, LocalDate date) {
+        return savings.allocate(amount, date);
+    }
+
+    public SavingsOperation deallocateSavings(Money amount, LocalDate date) {
+        return savings.deallocate(amount, date);
+    }
+
     public Set<Group> getGroups() {
         return Collections.unmodifiableSet(groups);
+    }
+
+    public Set<Expense> getExpenses() {
+        return Collections.unmodifiableSet(expenses);
+    }
+
+    public void addExpense(Expense expense) {
+        expenses.add(expense);
+    }
+
+    public Set<RecurringExpense> getRecurringExpenses() {
+        return Collections.unmodifiableSet(recurringExpenses);
+    }
+
+    public void addRecurringExpense(RecurringExpense recurringExpense) {
+        recurringExpenses.add(recurringExpense);
+    }
+
+    public Set<Income> getIncomes() {
+        return Collections.unmodifiableSet(incomes);
+    }
+
+    public void addIncome(Income income) {
+        incomes.add(income);
+    }
+
+    public Set<RecurringIncome> getRecurringIncomes() {
+        return Collections.unmodifiableSet(recurringIncomes);
+    }
+
+    public void addRecurringIncome(RecurringIncome recurringIncome) {
+        recurringIncomes.add(recurringIncome);
     }
 
     public Set<PersonalPiggyBank> getPiggyBanks() {
@@ -140,22 +168,6 @@ public class User {
             throw new InvalidDomainArgumentException("PiggyBank cannot be null");
         }
         piggyBanks.add(piggyBank);
-    }
-
-    public void addExpense(Expense expense) {
-        expenses.add(expense);
-    }
-
-    public void addRecurringExpense(RecurringExpense recurringExpense) {
-        recurringExpenses.add(recurringExpense);
-    }
-
-    public Set<Expense> getExpenses() {
-        return Collections.unmodifiableSet(expenses);
-    }
-
-    public Set<RecurringExpense> getRecurringExpenses() {
-        return Collections.unmodifiableSet(recurringExpenses);
     }
 
     public Set<Invitation> getInvitations() {
@@ -184,7 +196,10 @@ public class User {
         return Invitation.create(group, invitee);
     }
 
-    public Invitation respondToInvitation(Invitation invitation, InvitationResponseOperationType operationType) {
+    public Invitation respondToInvitation(
+        Invitation invitation, 
+        InvitationResponseOperationType operationType
+    ) {
         if (!invitations.contains(invitation)) {
             throw new UnauthorizedOperationException("User cannot respond to invitation");
         }
@@ -193,22 +208,6 @@ public class User {
             case REJECT -> invitation.reject();
         }
         return invitation;
-    }
-
-    public void addIncome(Income income) {
-        incomes.add(income);
-    }
-
-    public void addRecurringIncome(RecurringIncome recurringIncome) {
-        recurringIncomes.add(recurringIncome);
-    }
-
-    public Set<Income> getIncomes() {
-        return Collections.unmodifiableSet(incomes);
-    }
-
-    public Set<RecurringIncome> getRecurringIncomes() {
-        return Collections.unmodifiableSet(recurringIncomes);
     }
 
     @Override
@@ -230,5 +229,4 @@ public class User {
     public int hashCode() {
         return Objects.hash(username, email);
     }
-
 }
