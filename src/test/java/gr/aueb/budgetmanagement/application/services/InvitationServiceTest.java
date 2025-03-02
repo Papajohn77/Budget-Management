@@ -23,6 +23,7 @@ import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
+import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
@@ -208,7 +209,7 @@ class InvitationServiceTest {
 
         // Act & Assert
         assertThrows(
-            InvalidDomainArgumentException.class,
+            InviteeAlreadyInGroupException.class,
             () -> invitationService.sendInvitation(command)
         );
     }

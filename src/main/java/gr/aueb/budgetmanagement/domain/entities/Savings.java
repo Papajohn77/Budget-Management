@@ -42,7 +42,7 @@ public class Savings {
 
     public static Savings create(User user) {
         if (user == null) {
-            throw new InvalidDomainArgumentException("Amount cannot be null");
+            throw new InvalidDomainArgumentException("User cannot be null");
         }
 
         Savings savings = new Savings();

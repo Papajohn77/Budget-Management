@@ -22,6 +22,7 @@ import gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
+import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaPiggyBankRepository;
@@ -204,7 +205,7 @@ class PiggyBankAllocationServiceTest {
 
         // Act & Assert
         assertThrows(
-            UnsupportedOperationException.class,
+            UnauthorizedOperationException.class,
             () -> allocationService.allocateToPiggyBank(command)
         );
     }
@@ -229,7 +230,7 @@ class PiggyBankAllocationServiceTest {
 
         // Act & Assert
         assertThrows(
-            UnsupportedOperationException.class,
+            UnauthorizedOperationException.class,
             () -> allocationService.allocateToPiggyBank(command)
         );
     }

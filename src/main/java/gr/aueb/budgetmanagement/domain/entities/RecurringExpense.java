@@ -93,7 +93,7 @@ public class RecurringExpense {
         }
 
         if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End Date cannot be before Start Date");
+            throw new InvalidDomainArgumentException("End Date cannot be before Start Date");
         }
 
         if (user == null) {

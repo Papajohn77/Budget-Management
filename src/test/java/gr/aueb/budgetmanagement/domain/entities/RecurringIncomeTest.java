@@ -123,7 +123,7 @@ class RecurringIncomeTest {
             LocalDate invalidEndDate = VALID_START_DATE.minusDays(1);
 
             assertThrows(
-                IllegalArgumentException.class, () ->
+                InvalidDomainArgumentException.class, () ->
                 user.addRecurringIncome(
                     VALID_NAME,
                     VALID_AMOUNT,
