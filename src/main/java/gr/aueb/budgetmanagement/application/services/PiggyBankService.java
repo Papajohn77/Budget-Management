@@ -34,7 +34,9 @@ public class PiggyBankService {
     }
 
     @Transactional
-    public CreatedPersonalPiggyBankRepresentation createPersonalPiggyBank(CreatePersonalPiggyBankCommand command) {
+    public CreatedPersonalPiggyBankRepresentation createPersonalPiggyBank(
+        @Valid CreatePersonalPiggyBankCommand command
+    ) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -56,7 +58,9 @@ public class PiggyBankService {
     }
 
     @Transactional
-    public CreatedGroupPiggyBankRepresentation createGroupPiggyBank(CreateGroupPiggyBankCommand command) {
+    public CreatedGroupPiggyBankRepresentation createGroupPiggyBank(
+        @Valid CreateGroupPiggyBankCommand command
+    ) {
         Group group = groupRepository.findById(command.groupId())
             .orElseThrow(() -> new NotFoundException("Group not found with id: " + command.groupId()));
 

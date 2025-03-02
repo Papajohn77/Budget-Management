@@ -24,7 +24,9 @@ public class PiggyBankAllocationService {
     }
 
     @Transactional
-    public PiggyBankAllocationRepresentation allocateToPiggyBank(@Valid AllocateToPiggyBankCommand command) {
+    public PiggyBankAllocationRepresentation allocateToPiggyBank(
+        @Valid AllocateToPiggyBankCommand command
+    ) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 

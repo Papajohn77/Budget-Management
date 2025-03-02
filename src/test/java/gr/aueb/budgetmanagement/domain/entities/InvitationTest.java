@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
+import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
+import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class InvitationTest {
@@ -102,7 +104,7 @@ class InvitationTest {
     void create_WithInviteeAlreadyInGroup_ShouldThrowException() {
         group.addMember(invitee);
         assertThrows(
-            InvalidDomainArgumentException.class,
+            InviteeAlreadyInGroupException.class,
             () -> Invitation.create(group, invitee, admin)
         );
     }

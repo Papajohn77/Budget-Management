@@ -6,6 +6,7 @@ import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
+import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
 import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import jakarta.persistence.Column;
@@ -55,10 +56,6 @@ public class Invitation {
             throw new InvalidDomainArgumentException("Invitee cannot be null");
         }
 
-        if (invitee.hasAlreadyBeenInvitedTo(group)) {
-            throw new InvitationAlreadyExistsException("Invitation already exists");
-        }
-
         if (admin != group.getAdmin()) {
             throw new UnauthorizedOperationException("Only the group admin can send invitations");
         }
@@ -68,7 +65,11 @@ public class Invitation {
         }
 
         if (group.getMembers().contains(invitee)) {
-            throw new InvalidDomainArgumentException("User is already a member of the group");
+            throw new InviteeAlreadyInGroupException("User is already a member of the group");
+        }
+
+        if (invitee.hasAlreadyBeenInvitedTo(group)) {
+            throw new InvitationAlreadyExistsException("Invitation already exists");
         }
 
         Invitation invitation = new Invitation();

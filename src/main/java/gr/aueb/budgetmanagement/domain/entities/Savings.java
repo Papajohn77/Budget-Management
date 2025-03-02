@@ -42,39 +42,12 @@ public class Savings {
 
     public static Savings create(User user) {
         if (user == null) {
-            throw new InvalidDomainArgumentException("Amount cannot be null");
+            throw new InvalidDomainArgumentException("User cannot be null");
         }
 
         Savings savings = new Savings();
         savings.user = user;
         return savings;
-    }
-
-    public SavingsOperation allocate(Money amount, LocalDate date) {
-        SavingsOperation savingsOperation = SavingsOperation.create(
-            amount, 
-            date, 
-            SavingsOperationType.ALLOCATION, 
-            this
-        );
-        operations.add(savingsOperation);
-        return savingsOperation;
-    }
-
-    public SavingsOperation deallocate(Money amount, LocalDate date) {
-        BigDecimal newAmount = getCurrentAmount().getValue().subtract(amount.getValue());
-        if (newAmount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new InsufficientSavingsException("Insufficient savings balance");
-        }
-        
-        SavingsOperation savingsOperation = SavingsOperation.create(
-            amount, 
-            date, 
-            SavingsOperationType.DEALLOCATION, 
-            this
-        );
-        operations.add(savingsOperation);
-        return savingsOperation;
     }
 
     public Long getId() {
@@ -87,6 +60,33 @@ public class Savings {
 
     public List<SavingsOperation> getOperations() {
         return Collections.unmodifiableList(operations);
+    }
+
+    public SavingsOperation allocate(Money amount, LocalDate date) {
+        SavingsOperation savingsOperation = SavingsOperation.create(
+            amount,
+            date,
+            SavingsOperationType.ALLOCATION,
+            this
+        );
+        operations.add(savingsOperation);
+        return savingsOperation;
+    }
+
+    public SavingsOperation deallocate(Money amount, LocalDate date) {
+        BigDecimal newAmount = getCurrentAmount().getValue().subtract(amount.getValue());
+        if (newAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new InsufficientSavingsException("Insufficient savings balance");
+        }
+
+        SavingsOperation savingsOperation = SavingsOperation.create(
+            amount,
+            date,
+            SavingsOperationType.DEALLOCATION,
+            this
+        );
+        operations.add(savingsOperation);
+        return savingsOperation;
     }
 
     public Money getCurrentAmount() {

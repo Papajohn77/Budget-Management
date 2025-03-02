@@ -44,55 +44,53 @@ class JpaUserRepositoryTest {
     @Test
     void testSaveUser() {
         User user = createTestUser();
-        User savedUser = repository.save(user);
+        repository.save(user);
 
-        assertNotNull(savedUser.getId());
-        assertEquals(user.getUsername(), savedUser.getUsername());
-        assertEquals(user.getEmail(), savedUser.getEmail());
-        assertTrue(entityManager.contains(savedUser));
+        assertNotNull(user.getId());
+        assertTrue(entityManager.contains(user));
     }
 
     @Test
     void testExistsByUsername() {
         User user = createTestUser();
-        User savedUser = repository.save(user);
+        repository.save(user);
 
-        assertTrue(repository.existsByUsername(savedUser.getUsername()));
+        assertTrue(repository.existsByUsername(user.getUsername()));
         assertFalse(repository.existsByUsername("nonexistent"));
     }
 
     @Test
     void testExistsByEmail() {
         User user = createTestUser();
-        User savedUser = repository.save(user);
+        repository.save(user);
 
-        assertTrue(repository.existsByEmail(savedUser.getEmail().getValue()));
+        assertTrue(repository.existsByEmail(user.getEmail().getValue()));
         assertFalse(repository.existsByEmail("nonexistent@example.com"));
     }
 
     @Test
     void testFindByEmailExistingUser() {
         User user = createTestUser();
-        User savedUser = repository.save(user);
+        repository.save(user);
 
-        Optional<User> found = repository.findByEmail(savedUser.getEmail().getValue());
+        Optional<User> found = repository.findByEmail(user.getEmail().getValue());
 
         assertTrue(found.isPresent());
-        assertEquals(savedUser.getEmail(), found.get().getEmail());
-        assertEquals(savedUser.getUsername(), found.get().getUsername());
+        assertEquals(user.getEmail(), found.get().getEmail());
+        assertEquals(user.getUsername(), found.get().getUsername());
     }
 
     @Test
     void testFindByIdExistingUser() {
         User user = createTestUser();
-        User savedUser = repository.save(user);
+        repository.save(user);
 
-        Optional<User> found = repository.findById(savedUser.getId());
+        Optional<User> found = repository.findById(user.getId());
 
         assertTrue(found.isPresent());
-        assertEquals(savedUser.getId(), found.get().getId());
-        assertEquals(savedUser.getEmail(), found.get().getEmail());
-        assertEquals(savedUser.getUsername(), found.get().getUsername());
+        assertEquals(user.getId(), found.get().getId());
+        assertEquals(user.getEmail(), found.get().getEmail());
+        assertEquals(user.getUsername(), found.get().getUsername());
     }
 
     @Test

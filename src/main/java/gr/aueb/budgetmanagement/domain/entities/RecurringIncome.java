@@ -91,7 +91,11 @@ public class RecurringIncome {
         }
 
         if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End Date cannot be before End Date");
+            throw new InvalidDomainArgumentException("End Date cannot be before End Date");
+        }
+
+        if (user == null) {
+            throw new InvalidDomainArgumentException("User cannot be null");
         }
 
         RecurringIncome recurringIncome = new RecurringIncome();

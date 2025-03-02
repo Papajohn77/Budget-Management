@@ -47,19 +47,23 @@ public class Income {
             throw new InvalidDomainArgumentException("Amount cannot be null");
         }
 
-        if (category == null) {
-            throw new InvalidDomainArgumentException("Category cannot be null");
-        }
-
         if (date == null) {
             throw new InvalidDomainArgumentException("Date cannot be null");
         }
 
+        if (category == null) {
+            throw new InvalidDomainArgumentException("Category cannot be null");
+        }
+
+        if (user == null) {
+            throw new InvalidDomainArgumentException("User cannot be null");
+        }
+
         Income income = new Income();
-        income.user = user;
         income.amount = amount;
         income.date = date;
         income.category = category;
+        income.user = user;
         return income;
     }
 

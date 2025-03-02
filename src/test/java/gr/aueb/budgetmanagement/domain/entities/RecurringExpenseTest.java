@@ -1,12 +1,13 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -125,7 +126,7 @@ class RecurringExpenseTest {
             LocalDate invalidEndDate = VALID_START_DATE.minusDays(1);
 
             assertThrows(
-                IllegalArgumentException.class, () ->
+                InvalidDomainArgumentException.class, () ->
                 user.addRecurringExpense(
                     VALID_NAME,
                     VALID_AMOUNT,
