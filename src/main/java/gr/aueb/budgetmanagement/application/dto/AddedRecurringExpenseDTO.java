@@ -4,7 +4,7 @@ import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import java.time.LocalDate;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 
-public record CreatedRecurringExpenseDTO(
+public record AddedRecurringExpenseDTO(
         Long id,
         String name,
         Money amount,

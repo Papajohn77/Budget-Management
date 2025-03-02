@@ -17,7 +17,6 @@ import gr.aueb.budgetmanagement.application.commands.AddExpenseCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
@@ -59,10 +58,10 @@ class ExpenseServiceTest {
 
     private void createTestUser() {
         user = User.create(
-                TEST_USERNAME,
-                TEST_EMAIL,
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
+            TEST_USERNAME,
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         entityManager.persist(user);
     }
@@ -70,10 +69,10 @@ class ExpenseServiceTest {
     @Test
     void testCreateExpense() {
         AddExpenseCommand command = new AddExpenseCommand(
-                new Money(EXPENSE_AMOUNT),
-                ExpenseCategory.FOOD,
-                EXPENSE_DATE,
-                user.getId()
+            new Money(EXPENSE_AMOUNT),
+            ExpenseCategory.FOOD,
+            EXPENSE_DATE,
+            user.getId()
         );
 
         var result = expenseService.createExpense(command);
@@ -90,10 +89,10 @@ class ExpenseServiceTest {
     @Test
     void testCreateExpenseWithEntertainmentCategory() {
         AddExpenseCommand command = new AddExpenseCommand(
-                new Money(EXPENSE_AMOUNT),
-                ExpenseCategory.ENTERTAINMENT,
-                EXPENSE_DATE,
-                user.getId()
+            new Money(EXPENSE_AMOUNT),
+            ExpenseCategory.ENTERTAINMENT,
+            EXPENSE_DATE,
+            user.getId()
         );
 
         var result = expenseService.createExpense(command);
@@ -107,10 +106,10 @@ class ExpenseServiceTest {
     @Test
     void testCreateExpenseWithTransportationCategory() {
         AddExpenseCommand command = new AddExpenseCommand(
-                new Money(EXPENSE_AMOUNT),
-                ExpenseCategory.TRANSPORTATION,
-                EXPENSE_DATE,
-                user.getId()
+            new Money(EXPENSE_AMOUNT),
+            ExpenseCategory.TRANSPORTATION,
+            EXPENSE_DATE,
+            user.getId()
         );
 
         var result = expenseService.createExpense(command);
@@ -124,15 +123,15 @@ class ExpenseServiceTest {
     @Test
     void testCreateExpenseUserNotFound() {
         AddExpenseCommand command = new AddExpenseCommand(
-                new Money(EXPENSE_AMOUNT),
-                ExpenseCategory.FOOD,
-                EXPENSE_DATE,
-                999L
+            new Money(EXPENSE_AMOUNT),
+            ExpenseCategory.FOOD,
+            EXPENSE_DATE,
+            999L
         );
 
         assertThrows(
-                NotFoundException.class,
-                () -> expenseService.createExpense(command)
+            NotFoundException.class,
+            () -> expenseService.createExpense(command)
         );
     }
 
@@ -140,10 +139,10 @@ class ExpenseServiceTest {
     void testCreateExpenseWithDifferentAmount() {
         BigDecimal differentAmount = new BigDecimal("250.50");
         AddExpenseCommand command = new AddExpenseCommand(
-                new Money(differentAmount),
-                ExpenseCategory.FOOD,
-                EXPENSE_DATE,
-                user.getId()
+            new Money(differentAmount),
+            ExpenseCategory.FOOD,
+            EXPENSE_DATE,
+            user.getId()
         );
 
         var result = expenseService.createExpense(command);
@@ -158,10 +157,10 @@ class ExpenseServiceTest {
     void testCreateExpenseWithPastDate() {
         LocalDate pastDate = LocalDate.now().minusDays(5);
         AddExpenseCommand command = new AddExpenseCommand(
-                new Money(EXPENSE_AMOUNT),
-                ExpenseCategory.HEALTH,
-                pastDate,
-                user.getId()
+            new Money(EXPENSE_AMOUNT),
+            ExpenseCategory.HEALTH,
+            pastDate,
+            user.getId()
         );
 
         var result = expenseService.createExpense(command);

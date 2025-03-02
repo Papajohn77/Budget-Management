@@ -9,19 +9,17 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import gr.aueb.budgetmanagement.application.commands.CreateRecurringExpenseCommand;
-import gr.aueb.budgetmanagement.application.dto.CreatedRecurringExpenseDTO;
+import gr.aueb.budgetmanagement.application.commands.AddRecurringExpenseCommand;
+import gr.aueb.budgetmanagement.application.dto.AddedRecurringExpenseDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
@@ -39,7 +37,6 @@ class RecurringExpenseServiceTest {
     private EntityTransaction transaction;
     private JpaUserRepository userRepository;
     private RecurringExpenseService recurringExpenseService;
-    private PasswordHasher passwordHasher;
     private User user;
 
     @BeforeEach
@@ -50,7 +47,6 @@ class RecurringExpenseServiceTest {
 
         userRepository = new JpaUserRepository(entityManager);
         recurringExpenseService = new RecurringExpenseService(userRepository);
-        passwordHasher = new BCryptPasswordEncoder();
 
         createTestUser();
     }
@@ -65,10 +61,11 @@ class RecurringExpenseServiceTest {
 
     private void createTestUser() {
         user = User.create(
-                TEST_USERNAME,
-                TEST_EMAIL,
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder());
+            TEST_USERNAME,
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
+        );
 
         entityManager.persist(user);
     }
@@ -78,17 +75,17 @@ class RecurringExpenseServiceTest {
         // Arrange
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
-        CreateRecurringExpenseCommand command = new CreateRecurringExpenseCommand(
-                user.getId(),
-                "Netflix Subscription",
-                VALID_MONEY,
-                VALID_CATEGORY,
-                startDate,
-                endDate
+        AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
+            user.getId(),
+            "Netflix Subscription",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            startDate,
+            endDate
         );
 
         // Act
-        CreatedRecurringExpenseDTO result = recurringExpenseService.createRecurringExpense(command);
+        AddedRecurringExpenseDTO result = recurringExpenseService.createRecurringExpense(command);
 
         // Assert
         assertNotNull(result.id());
@@ -97,7 +94,7 @@ class RecurringExpenseServiceTest {
         assertEquals(VALID_CATEGORY, result.category());
         assertEquals(startDate, result.startDate());
         assertEquals(endDate, result.endDate());
-        //assertFalse(result.stopped());
+        assertFalse(result.isStopped());
 
         // Verify the recurring expense was saved in the database
         User updatedUser = entityManager.find(User.class, user.getId());
@@ -125,19 +122,19 @@ class RecurringExpenseServiceTest {
         // Arrange
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
-        CreateRecurringExpenseCommand command = new CreateRecurringExpenseCommand(
-                999L,
-                "Gym Membership",
-                VALID_MONEY,
-                VALID_CATEGORY,
-                startDate,
-                endDate
+        AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
+            999L,
+            "Gym Membership",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            startDate,
+            endDate
         );
 
         // Act & Assert
         assertThrows(
-                NotFoundException.class,
-                () -> recurringExpenseService.createRecurringExpense(command)
+            NotFoundException.class,
+            () -> recurringExpenseService.createRecurringExpense(command)
         );
     }
 
@@ -146,19 +143,19 @@ class RecurringExpenseServiceTest {
         // Arrange - Create command with empty name
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
-        CreateRecurringExpenseCommand command = new CreateRecurringExpenseCommand(
-                user.getId(),
-                "", // Empty name should be invalid
-                VALID_MONEY,
-                VALID_CATEGORY,
-                startDate,
-                endDate
+        AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
+            user.getId(),
+            "", // Empty name should be invalid
+            VALID_MONEY,
+            VALID_CATEGORY,
+            startDate,
+            endDate
         );
 
         // Act & Assert - Assuming RecurringExpense.create() validates the name
         assertThrows(
-                InvalidDomainArgumentException.class,
-                () -> recurringExpenseService.createRecurringExpense(command)
+            InvalidDomainArgumentException.class,
+            () -> recurringExpenseService.createRecurringExpense(command)
         );
     }
 
@@ -167,18 +164,18 @@ class RecurringExpenseServiceTest {
         // Arrange - Create command with end date before start date
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.minusMonths(1); // End date before start date
-        CreateRecurringExpenseCommand command = new CreateRecurringExpenseCommand(
-                user.getId(),
-                "Netflix Subscription",
-                VALID_MONEY,
-                VALID_CATEGORY,
-                startDate,
-                endDate
+        AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
+            user.getId(),
+            "Netflix Subscription",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            startDate,
+            endDate
         );
 
         assertThrows(
-                Exception.class,
-                () -> recurringExpenseService.createRecurringExpense(command)
+            Exception.class,
+            () -> recurringExpenseService.createRecurringExpense(command)
         );
     }
 }

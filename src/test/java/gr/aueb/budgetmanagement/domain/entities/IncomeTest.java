@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
 class IncomeTest {
@@ -25,10 +24,10 @@ class IncomeTest {
     @BeforeEach
     void setUp() {
         user = User.create(
-                "testuser",
-                "test@example.com",
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
+            "testuser",
+            "test@example.com",
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
     }
 
@@ -37,11 +36,10 @@ class IncomeTest {
         @Test
         void createWithValidData() {
             // Act
-            Income income = Income.create(
-                    user,
-                    VALID_AMOUNT,
-                    VALID_DATE,
-                    VALID_CATEGORY
+            Income income = user.addIncome(
+                VALID_AMOUNT,
+                VALID_DATE,
+                VALID_CATEGORY
             );
 
             // Assert
@@ -56,39 +54,27 @@ class IncomeTest {
         @Test
         void createWithNullAmount() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () ->
-                    Income.create(
-                            user,
-                            null,
-                            VALID_DATE,
-                            VALID_CATEGORY
-                    )
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> user.addIncome(null, VALID_DATE, VALID_CATEGORY)
             );
         }
 
         @Test
         void createWithNullDate() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () ->
-                    Income.create(
-                            user,
-                            VALID_AMOUNT,
-                            null,
-                            VALID_CATEGORY
-                    )
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> user.addIncome(VALID_AMOUNT, null, VALID_CATEGORY)
             );
         }
 
         @Test
         void createWithNullCategory() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () ->
-                    Income.create(
-                            user,
-                            VALID_AMOUNT,
-                            VALID_DATE,
-                            null
-                    )
+            assertThrows(
+                InvalidDomainArgumentException.class, () ->
+                user.addIncome(VALID_AMOUNT, VALID_DATE, null)
             );
         }
     }

@@ -31,10 +31,6 @@ public class RecurringExpense {
     @SequenceGenerator(name = "recurring_expense_seq", sequenceName = "recurring_expense_seq", initialValue = 1, allocationSize = 1)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
     @Column(nullable = false)
     private String name;
 
@@ -58,40 +54,46 @@ public class RecurringExpense {
     private boolean isStopped;
 
     @ManyToOne
-    @JoinColumn(name = "recurring_expense_id")
-    private RecurringExpense recurringExpense;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @OneToMany(mappedBy = "recurringExpense", cascade = CascadeType.ALL)
     private List<Expense> generatedExpenses = new ArrayList<>();
 
     protected RecurringExpense() {
+
     }
 
     public static RecurringExpense create(
-            String name,
-            Money amount,
-            ExpenseCategory category,
-            LocalDate startDate,
-            LocalDate endDate,
-            User user
+        String name,
+        Money amount,
+        ExpenseCategory category,
+        LocalDate startDate,
+        LocalDate endDate,
+        User user
     ) {
         if (name == null || name.isBlank()) {
             throw new InvalidDomainArgumentException("Name cannot be null");
         }
+
         if (amount == null) {
             throw new InvalidDomainArgumentException("Amount cannot be null");
         }
+
         if (category == null) {
             throw new InvalidDomainArgumentException("Category cannot be null");
         }
+
         if (startDate == null) {
             throw new InvalidDomainArgumentException("Start Date cannot be null");
         }
+
         if (endDate == null) {
             throw new InvalidDomainArgumentException("End Date cannot be null");
         }
+
         if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End date cannot be before start date");
+            throw new IllegalArgumentException("End Date cannot be before Start Date");
         }
 
         RecurringExpense recurringExpense = new RecurringExpense();
@@ -101,7 +103,6 @@ public class RecurringExpense {
         recurringExpense.startDate = startDate;
         recurringExpense.endDate = endDate;
         recurringExpense.user = user;
-        user.addRecurringExpense(recurringExpense);
         return recurringExpense;
     }
 

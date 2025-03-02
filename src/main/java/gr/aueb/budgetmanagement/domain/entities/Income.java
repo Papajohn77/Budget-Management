@@ -15,14 +15,6 @@ public class Income {
     @SequenceGenerator(name = "income_seq", sequenceName = "income_seq", initialValue = 1, allocationSize = 1)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @ManyToOne
-    @JoinColumn(name = "recurring_income_id")
-    private RecurringIncome recurringIncome;
-
     @Column(nullable = false)
     private Money amount;
 
@@ -33,10 +25,24 @@ public class Income {
     @Column(nullable = false)
     private IncomeCategory category;
 
-    protected Income() {}
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    public static Income create(User user, Money amount, LocalDate date, IncomeCategory category) {
+    @ManyToOne
+    @JoinColumn(name = "recurring_income_id")
+    private RecurringIncome recurringIncome;
 
+    protected Income() {
+
+    }
+
+    public static Income create(
+        Money amount, 
+        LocalDate date, 
+        IncomeCategory category,
+        User user
+    ) {
         if (amount == null) {
             throw new InvalidDomainArgumentException("Amount cannot be null");
         }
@@ -54,22 +60,26 @@ public class Income {
         income.amount = amount;
         income.date = date;
         income.category = category;
-
-        user.addIncome(income);
         return income;
     }
 
     public Long getId() {
         return id;
     }
-    public User getUser() {
-        return user;
-    }
+
     public Money getAmount() {
         return amount;
     }
-    public LocalDate getDate() {return date;}
+
+    public LocalDate getDate() {
+        return date;
+    }
+
     public IncomeCategory getCategory() {
         return category;
+    }
+
+    public User getUser() {
+        return user;
     }
 }

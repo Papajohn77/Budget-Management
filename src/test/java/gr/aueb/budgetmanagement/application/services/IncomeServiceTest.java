@@ -58,10 +58,10 @@ class IncomeServiceTest {
 
     private void createTestUser() {
         user = User.create(
-                TEST_USERNAME,
-                TEST_EMAIL,
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
+            TEST_USERNAME,
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
         entityManager.persist(user);
     }
@@ -69,10 +69,10 @@ class IncomeServiceTest {
     @Test
     void testCreateIncome() {
         AddIncomeCommand command = new AddIncomeCommand(
-                new Money(INCOME_AMOUNT),
-                IncomeCategory.SALARY,
-                INCOME_DATE,
-                user.getId()
+            new Money(INCOME_AMOUNT),
+            IncomeCategory.SALARY,
+            INCOME_DATE,
+            user.getId()
         );
 
         var result = incomeService.createIncome(command);
@@ -89,10 +89,10 @@ class IncomeServiceTest {
     @Test
     void testCreateIncomeWithEntertainmentCategory() {
         AddIncomeCommand command = new AddIncomeCommand(
-                new Money(INCOME_AMOUNT),
-                IncomeCategory.DIVIDENDS,
-                INCOME_DATE,
-                user.getId()
+            new Money(INCOME_AMOUNT),
+            IncomeCategory.DIVIDENDS,
+            INCOME_DATE,
+            user.getId()
         );
 
         var result = incomeService.createIncome(command);
@@ -106,10 +106,10 @@ class IncomeServiceTest {
     @Test
     void testCreateIncomeWithTransportationCategory() {
         AddIncomeCommand command = new AddIncomeCommand(
-                new Money(INCOME_AMOUNT),
-                IncomeCategory.SALARY,
-                INCOME_DATE,
-                user.getId()
+            new Money(INCOME_AMOUNT),
+            IncomeCategory.SALARY,
+            INCOME_DATE,
+            user.getId()
         );
 
         var result = incomeService.createIncome(command);
@@ -123,15 +123,15 @@ class IncomeServiceTest {
     @Test
     void testCreateIncomeUserNotFound() {
         AddIncomeCommand command = new AddIncomeCommand(
-                new Money(INCOME_AMOUNT),
-                IncomeCategory.DIVIDENDS,
-                INCOME_DATE,
-                999L
+            new Money(INCOME_AMOUNT),
+            IncomeCategory.DIVIDENDS,
+            INCOME_DATE,
+            999L
         );
 
         assertThrows(
-                NotFoundException.class,
-                () -> incomeService.createIncome(command)
+            NotFoundException.class,
+            () -> incomeService.createIncome(command)
         );
     }
 
@@ -139,10 +139,10 @@ class IncomeServiceTest {
     void testCreateIncomeWithDifferentAmount() {
         BigDecimal differentAmount = new BigDecimal("250.50");
         AddIncomeCommand command = new AddIncomeCommand(
-                new Money(differentAmount),
-                IncomeCategory.SALARY,
-                INCOME_DATE,
-                user.getId()
+            new Money(differentAmount),
+            IncomeCategory.SALARY,
+            INCOME_DATE,
+            user.getId()
         );
 
         var result = incomeService.createIncome(command);
@@ -157,10 +157,10 @@ class IncomeServiceTest {
     void testCreateIncomeWithPastDate() {
         LocalDate pastDate = LocalDate.now().minusDays(5);
         AddIncomeCommand command = new AddIncomeCommand(
-                new Money(INCOME_AMOUNT),
-                IncomeCategory.SALARY,
-                pastDate,
-                user.getId()
+            new Money(INCOME_AMOUNT),
+            IncomeCategory.SALARY,
+            pastDate,
+            user.getId()
         );
 
         var result = incomeService.createIncome(command);
