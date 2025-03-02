@@ -1,9 +1,9 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.AddRecurringIncomeCommand;
-import gr.aueb.budgetmanagement.application.dto.AddedRecurringIncomeDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.AddedRecurringIncomeRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.RecurringIncome;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.transaction.Transactional;
@@ -18,7 +18,7 @@ public class RecurringIncomeService {
     }
 
     @Transactional
-    public AddedRecurringIncomeDTO createRecurringIncome(AddRecurringIncomeCommand command) {
+    public AddedRecurringIncomeRepresentation createRecurringIncome(AddRecurringIncomeCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found"));
 
@@ -32,7 +32,7 @@ public class RecurringIncomeService {
 
         userRepository.save(user);
 
-        return new AddedRecurringIncomeDTO(
+        return new AddedRecurringIncomeRepresentation(
             recurringIncome.getId(),
             recurringIncome.getName(),
             recurringIncome.getAmount(),

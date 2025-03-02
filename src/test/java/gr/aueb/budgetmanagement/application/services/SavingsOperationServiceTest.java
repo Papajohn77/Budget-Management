@@ -13,9 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.AllocateSavingsCommand;
 import gr.aueb.budgetmanagement.application.commands.DeallocateSavingsCommand;
-import gr.aueb.budgetmanagement.application.dto.SavingsOperationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.SavingsOperationRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
@@ -77,7 +77,7 @@ class SavingsOperationServiceTest {
             user.getId()
         );
 
-        SavingsOperationDTO result = savingsOperationService.allocate(command);
+        SavingsOperationRepresentation result = savingsOperationService.allocate(command);
 
         assertNotNull(result.id());
         assertEquals(AMOUNT.getValue(), result.amount());
@@ -119,7 +119,7 @@ class SavingsOperationServiceTest {
             user.getId()
         );
 
-        SavingsOperationDTO result = savingsOperationService.deallocate(command);
+        SavingsOperationRepresentation result = savingsOperationService.deallocate(command);
 
         assertNotNull(result.id());
         assertEquals(deallocationAmount, result.amount());

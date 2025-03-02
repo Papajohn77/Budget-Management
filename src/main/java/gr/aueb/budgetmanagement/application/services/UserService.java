@@ -2,10 +2,10 @@ package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.AuthenticateUserCommand;
 import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
-import gr.aueb.budgetmanagement.application.dto.RegisteredUserDTO;
 import gr.aueb.budgetmanagement.application.exceptions.AlreadyExistsException;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.RegisteredUserRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import jakarta.transaction.Transactional;
@@ -21,7 +21,7 @@ public class UserService {
     }
 
     @Transactional
-    public RegisteredUserDTO registerUser(@Valid RegisterUserCommand command) {
+    public RegisteredUserRepresentation registerUser(@Valid RegisterUserCommand command) {
         if (userRepository.existsByUsername(command.username())) {
             throw new AlreadyExistsException("Username already exists: " + command.username());
         }
@@ -39,7 +39,7 @@ public class UserService {
 
         userRepository.save(user);
 
-        return new RegisteredUserDTO(
+        return new RegisteredUserRepresentation(
             user.getId(), 
             user.getUsername(), 
             user.getEmail().getValue()

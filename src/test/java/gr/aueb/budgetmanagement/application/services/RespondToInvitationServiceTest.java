@@ -9,11 +9,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.RespondToInvitationCommand;
-import gr.aueb.budgetmanagement.application.dto.InvitationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.InvitationRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.InvitationRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
@@ -121,7 +121,7 @@ class RespondToInvitationServiceTest {
         );
 
         // Act
-        InvitationDTO result = respondToInvitationService.respondToInvitation(command);
+        InvitationRepresentation result = respondToInvitationService.respondToInvitation(command);
 
         // Assert
         assertNotNull(result);
@@ -148,7 +148,7 @@ class RespondToInvitationServiceTest {
         );
 
         // Act
-        InvitationDTO result = respondToInvitationService.respondToInvitation(command);
+        InvitationRepresentation result = respondToInvitationService.respondToInvitation(command);
 
         // Assert
         assertNotNull(result);

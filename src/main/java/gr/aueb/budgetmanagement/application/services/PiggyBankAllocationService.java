@@ -1,10 +1,10 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.AllocateToPiggyBankCommand;
-import gr.aueb.budgetmanagement.application.dto.PiggyBankAllocationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.PiggyBankAllocationRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
 import gr.aueb.budgetmanagement.domain.entities.User;
@@ -24,7 +24,7 @@ public class PiggyBankAllocationService {
     }
 
     @Transactional
-    public PiggyBankAllocationDTO allocateToPiggyBank(@Valid AllocateToPiggyBankCommand command) {
+    public PiggyBankAllocationRepresentation allocateToPiggyBank(@Valid AllocateToPiggyBankCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -39,7 +39,7 @@ public class PiggyBankAllocationService {
 
         piggyBankRepository.save(piggyBank);
 
-        return new PiggyBankAllocationDTO(
+        return new PiggyBankAllocationRepresentation(
             allocation.getId(),
             allocation.getDate(),
             allocation.getAmount(),

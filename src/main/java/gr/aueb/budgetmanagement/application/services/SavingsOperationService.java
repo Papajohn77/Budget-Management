@@ -2,9 +2,9 @@ package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.AllocateSavingsCommand;
 import gr.aueb.budgetmanagement.application.commands.DeallocateSavingsCommand;
-import gr.aueb.budgetmanagement.application.dto.SavingsOperationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.SavingsOperationRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.SavingsOperation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.transaction.Transactional;
@@ -18,7 +18,7 @@ public class SavingsOperationService {
     }
 
     @Transactional
-    public SavingsOperationDTO allocate(@Valid AllocateSavingsCommand command) {
+    public SavingsOperationRepresentation allocate(@Valid AllocateSavingsCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -29,7 +29,7 @@ public class SavingsOperationService {
 
         userRepository.save(user);
 
-        return new SavingsOperationDTO(
+        return new SavingsOperationRepresentation(
             operation.getId(),
             operation.getDate(),
             operation.getAmount().getValue(),
@@ -39,7 +39,7 @@ public class SavingsOperationService {
     }
 
     @Transactional
-    public SavingsOperationDTO deallocate(@Valid DeallocateSavingsCommand command) {
+    public SavingsOperationRepresentation deallocate(@Valid DeallocateSavingsCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -50,7 +50,7 @@ public class SavingsOperationService {
 
         userRepository.save(user);
 
-        return new SavingsOperationDTO(
+        return new SavingsOperationRepresentation(
             operation.getId(),
             operation.getDate(),
             operation.getAmount().getValue(),
