@@ -76,12 +76,12 @@ class RecurringIncomeServiceTest {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
         AddRecurringIncomeCommand command = new AddRecurringIncomeCommand(
-            user.getId(),
             "Monthly Salary",
             VALID_MONEY,
             VALID_CATEGORY,
             startDate,
-            endDate
+            endDate, 
+            user.getId()
         );
 
         // Act
@@ -122,12 +122,12 @@ class RecurringIncomeServiceTest {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
         AddRecurringIncomeCommand command = new AddRecurringIncomeCommand(
-            999L,
             "Freelance Payment",
             VALID_MONEY,
             VALID_CATEGORY,
             startDate,
-            endDate
+            endDate, 
+            999L
         );
 
         // Act & Assert
@@ -143,12 +143,12 @@ class RecurringIncomeServiceTest {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
         AddRecurringIncomeCommand command = new AddRecurringIncomeCommand(
-            user.getId(),
             "", // Empty name should be invalid
             VALID_MONEY,
             VALID_CATEGORY,
             startDate,
-            endDate
+            endDate, 
+            user.getId()
         );
 
         // Act & Assert - Assuming RecurringIncome.create() validates the name
@@ -164,12 +164,12 @@ class RecurringIncomeServiceTest {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.minusMonths(1); // End date before start date
         AddRecurringIncomeCommand command = new AddRecurringIncomeCommand(
-            user.getId(),
             "Bonus Payment",
             VALID_MONEY,
             VALID_CATEGORY,
             startDate,
-            endDate
+            endDate, 
+            user.getId()
         );
 
         assertThrows(

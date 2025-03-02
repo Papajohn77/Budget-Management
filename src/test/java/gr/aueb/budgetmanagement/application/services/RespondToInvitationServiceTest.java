@@ -116,8 +116,8 @@ class RespondToInvitationServiceTest {
         // Arrange
         RespondToInvitationCommand command = new RespondToInvitationCommand(
             group.getId(), 
-            invitee.getId(), 
-            InvitationResponseOperationType.ACCEPT
+            InvitationResponseOperationType.ACCEPT, 
+            invitee.getId()
         );
 
         // Act
@@ -143,8 +143,8 @@ class RespondToInvitationServiceTest {
         // Arrange
         RespondToInvitationCommand command = new RespondToInvitationCommand(
             group.getId(), 
-            invitee.getId(), 
-            InvitationResponseOperationType.REJECT
+            InvitationResponseOperationType.REJECT, 
+            invitee.getId()
         );
 
         // Act
@@ -171,8 +171,8 @@ class RespondToInvitationServiceTest {
         Long nonExistentUserId = 999L;
         RespondToInvitationCommand command = new RespondToInvitationCommand(
             group.getId(), 
-            nonExistentUserId, 
-            InvitationResponseOperationType.ACCEPT
+            InvitationResponseOperationType.ACCEPT, 
+            nonExistentUserId
         );
 
         // Act & Assert
@@ -194,8 +194,8 @@ class RespondToInvitationServiceTest {
         Long nonExistentGroupId = 999L;
         RespondToInvitationCommand command = new RespondToInvitationCommand(
             nonExistentGroupId, 
-            invitee.getId(), 
-            InvitationResponseOperationType.ACCEPT
+            InvitationResponseOperationType.ACCEPT, 
+            invitee.getId()
         );
 
         // Act & Assert
@@ -218,9 +218,9 @@ class RespondToInvitationServiceTest {
         entityManager.flush();
 
         RespondToInvitationCommand command = new RespondToInvitationCommand(
-            group.getId(), 
-            otherUser.getId(), 
-            InvitationResponseOperationType.ACCEPT
+            group.getId(),  
+            InvitationResponseOperationType.ACCEPT, 
+            otherUser.getId()
         );
 
         // Act & Assert

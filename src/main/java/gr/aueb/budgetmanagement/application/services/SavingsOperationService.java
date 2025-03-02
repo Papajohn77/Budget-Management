@@ -7,7 +7,6 @@ import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.SavingsOperation;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
@@ -24,7 +23,7 @@ public class SavingsOperationService {
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
         SavingsOperation operation = user.allocateSavings(
-            new Money(command.amount()),
+            command.amount(),
             command.date()
         );
 
@@ -45,7 +44,7 @@ public class SavingsOperationService {
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
         SavingsOperation operation = user.deallocateSavings(
-            new Money(command.amount()),
+            command.amount(),
             command.date()
         );
 

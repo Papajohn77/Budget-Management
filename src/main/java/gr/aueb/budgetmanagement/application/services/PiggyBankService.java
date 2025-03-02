@@ -60,8 +60,8 @@ public class PiggyBankService {
         Group group = groupRepository.findById(command.groupId())
             .orElseThrow(() -> new NotFoundException("Group not found with id: " + command.groupId()));
 
-        User admin = userRepository.findById(command.adminId())
-            .orElseThrow(() -> new NotFoundException("Admin user not found with id: " + command.adminId()));
+        User admin = userRepository.findById(command.userId())
+            .orElseThrow(() -> new NotFoundException("Admin user not found with id: " + command.userId()));
 
         GroupPiggyBank piggyBank = GroupPiggyBank.create(
             command.name(),

@@ -76,12 +76,12 @@ class RecurringExpenseServiceTest {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
         AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
-            user.getId(),
             "Netflix Subscription",
             VALID_MONEY,
             VALID_CATEGORY,
             startDate,
-            endDate
+            endDate,
+            user.getId()
         );
 
         // Act
@@ -123,12 +123,12 @@ class RecurringExpenseServiceTest {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
         AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
-            999L,
             "Gym Membership",
             VALID_MONEY,
             VALID_CATEGORY,
             startDate,
-            endDate
+            endDate,
+            999L
         );
 
         // Act & Assert
@@ -144,12 +144,12 @@ class RecurringExpenseServiceTest {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
         AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
-            user.getId(),
             "", // Empty name should be invalid
             VALID_MONEY,
             VALID_CATEGORY,
             startDate,
-            endDate
+            endDate, 
+            user.getId()
         );
 
         // Act & Assert - Assuming RecurringExpense.create() validates the name
@@ -165,12 +165,12 @@ class RecurringExpenseServiceTest {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.minusMonths(1); // End date before start date
         AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
-            user.getId(),
             "Netflix Subscription",
             VALID_MONEY,
             VALID_CATEGORY,
             startDate,
-            endDate
+            endDate, 
+            user.getId()
         );
 
         assertThrows(

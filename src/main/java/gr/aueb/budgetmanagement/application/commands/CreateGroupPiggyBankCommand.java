@@ -19,5 +19,5 @@ public record CreateGroupPiggyBankCommand(
     Long groupId,
     
     @NotNull(message = "Admin ID cannot be null")
-    Long adminId
+    Long userId
 ) {}

@@ -7,9 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record AddRecurringExpenseCommand(
-    @NotNull(message = "User ID cannot be null")
-    Long userId,
-
     @NotBlank(message = "Name cannot be blank")
     String name,
 
@@ -23,5 +20,8 @@ public record AddRecurringExpenseCommand(
     LocalDate startDate,
 
     @NotNull(message = "End date cannot be null")
-    LocalDate endDate
+    LocalDate endDate,
+
+    @NotNull(message = "User ID cannot be null") 
+    Long userId
 ) {}

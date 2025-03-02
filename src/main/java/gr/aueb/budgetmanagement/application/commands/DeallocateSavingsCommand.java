@@ -1,17 +1,17 @@
 package gr.aueb.budgetmanagement.application.commands;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.validation.constraints.NotNull;
 
 public record DeallocateSavingsCommand(
-    @NotNull(message = "User ID is required.")
-    Long userId,
-
     @NotNull(message = "Amount is required.")
-    BigDecimal amount,
+    Money amount,
 
     @NotNull(message = "Date is required.")
-    LocalDate date
+    LocalDate date,
+
+    @NotNull(message = "User ID is required.") 
+    Long userId
 ) {}

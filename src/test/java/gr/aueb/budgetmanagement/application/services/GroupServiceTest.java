@@ -69,7 +69,10 @@ class GroupServiceTest {
    @Test
    void createGroupWithValidData() {
        // Arrange
-       CreateGroupCommand command = new CreateGroupCommand(user.getId(), "Test Group");
+        CreateGroupCommand command = new CreateGroupCommand(
+            "Test Group", 
+            user.getId()
+        );
 
        // Act
        CreatedGroupDTO result = groupService.createGroup(command);
@@ -89,32 +92,38 @@ class GroupServiceTest {
    @Test
    void createGroupWithNonExistentUser() {
        // Arrange
-       CreateGroupCommand command = new CreateGroupCommand(999L, "Test Group");
+        CreateGroupCommand command = new CreateGroupCommand(
+            "Test Group", 
+            999L
+        );
 
        // Act & Assert
-       assertThrows(
-           NotFoundException.class,
-           () -> groupService.createGroup(command)
-       );
+        assertThrows(
+            NotFoundException.class,
+            () -> groupService.createGroup(command)
+        );
    }
 
    @Test
    void createGroupWithExistingGroupName() {
        // Arrange
-       CreateGroupCommand command = new CreateGroupCommand(user.getId(), "Test Group");
+        CreateGroupCommand command = new CreateGroupCommand(
+            "Test Group", 
+            user.getId()
+        );
        groupService.createGroup(command);
 
-       // Act & Assert
-       assertThrows(
-           GroupAlreadyExistsException.class,
-           () -> groupService.createGroup(command)
-       );
+        // Act & Assert
+        assertThrows(
+            GroupAlreadyExistsException.class,
+            () -> groupService.createGroup(command)
+        );
    }
 
    @Test
    void createGroupWithInvalidCommand() {
        // Arrange
-       CreateGroupCommand command = new CreateGroupCommand(user.getId(), "");
+       CreateGroupCommand command = new CreateGroupCommand("", user.getId());
 
        // Act & Assert
        assertThrows(
