@@ -78,6 +78,10 @@ public class Group {
         return admin;
     }
 
+    public boolean isAdmin(User user) {
+        return admin.equals(user);
+    }
+
     public Set<User> getMembers() {
         return Collections.unmodifiableSet(members);
     }

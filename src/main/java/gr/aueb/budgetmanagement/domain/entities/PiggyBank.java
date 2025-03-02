@@ -1,5 +1,6 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -88,11 +89,23 @@ public abstract class PiggyBank {
         return Collections.unmodifiableSet(allocations);
     }
 
-    void addAllocation(PiggyBankAllocation allocation) {
-        if (allocation == null) {
-            throw new InvalidDomainArgumentException("Allocation cannot be null");
+    public PiggyBankAllocation allocate(
+        Money amount, 
+        LocalDate date, 
+        User user
+    ) {
+        if (!isAuthorizedUser(user)) {
+            throw new UnsupportedOperationException("User is not authorized to access this piggy bank");
         }
+
+        PiggyBankAllocation allocation = PiggyBankAllocation.create(
+            amount, 
+            date, 
+            this, 
+            user
+        );
         allocations.add(allocation);
+        return allocation;
     }
 
     public abstract boolean isAuthorizedUser(User user);

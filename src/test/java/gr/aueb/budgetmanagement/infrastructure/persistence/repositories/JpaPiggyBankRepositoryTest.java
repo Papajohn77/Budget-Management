@@ -123,10 +123,9 @@ class JpaPiggyBankRepositoryTest {
         PersonalPiggyBank piggyBank = createTestPersonalPiggyBank(user);
         repository.save(piggyBank);
 
-        PiggyBankAllocation allocation = PiggyBankAllocation.create(
+        PiggyBankAllocation allocation = piggyBank.allocate(
             new Money(BigDecimal.valueOf(500)),
-            LocalDate.now(),
-            piggyBank,
+            LocalDate.now(), 
             user
         );
         entityManager.persist(allocation);
@@ -145,10 +144,9 @@ class JpaPiggyBankRepositoryTest {
         GroupPiggyBank piggyBank = createTestGroupPiggyBank(group);
         repository.save(piggyBank);
 
-        PiggyBankAllocation allocation = PiggyBankAllocation.create(
+        PiggyBankAllocation allocation = piggyBank.allocate(
             new Money(BigDecimal.valueOf(500)),
-            LocalDate.now(),
-            piggyBank,
+            LocalDate.now(), 
             user
         );
         entityManager.persist(allocation);
@@ -194,7 +192,8 @@ class JpaPiggyBankRepositoryTest {
             "Family vacation",
             new Money(BigDecimal.valueOf(2000)),
             ExpenseCategory.ENTERTAINMENT,
-            group
+            group, 
+            group.getAdmin()
         );
     }
 }

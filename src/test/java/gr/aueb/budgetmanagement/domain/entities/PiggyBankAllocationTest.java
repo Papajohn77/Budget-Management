@@ -3,7 +3,6 @@ package gr.aueb.budgetmanagement.domain.entities;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -56,13 +55,13 @@ class PiggyBankAllocationTest {
         assertEquals(VALID_DATE, allocation.getDate());
         assertEquals(piggyBank, allocation.getPiggyBank());
         assertEquals(user, allocation.getUser());
-        assertTrue(piggyBank.getAllocations().contains(allocation));
     }
 
     @Test
     void createWithNullAmountShouldThrowException() {
-        assertThrows(InvalidDomainArgumentException.class, () ->
-            PiggyBankAllocation.create(
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> PiggyBankAllocation.create(
                 null,
                 VALID_DATE,
                 piggyBank,
@@ -73,8 +72,9 @@ class PiggyBankAllocationTest {
 
     @Test
     void createWithNullDateShouldThrowException() {
-        assertThrows(InvalidDomainArgumentException.class, () ->
-            PiggyBankAllocation.create(
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> PiggyBankAllocation.create(
                 VALID_AMOUNT,
                 null,
                 piggyBank,
@@ -85,8 +85,9 @@ class PiggyBankAllocationTest {
 
     @Test
     void createWithNullPiggyBankShouldThrowException() {
-        assertThrows(InvalidDomainArgumentException.class, () ->
-            PiggyBankAllocation.create(
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> PiggyBankAllocation.create(
                 VALID_AMOUNT,
                 VALID_DATE,
                 null,
@@ -97,8 +98,9 @@ class PiggyBankAllocationTest {
 
     @Test
     void createWithNullUserShouldThrowException() {
-        assertThrows(InvalidDomainArgumentException.class, () ->
-            PiggyBankAllocation.create(
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> PiggyBankAllocation.create(
                 VALID_AMOUNT,
                 VALID_DATE,
                 piggyBank,

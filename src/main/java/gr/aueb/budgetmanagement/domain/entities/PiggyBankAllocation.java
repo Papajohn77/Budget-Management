@@ -68,7 +68,6 @@ public class PiggyBankAllocation {
         allocation.date = date;
         allocation.piggyBank = piggyBank;
         allocation.user = user;
-        piggyBank.addAllocation(allocation);
         return allocation;
     }
 

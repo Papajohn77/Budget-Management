@@ -33,7 +33,8 @@ class GroupPiggyBankTest {
             "Family vacation",
             new Money(BigDecimal.valueOf(1000)),
             ExpenseCategory.ENTERTAINMENT,
-            group
+            group, 
+            group.getAdmin()
         );
 
         // Assert
@@ -49,6 +50,7 @@ class GroupPiggyBankTest {
                 "Family vacation", 
                 new Money(BigDecimal.valueOf(1000)), 
                 ExpenseCategory.ENTERTAINMENT, 
+                null,
                 null
             ),
             "Creating GroupPiggyBank with null group should throw exception"

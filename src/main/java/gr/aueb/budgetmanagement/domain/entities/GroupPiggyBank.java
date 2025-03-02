@@ -2,6 +2,7 @@ package gr.aueb.budgetmanagement.domain.entities;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
+import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -26,9 +27,19 @@ public class GroupPiggyBank extends PiggyBank {
         group.addPiggyBank(this);
     }
 
-    public static GroupPiggyBank create(String name, Money targetAmount, ExpenseCategory category, Group group) {
+    public static GroupPiggyBank create(
+        String name, 
+        Money targetAmount, 
+        ExpenseCategory category, 
+        Group group,
+        User user
+    ) {
         if (group == null) {
             throw new InvalidDomainArgumentException("Group cannot be null");
+        }
+
+        if (!group.isAdmin(user)) {
+            throw new UnauthorizedOperationException("Only group admin can create group piggy banks");
         }
 
         return new GroupPiggyBank(name, targetAmount, category, group);

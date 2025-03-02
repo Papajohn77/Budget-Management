@@ -62,8 +62,9 @@ class PiggyBankTest {
         @Test
         void createWithNullName() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () -> 
-                PersonalPiggyBank.create(
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> PersonalPiggyBank.create(
                     null,
                     VALID_TARGET,
                     VALID_CATEGORY,
@@ -75,8 +76,9 @@ class PiggyBankTest {
         @Test
         void createWithEmptyName() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () -> 
-                PersonalPiggyBank.create(
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> PersonalPiggyBank.create(
                     "",
                     VALID_TARGET,
                     VALID_CATEGORY,
@@ -88,8 +90,8 @@ class PiggyBankTest {
         @Test
         void createWithNullTargetAmount() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () -> 
-                PersonalPiggyBank.create(
+            assertThrows(InvalidDomainArgumentException.class, 
+            () -> PersonalPiggyBank.create(
                     VALID_NAME,
                     null,
                     VALID_CATEGORY,
@@ -101,8 +103,9 @@ class PiggyBankTest {
         @Test
         void createWithNullCategory() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () -> 
-                PersonalPiggyBank.create(
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> PersonalPiggyBank.create(
                     VALID_NAME,
                     VALID_TARGET,
                     null,
@@ -114,8 +117,9 @@ class PiggyBankTest {
         @Test
         void createWithNullUser() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () -> 
-                PersonalPiggyBank.create(
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> PersonalPiggyBank.create(
                     VALID_NAME,
                     VALID_TARGET,
                     VALID_CATEGORY,
@@ -202,7 +206,8 @@ class PiggyBankTest {
                 VALID_NAME,
                 VALID_TARGET,
                 VALID_CATEGORY,
-                group
+                group, 
+                group.getAdmin()
             );
 
             // Assert
@@ -217,12 +222,14 @@ class PiggyBankTest {
         @Test
         void createWithNullName() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () -> 
-                GroupPiggyBank.create(
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> GroupPiggyBank.create(
                     null,
                     VALID_TARGET,
                     VALID_CATEGORY,
-                    group
+                    group, 
+                    group.getAdmin()
                 )
             );
         }
@@ -230,12 +237,14 @@ class PiggyBankTest {
         @Test
         void createWithEmptyName() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () -> 
-                GroupPiggyBank.create(
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> GroupPiggyBank.create(
                     "",
                     VALID_TARGET,
                     VALID_CATEGORY,
-                    group
+                    group, 
+                    group.getAdmin()
                 )
             );
         }
@@ -243,12 +252,14 @@ class PiggyBankTest {
         @Test
         void createWithNullTargetAmount() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () -> 
-                GroupPiggyBank.create(
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> GroupPiggyBank.create(
                     VALID_NAME,
                     null,
                     VALID_CATEGORY,
-                    group
+                    group,
+                    group.getAdmin()
                 )
             );
         }
@@ -256,12 +267,14 @@ class PiggyBankTest {
         @Test
         void createWithNullCategory() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () -> 
-                GroupPiggyBank.create(
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> GroupPiggyBank.create(
                     VALID_NAME,
                     VALID_TARGET,
                     null,
-                    group
+                    group, 
+                    group.getAdmin()
                 )
             );
         }
@@ -269,11 +282,13 @@ class PiggyBankTest {
         @Test
         void createWithNullGroup() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () -> 
-                GroupPiggyBank.create(
+            assertThrows(
+                InvalidDomainArgumentException.class, 
+                () -> GroupPiggyBank.create(
                     VALID_NAME,
                     VALID_TARGET,
                     VALID_CATEGORY,
+                    null, 
                     null
                 )
             );
@@ -286,7 +301,8 @@ class PiggyBankTest {
                 VALID_NAME,
                 VALID_TARGET,
                 VALID_CATEGORY,
-                group
+                group, 
+                group.getAdmin()
             );
 
             // Assert
@@ -300,7 +316,8 @@ class PiggyBankTest {
                 VALID_NAME,
                 VALID_TARGET,
                 VALID_CATEGORY,
-                group
+                group, 
+                group.getAdmin()
             );
             User nonMember = User.create(
                 "nonmember",
@@ -320,7 +337,8 @@ class PiggyBankTest {
                 VALID_NAME,
                 VALID_TARGET,
                 VALID_CATEGORY,
-                group
+                group, 
+                group.getAdmin()
             );
 
             // Assert
@@ -334,7 +352,8 @@ class PiggyBankTest {
                 VALID_NAME,
                 VALID_TARGET,
                 VALID_CATEGORY,
-                group
+                group,
+                group.getAdmin()
             );
             User member = User.create(
                 "member",
@@ -360,33 +379,15 @@ class PiggyBankTest {
                 VALID_CATEGORY,
                 user
             );
-            PiggyBankAllocation allocation = PiggyBankAllocation.create(
+            PiggyBankAllocation allocation = piggyBank.allocate(
                 new Money(BigDecimal.valueOf(100)),
-                LocalDate.now(),
-                piggyBank,
+                LocalDate.now(), 
                 user
             );
 
             // Assert
             assertTrue(piggyBank.getAllocations().contains(allocation));
             assertEquals(1, piggyBank.getAllocations().size());
-        }
-
-        @Test
-        void addNullAllocationShouldThrowException() {
-            // Arrange
-            PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
-                VALID_NAME,
-                VALID_TARGET,
-                VALID_CATEGORY,
-                user
-            );
-
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class,
-                () -> piggyBank.addAllocation(null)
-            );
         }
     }
 }
