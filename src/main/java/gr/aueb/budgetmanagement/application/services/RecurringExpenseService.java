@@ -7,6 +7,7 @@ import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpens
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 
 public class RecurringExpenseService {
     private final UserRepository userRepository;
@@ -18,7 +19,9 @@ public class RecurringExpenseService {
     }
 
     @Transactional
-    public AddedRecurringExpenseRepresentation createRecurringExpense(AddRecurringExpenseCommand command) {
+    public AddedRecurringExpenseRepresentation createRecurringExpense(
+        @Valid AddRecurringExpenseCommand command
+    ) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found"));
 
