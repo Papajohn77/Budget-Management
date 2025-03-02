@@ -96,6 +96,10 @@ public class RecurringExpense {
             throw new IllegalArgumentException("End Date cannot be before Start Date");
         }
 
+        if (user == null) {
+            throw new InvalidDomainArgumentException("User cannot be null");
+        }
+
         RecurringExpense recurringExpense = new RecurringExpense();
         recurringExpense.name = name;
         recurringExpense.amount = amount;

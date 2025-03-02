@@ -50,11 +50,23 @@ public class Savings {
         return savings;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public List<SavingsOperation> getOperations() {
+        return Collections.unmodifiableList(operations);
+    }
+
     public SavingsOperation allocate(Money amount, LocalDate date) {
         SavingsOperation savingsOperation = SavingsOperation.create(
-            amount, 
-            date, 
-            SavingsOperationType.ALLOCATION, 
+            amount,
+            date,
+            SavingsOperationType.ALLOCATION,
             this
         );
         operations.add(savingsOperation);
@@ -66,27 +78,15 @@ public class Savings {
         if (newAmount.compareTo(BigDecimal.ZERO) < 0) {
             throw new InsufficientSavingsException("Insufficient savings balance");
         }
-        
+
         SavingsOperation savingsOperation = SavingsOperation.create(
-            amount, 
-            date, 
-            SavingsOperationType.DEALLOCATION, 
+            amount,
+            date,
+            SavingsOperationType.DEALLOCATION,
             this
         );
         operations.add(savingsOperation);
         return savingsOperation;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public List<SavingsOperation> getOperations() {
-        return Collections.unmodifiableList(operations);
     }
 
     public Money getCurrentAmount() {

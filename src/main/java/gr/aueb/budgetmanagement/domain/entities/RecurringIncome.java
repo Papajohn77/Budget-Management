@@ -94,6 +94,10 @@ public class RecurringIncome {
             throw new IllegalArgumentException("End Date cannot be before End Date");
         }
 
+        if (user == null) {
+            throw new InvalidDomainArgumentException("User cannot be null");
+        }
+
         RecurringIncome recurringIncome = new RecurringIncome();
         recurringIncome.name = name;
         recurringIncome.amount = amount;
