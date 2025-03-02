@@ -3,12 +3,12 @@ package gr.aueb.budgetmanagement.application.services;
 import gr.aueb.budgetmanagement.application.commands.SendInvitationCommand;
 import gr.aueb.budgetmanagement.application.dto.InvitationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
+import gr.aueb.budgetmanagement.application.repositories.InvitationRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
-import gr.aueb.budgetmanagement.domain.repositories.InvitationRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
