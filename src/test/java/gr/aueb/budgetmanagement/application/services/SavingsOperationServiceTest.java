@@ -19,6 +19,7 @@ import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
+import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
@@ -30,7 +31,7 @@ class SavingsOperationServiceTest {
     private static final String TEST_EMAIL = "test@example.com";
     private static final String TEST_PASSWORD = "Test123!@#";
     private static final LocalDate TODAY = LocalDate.now();
-    private static final BigDecimal AMOUNT = new BigDecimal("100.00");
+    private static final Money AMOUNT = new Money(new BigDecimal("100.00"));
 
     private EntityManager entityManager;
     private EntityTransaction transaction;
@@ -79,13 +80,13 @@ class SavingsOperationServiceTest {
         SavingsOperationDTO result = savingsOperationService.allocate(command);
 
         assertNotNull(result.id());
-        assertEquals(AMOUNT, result.amount());
+        assertEquals(AMOUNT.getValue(), result.amount());
         assertEquals(TODAY, result.date());
         assertEquals(SavingsOperationType.ALLOCATION, result.operationType());
         assertEquals(user.getSavings().getId(), result.savingsId());
 
         User persistedUser = userRepository.findById(user.getId()).orElseThrow();
-        assertEquals(AMOUNT, persistedUser.getSavings().getCurrentAmount().getValue());
+        assertEquals(AMOUNT.getValue(), persistedUser.getSavings().getCurrentAmount().getValue());
         assertEquals(1, persistedUser.getSavings().getOperations().size());
     }
 
@@ -111,9 +112,9 @@ class SavingsOperationServiceTest {
         );
 
         // Then deallocate half
-        BigDecimal deallocationAmount = AMOUNT.divide(new BigDecimal("2"));
+        BigDecimal deallocationAmount = AMOUNT.getValue().divide(new BigDecimal("2"));
         DeallocateSavingsCommand command = new DeallocateSavingsCommand(
-            deallocationAmount,
+            new Money(deallocationAmount),
             TODAY, 
             user.getId()
         );
@@ -153,8 +154,9 @@ class SavingsOperationServiceTest {
         );
 
         // Try to deallocate more than allocated
+        BigDecimal deallocationAmount = AMOUNT.getValue().add(BigDecimal.ONE);
         DeallocateSavingsCommand command = new DeallocateSavingsCommand(
-            AMOUNT.add(BigDecimal.ONE),
+            new Money(deallocationAmount),
             TODAY, 
             user.getId()
         );
@@ -165,7 +167,7 @@ class SavingsOperationServiceTest {
         );
 
         User persistedUser = userRepository.findById(user.getId()).orElseThrow();
-        assertEquals(AMOUNT, persistedUser.getSavings().getCurrentAmount().getValue());
+        assertEquals(AMOUNT.getValue(), persistedUser.getSavings().getCurrentAmount().getValue());
         assertEquals(1, persistedUser.getSavings().getOperations().size());
     }
 }
