@@ -2,8 +2,11 @@ package gr.aueb.budgetmanagement.domain.entities;
 
 import java.time.LocalDateTime;
 
+import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
+import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
+import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -41,16 +44,27 @@ public class Invitation {
 
     protected Invitation() {}
 
-    public static Invitation create(Group group, User invitee) {
+    public static Invitation create(Group group, User invitee, User admin) {
         if (group == null) {
             throw new InvalidDomainArgumentException("Group cannot be null");
         }
+
         if (invitee == null) {
             throw new InvalidDomainArgumentException("Invitee cannot be null");
         }
+
+        if (invitee.hasAlreadyBeenInvitedTo(group)) {
+            throw new InvitationAlreadyExistsException("Invitation already exists");
+        }
+
+        if (admin != group.getAdmin()) {
+            throw new UnauthorizedOperationException("Only the group admin can send invitations");
+        }
+
         if (group.getAdmin().equals(invitee)) {
             throw new InvalidDomainArgumentException("Cannot invite group admin");
         }
+
         if (group.getMembers().contains(invitee)) {
             throw new InvalidDomainArgumentException("User is already a member of the group");
         }
@@ -62,7 +76,6 @@ public class Invitation {
         invitation.status = InvitationStatus.PENDING;
         invitation.createdAt = LocalDateTime.now();
         invitee.addInvitation(invitation);
-        
         return invitation;
     }
 
@@ -90,7 +103,7 @@ public class Invitation {
         return createdAt;
     }
 
-    public void accept() {
+    void accept() {
         if (status != InvitationStatus.PENDING) {
             throw new InvalidDomainArgumentException("Can only accept pending invitations");
         }
@@ -98,10 +111,21 @@ public class Invitation {
         group.addMember(invitee);
     }
 
-    public void reject() {
+    void reject() {
         if (status != InvitationStatus.PENDING) {
             throw new InvalidDomainArgumentException("Can only decline pending invitations");
         }
         status = InvitationStatus.REJECTED;
+    }
+
+    public Invitation respond(InvitationResponseOperationType operationType, User user) {
+        if (!user.containsInvitation(this)) {
+            throw new UnauthorizedOperationException("User cannot respond to invitation");
+        }
+        switch (operationType) {
+            case ACCEPT -> accept();
+            case REJECT -> reject();
+        }
+        return this;
     }
 }

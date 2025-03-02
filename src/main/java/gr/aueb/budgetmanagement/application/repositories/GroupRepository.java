@@ -1,4 +1,4 @@
-package gr.aueb.budgetmanagement.domain.repositories;
+package gr.aueb.budgetmanagement.application.repositories;
 
 import java.util.Optional;
 

@@ -2,8 +2,8 @@ package gr.aueb.budgetmanagement.infrastructure.persistence.repositories;
 
 import java.util.Optional;
 
+import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
-import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
 import jakarta.persistence.EntityManager;
 
 public class JpaGroupRepository implements GroupRepository {

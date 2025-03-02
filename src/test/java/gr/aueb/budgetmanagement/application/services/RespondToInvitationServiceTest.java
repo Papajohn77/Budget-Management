@@ -1,26 +1,28 @@
 package gr.aueb.budgetmanagement.application.services;
 
-import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.RespondToInvitationCommand;
 import gr.aueb.budgetmanagement.application.dto.InvitationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
+import gr.aueb.budgetmanagement.application.repositories.InvitationRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
-import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
-import gr.aueb.budgetmanagement.domain.repositories.InvitationRepository;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
+import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaGroupRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaInvitationRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
@@ -38,6 +40,7 @@ class RespondToInvitationServiceTest {
     private EntityManager entityManager;
     private EntityTransaction transaction;
     private UserRepository userRepository;
+    private GroupRepository groupRepository;
     private InvitationRepository invitationRepository;
     private RespondToInvitationService respondToInvitationService;
     private PasswordHasher passwordHasher;
@@ -53,8 +56,13 @@ class RespondToInvitationServiceTest {
         transaction.begin();
 
         userRepository = new JpaUserRepository(entityManager);
+        groupRepository = new JpaGroupRepository(entityManager);
         invitationRepository = new JpaInvitationRepository(entityManager);
-        respondToInvitationService = new RespondToInvitationService(invitationRepository, userRepository);
+        respondToInvitationService = new RespondToInvitationService(
+            invitationRepository, 
+            groupRepository, 
+            userRepository
+        );
         passwordHasher = new BCryptPasswordEncoder();
 
         createTestUsers();
@@ -75,14 +83,16 @@ class RespondToInvitationServiceTest {
             ADMIN_USERNAME,
             ADMIN_EMAIL,
             TEST_PASSWORD,
-            passwordHasher);
+            passwordHasher
+        );
         entityManager.persist(admin);
 
         invitee = User.create(
             INVITEE_USERNAME,
             INVITEE_EMAIL,
             TEST_PASSWORD,
-            passwordHasher);
+            passwordHasher
+        );
         entityManager.persist(invitee);
 
         // Flush to ensure IDs are assigned
@@ -96,7 +106,7 @@ class RespondToInvitationServiceTest {
     }
 
     private void createTestInvitation() {
-        invitation = Invitation.create(group, invitee);
+        invitation = Invitation.create(group, invitee, admin);
         entityManager.persist(invitation);
         entityManager.flush();
     }
@@ -105,9 +115,10 @@ class RespondToInvitationServiceTest {
     void respondToInvitation_AcceptInvitation_Success() {
         // Arrange
         RespondToInvitationCommand command = new RespondToInvitationCommand(
-            group.getId(), invitee.getId(), invitee.getId(), InvitationResponseOperationType.ACCEPT
+            group.getId(), 
+            invitee.getId(), 
+            InvitationResponseOperationType.ACCEPT
         );
-
 
         // Act
         InvitationDTO result = respondToInvitationService.respondToInvitation(command);
@@ -131,7 +142,9 @@ class RespondToInvitationServiceTest {
     void respondToInvitation_RejectInvitation_Success() {
         // Arrange
         RespondToInvitationCommand command = new RespondToInvitationCommand(
-            group.getId(), invitee.getId(), invitee.getId(), InvitationResponseOperationType.REJECT
+            group.getId(), 
+            invitee.getId(), 
+            InvitationResponseOperationType.REJECT
         );
 
         // Act
@@ -157,7 +170,9 @@ class RespondToInvitationServiceTest {
         // Arrange
         Long nonExistentUserId = 999L;
         RespondToInvitationCommand command = new RespondToInvitationCommand(
-            group.getId(), invitee.getId(), nonExistentUserId, InvitationResponseOperationType.ACCEPT
+            group.getId(), 
+            nonExistentUserId, 
+            InvitationResponseOperationType.ACCEPT
         );
 
         // Act & Assert
@@ -178,15 +193,16 @@ class RespondToInvitationServiceTest {
         // Arrange
         Long nonExistentGroupId = 999L;
         RespondToInvitationCommand command = new RespondToInvitationCommand(
-            nonExistentGroupId, invitee.getId(), invitee.getId(), InvitationResponseOperationType.ACCEPT
+            nonExistentGroupId, 
+            invitee.getId(), 
+            InvitationResponseOperationType.ACCEPT
         );
 
         // Act & Assert
-        NotFoundException exception = assertThrows(
+        assertThrows(
             NotFoundException.class,
             () -> respondToInvitationService.respondToInvitation(command)
         );
-        assertEquals("Invitation not found", exception.getMessage());
     }
 
     @Test
@@ -202,12 +218,16 @@ class RespondToInvitationServiceTest {
         entityManager.flush();
 
         RespondToInvitationCommand command = new RespondToInvitationCommand(
-            group.getId(), invitee.getId(), otherUser.getId(), InvitationResponseOperationType.ACCEPT
+            group.getId(), 
+            otherUser.getId(), 
+            InvitationResponseOperationType.ACCEPT
         );
 
         // Act & Assert
-        assertThrows(UnauthorizedOperationException.class, () -> {
-            respondToInvitationService.respondToInvitation(command);
-        });
+        NotFoundException notFoundException = assertThrows(
+            NotFoundException.class, 
+            () -> respondToInvitationService.respondToInvitation(command)
+        );
+        assertEquals("Invitation not found", notFoundException.getMessage());
     }
 }

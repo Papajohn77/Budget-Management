@@ -17,6 +17,8 @@ import gr.aueb.budgetmanagement.application.commands.CreatePersonalPiggyBankComm
 import gr.aueb.budgetmanagement.application.commands.DissolvePiggyBankCommand;
 import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
+import gr.aueb.budgetmanagement.application.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
@@ -24,8 +26,6 @@ import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
-import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
-import gr.aueb.budgetmanagement.domain.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaGroupRepository;

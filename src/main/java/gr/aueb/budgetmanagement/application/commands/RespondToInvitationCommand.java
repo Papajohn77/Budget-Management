@@ -7,11 +7,8 @@ public record RespondToInvitationCommand(
     @NotNull(message = "Group ID cannot be null")
     Long groupId,
     
-    @NotNull(message = "Invitee ID cannot be null")
-    Long inviteeId,
-
-    @NotNull(message = "Responder ID cannot be null")
-    Long responderId,
+    @NotNull(message = "User ID cannot be null") 
+    Long userId,
     
     @NotNull(message = "Response type cannot be null")
     InvitationResponseOperationType response

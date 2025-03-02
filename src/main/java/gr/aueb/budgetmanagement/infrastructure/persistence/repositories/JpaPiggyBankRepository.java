@@ -2,8 +2,8 @@ package gr.aueb.budgetmanagement.infrastructure.persistence.repositories;
 
 import java.util.Optional;
 
+import gr.aueb.budgetmanagement.application.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
-import gr.aueb.budgetmanagement.domain.repositories.PiggyBankRepository;
 import jakarta.persistence.EntityManager;
 
 public class JpaPiggyBankRepository implements PiggyBankRepository {

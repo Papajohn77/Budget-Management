@@ -49,7 +49,7 @@ class InvitationTest {
             setId(invitee, 2L);
             setId(group, 3L);
 
-            invitation = Invitation.create(group, invitee);
+            invitation = Invitation.create(group, invitee, admin);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -78,7 +78,7 @@ class InvitationTest {
     void create_WithNullGroup_ShouldThrowException() {
         assertThrows(
             InvalidDomainArgumentException.class,
-            () -> Invitation.create(null, invitee)
+            () -> Invitation.create(null, invitee, admin)
         );
     }
 
@@ -86,7 +86,7 @@ class InvitationTest {
     void create_WithNullInvitee_ShouldThrowException() {
         assertThrows(
             InvalidDomainArgumentException.class,
-            () -> Invitation.create(group, null)
+            () -> Invitation.create(group, null, admin)
         );
     }
 
@@ -94,7 +94,7 @@ class InvitationTest {
     void create_WithInviteeAsAdmin_ShouldThrowException() {
         assertThrows(
             InvalidDomainArgumentException.class,
-            () -> Invitation.create(group, admin)
+            () -> Invitation.create(group, admin, admin)
         );
     }
 
@@ -103,7 +103,7 @@ class InvitationTest {
         group.addMember(invitee);
         assertThrows(
             InvalidDomainArgumentException.class,
-            () -> Invitation.create(group, invitee)
+            () -> Invitation.create(group, invitee, admin)
         );
     }
 

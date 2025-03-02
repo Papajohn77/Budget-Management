@@ -1,10 +1,11 @@
 package gr.aueb.budgetmanagement.application.services;
 
-import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,8 +15,8 @@ import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.enums.InvitationOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
+import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
@@ -98,7 +99,11 @@ class SendInvitationServiceTest {
     @Test
     void sendInvitation_WithValidData_ShouldCreateInvitation() {
         // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(group.getId(), INVITEE_EMAIL, InvitationOperationType.CREATE);
+        SendInvitationCommand command = new SendInvitationCommand(
+            group.getId(), 
+            INVITEE_EMAIL, 
+            admin.getId()
+        );
 
         // Act
         InvitationDTO result = sendInvitationService.sendInvitation(command);
@@ -126,7 +131,11 @@ class SendInvitationServiceTest {
     @Test
     void sendInvitation_WithNonExistentGroup_ShouldThrowNotFoundException() {
         // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(999L, INVITEE_EMAIL, InvitationOperationType.CREATE);
+        SendInvitationCommand command = new SendInvitationCommand(
+            999L, 
+            INVITEE_EMAIL, 
+            admin.getId()
+        );
 
         // Act & Assert
         NotFoundException exception = assertThrows(
@@ -139,7 +148,11 @@ class SendInvitationServiceTest {
     @Test
     void sendInvitation_WithNonExistentUser_ShouldThrowNotFoundException() {
         // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(group.getId(), "nonexistent@example.com", InvitationOperationType.CREATE);
+        SendInvitationCommand command = new SendInvitationCommand(
+            group.getId(), 
+            "nonexistent@example.com", 
+            admin.getId()
+        );
 
         // Act & Assert
         NotFoundException exception = assertThrows(
@@ -152,11 +165,15 @@ class SendInvitationServiceTest {
     @Test
     void sendInvitation_ToGroupAdmin_ShouldThrowInvalidDomainArgumentException() {
         // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(group.getId(), ADMIN_EMAIL, InvitationOperationType.CREATE);
+        SendInvitationCommand command = new SendInvitationCommand(
+            group.getId(), 
+            ADMIN_EMAIL, 
+            admin.getId()
+        );
 
         // Act & Assert
         assertThrows(
-            gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException.class,
+            InvalidDomainArgumentException.class,
             () -> sendInvitationService.sendInvitation(command)
         );
     }
@@ -167,7 +184,10 @@ class SendInvitationServiceTest {
         group.addMember(invitee);
         entityManager.flush();
         
-        SendInvitationCommand command = new SendInvitationCommand(group.getId(), INVITEE_EMAIL, InvitationOperationType.CREATE);
+        SendInvitationCommand command = new SendInvitationCommand(
+            group.getId(), 
+            INVITEE_EMAIL, 
+            admin.getId());
 
         // Act & Assert
         assertThrows(
@@ -179,9 +199,14 @@ class SendInvitationServiceTest {
     @Test
     void sendInvitation_WithExistingInvitation_ShouldThrowInvitationAlreadyExistsException() {
         // Arrange
+        SendInvitationCommand command = new SendInvitationCommand(
+            group.getId(), 
+            INVITEE_EMAIL, 
+            admin.getId()
+        );
+
         // First, send an invitation
-        SendInvitationCommand command = new SendInvitationCommand(group.getId(), INVITEE_EMAIL, InvitationOperationType.CREATE);
-        InvitationDTO firstInvitation = sendInvitationService.sendInvitation(command);
+        sendInvitationService.sendInvitation(command);
         
         // Act: Try to send another invitation to the same invitee for the same group
         InvitationAlreadyExistsException exception = assertThrows(

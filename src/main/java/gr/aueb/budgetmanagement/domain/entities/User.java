@@ -8,11 +8,8 @@ import java.util.Set;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
-import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
-import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
@@ -232,33 +229,13 @@ public class User {
         invitations.add(invitation);
     }
 
-    private boolean hasAlreadyBeenInvitedTo(Group group) {
+    public boolean containsInvitation(Invitation invitation) {
+        return invitations.contains(invitation);
+    }
+
+    boolean hasAlreadyBeenInvitedTo(Group group) {
         return invitations.stream()
             .anyMatch(invitation -> invitation.getGroup().equals(group));
-    }
-
-    public Invitation sendInvitationTo(User invitee, Group group) {
-        if (group.getAdmin() != this) {
-            throw new UnauthorizedOperationException("Only the group admin can send invitations");
-        }
-        if (invitee.hasAlreadyBeenInvitedTo(group)) {
-            throw new InvitationAlreadyExistsException("Invitation already exists");
-        }
-        return Invitation.create(group, invitee);
-    }
-
-    public Invitation respondToInvitation(
-        Invitation invitation, 
-        InvitationResponseOperationType operationType
-    ) {
-        if (!invitations.contains(invitation)) {
-            throw new UnauthorizedOperationException("User cannot respond to invitation");
-        }
-        switch (operationType) {
-            case ACCEPT -> invitation.accept();
-            case REJECT -> invitation.reject();
-        }
-        return invitation;
     }
 
     @Override

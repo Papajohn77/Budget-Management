@@ -10,23 +10,36 @@ public class InvitationId implements Serializable {
     private Long groupId;
     private Long inviteeId;
 
-    protected InvitationId() {}
+    protected InvitationId() {
+
+    }
 
     public InvitationId(Long groupId, Long inviteeId) {
-        if (groupId == null || inviteeId == null) {
-            throw new IllegalArgumentException("groupId and inviteeId must not be null");
+        if (groupId == null) {
+            throw new IllegalArgumentException("Group ID cannot be null");
         }
+
+        if (inviteeId == null) {
+            throw new IllegalArgumentException("Invitee ID cannot be null");
+        }
+
         this.groupId = groupId;
         this.inviteeId = inviteeId;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof InvitationId)) return false;
-        InvitationId that = (InvitationId) o;
-        return Objects.equals(groupId, that.groupId) &&
-               Objects.equals(inviteeId, that.inviteeId);
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        InvitationId invitationId = (InvitationId) o;
+        return Objects.equals(groupId, invitationId.groupId) &&
+            Objects.equals(inviteeId, invitationId.inviteeId);
     }
 
     @Override
