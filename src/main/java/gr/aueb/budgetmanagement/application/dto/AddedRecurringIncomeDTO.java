@@ -4,7 +4,7 @@ import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import java.time.LocalDate;
 
-public record CreatedRecurringIncomeDTO(
+public record AddedRecurringIncomeDTO(
         Long id,
         String name,
         Money amount,

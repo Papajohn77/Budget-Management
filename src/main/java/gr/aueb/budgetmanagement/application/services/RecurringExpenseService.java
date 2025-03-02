@@ -1,7 +1,7 @@
 package gr.aueb.budgetmanagement.application.services;
 
-import gr.aueb.budgetmanagement.application.commands.CreateRecurringExpenseCommand;
-import gr.aueb.budgetmanagement.application.dto.CreatedRecurringExpenseDTO;
+import gr.aueb.budgetmanagement.application.commands.AddRecurringExpenseCommand;
+import gr.aueb.budgetmanagement.application.dto.AddedRecurringExpenseDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
@@ -12,36 +12,35 @@ public class RecurringExpenseService {
     private final UserRepository userRepository;
 
     public RecurringExpenseService(
-            UserRepository userRepository
+        UserRepository userRepository
     ) {
         this.userRepository = userRepository;
     }
 
     @Transactional
-    public CreatedRecurringExpenseDTO createRecurringExpense(CreateRecurringExpenseCommand command) {
+    public AddedRecurringExpenseDTO createRecurringExpense(AddRecurringExpenseCommand command) {
         User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found"));
 
-        RecurringExpense recurringExpense = RecurringExpense.create(
-                command.name(),
-                command.amount(),
-                command.category(),
-                command.startDate(),
-                command.endDate(),
-                user
+        RecurringExpense recurringExpense = user.addRecurringExpense(
+            command.name(),
+            command.amount(),
+            command.category(),
+            command.startDate(),
+            command.endDate()
         );
 
         userRepository.save(user);
 
-        return new CreatedRecurringExpenseDTO(
-                recurringExpense.getId(),
-                recurringExpense.getName(),
-                recurringExpense.getAmount(),
-                recurringExpense.getCategory(),
-                recurringExpense.getStartDate(),
-                recurringExpense.getEndDate(),
-                recurringExpense.getLastAppliedDate(),
-                recurringExpense.isStopped()
+        return new AddedRecurringExpenseDTO(
+            recurringExpense.getId(),
+            recurringExpense.getName(),
+            recurringExpense.getAmount(),
+            recurringExpense.getCategory(),
+            recurringExpense.getStartDate(),
+            recurringExpense.getEndDate(),
+            recurringExpense.getLastAppliedDate(),
+            recurringExpense.isStopped()
         );
     }
 }

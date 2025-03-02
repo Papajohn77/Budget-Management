@@ -1,12 +1,13 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.AddIncomeCommand;
-import gr.aueb.budgetmanagement.application.dto.AddIncomeDTO;
+import gr.aueb.budgetmanagement.application.dto.AddedIncomeDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Income;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 
 public class IncomeService {
     private final UserRepository userRepository;
@@ -16,24 +17,23 @@ public class IncomeService {
     }
 
     @Transactional
-    public AddIncomeDTO createIncome(AddIncomeCommand command) {
+    public AddedIncomeDTO createIncome(@Valid AddIncomeCommand command) {
         User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found"));
 
-        Income income = Income.create(
-                user,
-                command.amount(),
-                command.date(),
-                command.category()
+        Income income = user.addIncome(
+            command.amount(),
+            command.date(),
+            command.category()
         );
 
         userRepository.save(user);
 
-        return new AddIncomeDTO(
-                income.getId(),
-                income.getAmount(),
-                income.getDate(),
-                income.getCategory()
+        return new AddedIncomeDTO(
+            income.getId(),
+            income.getAmount(),
+            income.getDate(),
+            income.getCategory()
         );
     }
 }

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
 class RecurringIncomeTest {
@@ -27,10 +26,10 @@ class RecurringIncomeTest {
     @BeforeEach
     void setUp() {
         user = User.create(
-                "testuser",
-                "test@example.com",
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
+            "testuser",
+            "test@example.com",
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
         );
     }
 
@@ -39,13 +38,12 @@ class RecurringIncomeTest {
         @Test
         void createWithValidData() {
             // Act
-            RecurringIncome recurringIncome = RecurringIncome.create(
-                    VALID_NAME,
-                    VALID_AMOUNT,
-                    VALID_CATEGORY,
-                    VALID_START_DATE,
-                    VALID_END_DATE,
-                    user
+            RecurringIncome recurringIncome = user.addRecurringIncome(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                VALID_START_DATE,
+                VALID_END_DATE
             );
 
             // Assert
@@ -62,60 +60,60 @@ class RecurringIncomeTest {
         @Test
         void createWithNullAmount() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () ->
-                    RecurringIncome.create(
-                            VALID_NAME,
-                            null,
-                            VALID_CATEGORY,
-                            VALID_START_DATE,
-                            VALID_END_DATE,
-                            user
-                    )
+            assertThrows(
+                InvalidDomainArgumentException.class, () ->
+                user.addRecurringIncome(
+                    VALID_NAME,
+                    null,
+                    VALID_CATEGORY,
+                    VALID_START_DATE,
+                    VALID_END_DATE
+                )
             );
         }
 
         @Test
         void createWithNullCategory() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () ->
-                    RecurringIncome.create(
-                            VALID_NAME,
-                            VALID_AMOUNT,
-                            null,
-                            VALID_START_DATE,
-                            VALID_END_DATE,
-                            user
-                    )
+            assertThrows(
+                InvalidDomainArgumentException.class, () ->
+                user.addRecurringIncome(
+                    VALID_NAME,
+                    VALID_AMOUNT,
+                    null,
+                    VALID_START_DATE,
+                    VALID_END_DATE
+                )
             );
         }
 
         @Test
         void createWithNullStartDate() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () ->
-                    RecurringIncome.create(
-                            VALID_NAME,
-                            VALID_AMOUNT,
-                            VALID_CATEGORY,
-                            null,
-                            VALID_END_DATE,
-                            user
-                    )
+            assertThrows(
+                InvalidDomainArgumentException.class, () ->
+                user.addRecurringIncome(
+                    VALID_NAME,
+                    VALID_AMOUNT,
+                    VALID_CATEGORY,
+                    null,
+                    VALID_END_DATE
+                )
             );
         }
 
         @Test
         void createWithNullEndDate() {
             // Act & Assert
-            assertThrows(InvalidDomainArgumentException.class, () ->
-                    RecurringIncome.create(
-                            VALID_NAME,
-                            VALID_AMOUNT,
-                            VALID_CATEGORY,
-                            VALID_START_DATE,
-                            null,
-                            user
-                    )
+            assertThrows(
+                InvalidDomainArgumentException.class, () ->
+                user.addRecurringIncome(
+                    VALID_NAME,
+                    VALID_AMOUNT,
+                    VALID_CATEGORY,
+                    VALID_START_DATE,
+                    null
+                )
             );
         }
 
@@ -124,15 +122,15 @@ class RecurringIncomeTest {
             // Act & Assert
             LocalDate invalidEndDate = VALID_START_DATE.minusDays(1);
 
-            assertThrows(IllegalArgumentException.class, () ->
-                    RecurringIncome.create(
-                            VALID_NAME,
-                            VALID_AMOUNT,
-                            VALID_CATEGORY,
-                            VALID_START_DATE,
-                            invalidEndDate,
-                            user
-                    )
+            assertThrows(
+                IllegalArgumentException.class, () ->
+                user.addRecurringIncome(
+                    VALID_NAME,
+                    VALID_AMOUNT,
+                    VALID_CATEGORY,
+                    VALID_START_DATE,
+                    invalidEndDate
+                )
             );
         }
     }

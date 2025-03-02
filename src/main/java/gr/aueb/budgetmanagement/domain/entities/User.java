@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
+import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
@@ -72,7 +74,12 @@ public class User {
 
     }
 
-    public static User create(String username, String email, String rawPassword, PasswordHasher passwordHasher) {
+    public static User create(
+        String username, 
+        String email, 
+        String rawPassword, 
+        PasswordHasher passwordHasher
+    ) {
         if (username == null || username.trim().isEmpty()) {
             throw new InvalidDomainArgumentException("Username cannot be null or empty");
         }
@@ -131,32 +138,76 @@ public class User {
         return Collections.unmodifiableSet(expenses);
     }
 
-    public void addExpense(Expense expense) {
+    public Expense addExpense(Money amount, LocalDate date, ExpenseCategory category) {
+        Expense expense = Expense.create(
+            amount,
+            date,
+            category,
+            this
+        );
         expenses.add(expense);
+        return expense;
     }
 
     public Set<RecurringExpense> getRecurringExpenses() {
         return Collections.unmodifiableSet(recurringExpenses);
     }
 
-    public void addRecurringExpense(RecurringExpense recurringExpense) {
+    public RecurringExpense addRecurringExpense(
+        String name, 
+        Money amount, 
+        ExpenseCategory category,
+        LocalDate startDate,
+        LocalDate endDate
+    ) {
+        RecurringExpense recurringExpense = RecurringExpense.create(
+            name, 
+            amount, 
+            category, 
+            startDate, 
+            endDate, 
+            this
+        );
         recurringExpenses.add(recurringExpense);
+        return recurringExpense;
     }
 
     public Set<Income> getIncomes() {
         return Collections.unmodifiableSet(incomes);
     }
 
-    public void addIncome(Income income) {
+    public Income addIncome(Money amount, LocalDate date, IncomeCategory category) {
+        Income income = Income.create(
+            amount, 
+            date, 
+            category, 
+            this
+        );
         incomes.add(income);
+        return income;
     }
 
     public Set<RecurringIncome> getRecurringIncomes() {
         return Collections.unmodifiableSet(recurringIncomes);
     }
 
-    public void addRecurringIncome(RecurringIncome recurringIncome) {
+    public RecurringIncome addRecurringIncome(
+        String name,
+        Money amount,
+        IncomeCategory category,
+        LocalDate startDate,
+        LocalDate endDate
+    ) {
+        RecurringIncome recurringIncome = RecurringIncome.create(
+            name,
+            amount,
+            category,
+            startDate,
+            endDate,
+            this
+        );
         recurringIncomes.add(recurringIncome);
+        return recurringIncome;
     }
 
     public Set<PersonalPiggyBank> getPiggyBanks() {
