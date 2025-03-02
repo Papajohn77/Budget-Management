@@ -47,8 +47,7 @@ public class InvitationService {
 
         return new InvitationRepresentation(
             group.getId(),
-            group.getAdmin().getEmail(),
-            invitee.getEmail(),
+            invitee.getId(),
             invitation.getStatus(),
             invitation.getCreatedAt()
         );
@@ -72,8 +71,7 @@ public class InvitationService {
 
         return new InvitationRepresentation(
             invitation.getGroup().getId(),
-            invitation.getAdmin().getEmail(),
-            invitation.getInvitee().getEmail(),
+            invitation.getInvitee().getId(),
             invitation.getStatus(),
             invitation.getCreatedAt()
         );

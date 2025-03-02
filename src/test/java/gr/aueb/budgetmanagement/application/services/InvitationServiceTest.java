@@ -128,8 +128,7 @@ class InvitationServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(group.getId(), result.groupId());
-        assertEquals(ADMIN_EMAIL, result.adminEmail().getValue());
-        assertEquals(INVITEE_EMAIL, result.inviteeEmail().getValue());
+        assertEquals(invitee.getId(), result.inviteeId());
         assertEquals(InvitationStatus.PENDING, result.status());
         assertNotNull(result.createdAt());
 
@@ -261,8 +260,7 @@ class InvitationServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(group.getId(), result.groupId());
-        assertEquals(ADMIN_EMAIL, result.adminEmail().getValue());
-        assertEquals(INVITEE_EMAIL, result.inviteeEmail().getValue());
+        assertEquals(invitee.getId(), result.inviteeId());
         assertEquals(InvitationStatus.ACCEPTED, result.status());
         assertNotNull(result.createdAt());
 
@@ -290,8 +288,7 @@ class InvitationServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(group.getId(), result.groupId());
-        assertEquals(ADMIN_EMAIL, result.adminEmail().getValue());
-        assertEquals(INVITEE_EMAIL, result.inviteeEmail().getValue());
+        assertEquals(invitee.getId(), result.inviteeId());
         assertEquals(InvitationStatus.REJECTED, result.status());
         assertNotNull(result.createdAt());
 

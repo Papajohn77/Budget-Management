@@ -25,6 +25,13 @@ public class Invitation {
     @EmbeddedId
     private InvitationId id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private InvitationStatus status;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("groupId")
     @JoinColumn(name = "group_id", nullable = false)
@@ -35,14 +42,9 @@ public class Invitation {
     @JoinColumn(name = "invitee_id", nullable = false)
     private User invitee;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private InvitationStatus status;
+    protected Invitation() {
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    protected Invitation() {}
+    }
 
     public static Invitation create(Group group, User invitee, User admin) {
         if (group == null) {
@@ -83,24 +85,24 @@ public class Invitation {
         return id;
     }
 
-    public Group getGroup() {
-        return group;
-    }
-
-    public User getInvitee() {
-        return invitee;
-    }
-
-    public User getAdmin() {
-        return group.getAdmin();
-    }
-
     public InvitationStatus getStatus() {
         return status;
     }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public User getAdmin() {
+        return group.getAdmin();
+    }
+
+    public User getInvitee() {
+        return invitee;
     }
 
     void accept() {
