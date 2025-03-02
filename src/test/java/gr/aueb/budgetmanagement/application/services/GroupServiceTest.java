@@ -17,6 +17,7 @@ import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
+import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaGroupRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
@@ -30,6 +31,7 @@ class GroupServiceTest {
     private EntityManager entityManager;
     private EntityTransaction transaction;
     private JpaUserRepository userRepository;
+    private JpaGroupRepository groupRepository;
     private GroupService groupService;
     private User user;
 
@@ -40,7 +42,8 @@ class GroupServiceTest {
         transaction.begin();
 
         userRepository = new JpaUserRepository(entityManager);
-        groupService = new GroupService(userRepository);
+        groupRepository = new JpaGroupRepository(entityManager);
+        groupService = new GroupService(groupRepository, userRepository);
 
         createTestUser();
     }

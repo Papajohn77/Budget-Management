@@ -90,8 +90,8 @@ class SendInvitationServiceTest {
     }
 
     private void createTestGroup() {
-        group = admin.createGroup(GROUP_NAME);
-        entityManager.persist(admin);
+        group = Group.create(GROUP_NAME, admin);
+        entityManager.persist(group);
         entityManager.flush();
     }
 

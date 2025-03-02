@@ -1,4 +1,4 @@
-package gr.aueb.budgetmanagement.application.repositories;
+package gr.aueb.budgetmanagement.infrastructure.persistence.repositories;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
