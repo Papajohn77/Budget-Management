@@ -23,6 +23,7 @@ import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
+import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
 import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.domain.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
@@ -197,7 +198,7 @@ class PiggyBankServiceTest {
         );
 
         assertThrows(
-            ForbiddenException.class,
+            UnauthorizedOperationException.class,
             () -> piggyBankService.createGroupPiggyBank(command)
         );
     }
@@ -213,10 +214,13 @@ class PiggyBankServiceTest {
         );
         var created = piggyBankService.createPersonalPiggyBank(createCommand);
 
-        PiggyBankAllocation allocation = PiggyBankAllocation.create(
+        PiggyBank personalPiggyBank = piggyBankRepository
+            .findById(created.id())
+            .orElseThrow();
+
+        PiggyBankAllocation allocation = personalPiggyBank.allocate(
             new Money(BigDecimal.valueOf(500)),
             LocalDate.now(),
-            piggyBankRepository.findById(created.id()).orElseThrow(),
             user
         );
         entityManager.persist(allocation);
@@ -244,12 +248,14 @@ class PiggyBankServiceTest {
             user.getId()
         );
         var created = piggyBankService.createGroupPiggyBank(createCommand);
-        
-        // Add allocation
-        PiggyBankAllocation allocation = PiggyBankAllocation.create(
+
+        PiggyBank groupPiggyBank = piggyBankRepository
+            .findById(created.id())
+            .orElseThrow();
+
+        PiggyBankAllocation allocation = groupPiggyBank.allocate(
             new Money(BigDecimal.valueOf(500)),
             LocalDate.now(),
-            piggyBankRepository.findById(created.id()).orElseThrow(),
             user
         );
         entityManager.persist(allocation);

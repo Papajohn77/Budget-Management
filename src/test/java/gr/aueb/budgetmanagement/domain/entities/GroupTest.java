@@ -166,7 +166,8 @@ class GroupTest {
             "Test Piggy Bank",
             new Money(new BigDecimal("100.00")),
             ExpenseCategory.OTHER,
-            group
+            group, 
+            group.getAdmin()
         );
     }
 }

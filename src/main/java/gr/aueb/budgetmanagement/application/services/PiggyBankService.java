@@ -36,7 +36,7 @@ public class PiggyBankService {
     @Transactional
     public CreatedPersonalPiggyBankDTO createPersonalPiggyBank(CreatePersonalPiggyBankCommand command) {
         User user = userRepository.findById(command.userId())
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
         PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
             command.name(),
@@ -58,20 +58,17 @@ public class PiggyBankService {
     @Transactional
     public CreatedGroupPiggyBankDTO createGroupPiggyBank(CreateGroupPiggyBankCommand command) {
         Group group = groupRepository.findById(command.groupId())
-            .orElseThrow(() -> new NotFoundException("Group not found"));
+            .orElseThrow(() -> new NotFoundException("Group not found with id: " + command.groupId()));
 
         User admin = userRepository.findById(command.adminId())
-            .orElseThrow(() -> new NotFoundException("Admin user not found"));
-
-        if (!group.getAdmin().equals(admin)) {
-            throw new ForbiddenException("Only group admin can create group piggy banks");
-        }
+            .orElseThrow(() -> new NotFoundException("Admin user not found with id: " + command.adminId()));
 
         GroupPiggyBank piggyBank = GroupPiggyBank.create(
             command.name(),
             command.targetAmount(),
             command.category(),
-            group
+            group, 
+            admin
         );
 
         piggyBankRepository.save(piggyBank);

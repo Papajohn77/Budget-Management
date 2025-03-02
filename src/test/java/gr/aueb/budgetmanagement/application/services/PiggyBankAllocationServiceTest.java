@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.AllocateToPiggyBankCommand;
 import gr.aueb.budgetmanagement.application.dto.PiggyBankAllocationDTO;
-import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
@@ -22,11 +21,9 @@ import gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.domain.repositories.PiggyBankAllocationRepository;
 import gr.aueb.budgetmanagement.domain.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaPiggyBankAllocationRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaPiggyBankRepository;
 import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
@@ -44,7 +41,6 @@ class PiggyBankAllocationServiceTest {
     private EntityTransaction transaction;
     private UserRepository userRepository;
     private PiggyBankRepository piggyBankRepository;
-    private PiggyBankAllocationRepository allocationRepository;
     private PiggyBankAllocationService allocationService;
     private User user;
     private PersonalPiggyBank personalPiggyBank;
@@ -59,10 +55,8 @@ class PiggyBankAllocationServiceTest {
         
         userRepository = new JpaUserRepository(entityManager);
         piggyBankRepository = new JpaPiggyBankRepository(entityManager);
-        allocationRepository = new JpaPiggyBankAllocationRepository(entityManager);
         
         allocationService = new PiggyBankAllocationService(
-            allocationRepository,
             piggyBankRepository,
             userRepository
         );
@@ -102,7 +96,8 @@ class PiggyBankAllocationServiceTest {
             "Group Savings",
             new Money(new BigDecimal("2000.00")),
             ExpenseCategory.ENTERTAINMENT,
-            group
+            group, 
+            user
         );
         entityManager.persist(groupPiggyBank);
     }
@@ -209,7 +204,7 @@ class PiggyBankAllocationServiceTest {
 
         // Act & Assert
         assertThrows(
-            ForbiddenException.class,
+            UnsupportedOperationException.class,
             () -> allocationService.allocateToPiggyBank(command)
         );
     }
@@ -234,7 +229,7 @@ class PiggyBankAllocationServiceTest {
 
         // Act & Assert
         assertThrows(
-            ForbiddenException.class,
+            UnsupportedOperationException.class,
             () -> allocationService.allocateToPiggyBank(command)
         );
     }
