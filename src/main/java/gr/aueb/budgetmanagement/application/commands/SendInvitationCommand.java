@@ -11,5 +11,8 @@ public record SendInvitationCommand(
     String email,
     
     @NotNull(message = "Operation type cannot be null")
-    InvitationOperationType operation
+    InvitationOperationType operation,
+
+    @NotNull(message = "User ID cannot be null")
+    Long userId
 ) {}

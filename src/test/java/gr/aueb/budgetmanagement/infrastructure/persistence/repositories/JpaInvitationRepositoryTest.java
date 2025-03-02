@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
+import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
@@ -49,7 +50,7 @@ class JpaInvitationRepositoryTest {
         entityManager.persist(invitee);
         entityManager.persist(group);
         
-        invitation = Invitation.create(group, invitee);
+        invitation = Invitation.create(group, invitee, admin);
     }
 
     @Test
@@ -97,7 +98,7 @@ class JpaInvitationRepositoryTest {
         repository.save(invitation);
         Group anotherGroup = Group.create("Another Group", admin);
         entityManager.persist(anotherGroup);
-        Invitation anotherInvitation = Invitation.create(anotherGroup, invitee);
+        Invitation anotherInvitation = Invitation.create(anotherGroup, invitee, admin);
         repository.save(anotherInvitation);
 
         // Act
@@ -114,7 +115,7 @@ class JpaInvitationRepositoryTest {
         repository.save(invitation);
         User anotherInvitee = User.create("another", "another@example.com", TEST_PASSWORD, new BCryptPasswordEncoder());
         entityManager.persist(anotherInvitee);
-        Invitation anotherInvitation = Invitation.create(group, anotherInvitee);
+        Invitation anotherInvitation = Invitation.create(group, anotherInvitee, admin);
         repository.save(anotherInvitation);
 
         // Act
@@ -131,7 +132,7 @@ class JpaInvitationRepositoryTest {
         repository.save(invitation);
         User anotherInvitee = User.create("another", "another@example.com", TEST_PASSWORD, new BCryptPasswordEncoder());
         entityManager.persist(anotherInvitee);
-        Invitation anotherInvitation = Invitation.create(group, anotherInvitee);
+        Invitation anotherInvitation = Invitation.create(group, anotherInvitee, admin);
         repository.save(anotherInvitation);
 
         // Act
@@ -162,8 +163,8 @@ class JpaInvitationRepositoryTest {
         
         Group anotherGroup = Group.create("Another Group", admin);
         entityManager.persist(anotherGroup);
-        Invitation acceptedInvitation = Invitation.create(anotherGroup, invitee);
-        acceptedInvitation.accept();
+        Invitation acceptedInvitation = Invitation.create(anotherGroup, invitee, admin);
+        acceptedInvitation.respond(InvitationResponseOperationType.ACCEPT, invitee);
         repository.save(acceptedInvitation);
 
         // Act

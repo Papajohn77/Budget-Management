@@ -18,9 +18,10 @@ public class SendInvitationService {
     private final GroupRepository groupRepository;
 
     public SendInvitationService(
-            InvitationRepository invitationRepository,
-            UserRepository userRepository,
-            GroupRepository groupRepository) {
+        InvitationRepository invitationRepository,
+        UserRepository userRepository,
+        GroupRepository groupRepository
+    ) {
         this.invitationRepository = invitationRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
@@ -34,8 +35,10 @@ public class SendInvitationService {
         User invitee = userRepository.findByEmail(command.email())
             .orElseThrow(() -> new NotFoundException("Invitee not found with email: " + command.email()));
 
-        User admin = group.getAdmin();
-        Invitation invitation = admin.sendInvitationTo(invitee, group);
+        User admin = userRepository.findById(command.userId())
+            .orElseThrow(() -> new NotFoundException("Admin not found with id: " + command.userId()));
+
+        Invitation invitation = Invitation.create(group, invitee, admin);
 
         invitationRepository.save(invitation);
 

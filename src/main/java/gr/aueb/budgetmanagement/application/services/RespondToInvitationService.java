@@ -5,8 +5,10 @@ import gr.aueb.budgetmanagement.application.commands.RespondToInvitationCommand;
 import gr.aueb.budgetmanagement.application.dto.InvitationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
+import gr.aueb.budgetmanagement.domain.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.domain.repositories.InvitationRepository;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import jakarta.transaction.Transactional;
@@ -14,26 +16,32 @@ import jakarta.validation.Valid;
 
 public class RespondToInvitationService {
     private final InvitationRepository invitationRepository;
+    private final GroupRepository groupRepository;
     private final UserRepository userRepository;
 
     public RespondToInvitationService(
-            InvitationRepository invitationRepository,
-            UserRepository userRepository) {
+        InvitationRepository invitationRepository,
+        GroupRepository groupRepository,
+        UserRepository userRepository
+    ) {
         this.invitationRepository = invitationRepository;
+        this.groupRepository = groupRepository;
         this.userRepository = userRepository;
     }
 
     @Transactional
     public InvitationDTO respondToInvitation(@Valid RespondToInvitationCommand command) {
-        User responder = userRepository.findById(command.responderId())
-            .orElseThrow(() -> new NotFoundException("User not found with id: " + command.responderId()));
+        Group group = groupRepository.findById(command.groupId())
+            .orElseThrow(() -> new NotFoundException("Group not found with id: " + command.groupId()));
 
-        InvitationId invitationId = new InvitationId(command.groupId(), command.inviteeId());
+        User invitee = userRepository.findById(command.userId())
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
+        InvitationId invitationId = new InvitationId(group.getId(), invitee.getId());
         Invitation invitation = invitationRepository.findById(invitationId)
             .orElseThrow(() -> new NotFoundException("Invitation not found"));
 
-        responder.respondToInvitation(invitation, command.response());
+        invitation.respond(command.response(), invitee);
 
         invitationRepository.save(invitation);
 
