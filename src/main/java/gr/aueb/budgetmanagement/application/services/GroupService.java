@@ -1,10 +1,10 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.CreateGroupCommand;
-import gr.aueb.budgetmanagement.application.dto.CreatedGroupDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.CreatedGroupRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
@@ -19,7 +19,7 @@ public class GroupService {
         this.userRepository = userRepository;
     }
 
-    public CreatedGroupDTO createGroup(@Valid CreateGroupCommand command) {
+    public CreatedGroupRepresentation createGroup(@Valid CreateGroupCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -31,7 +31,7 @@ public class GroupService {
 
         groupRepository.save(group);
 
-        return new CreatedGroupDTO(
+        return new CreatedGroupRepresentation(
             group.getId(),
             group.getName(),
             true

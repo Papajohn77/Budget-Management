@@ -16,8 +16,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.AddRecurringExpenseCommand;
-import gr.aueb.budgetmanagement.application.dto.AddedRecurringExpenseDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpenseRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
@@ -85,7 +85,7 @@ class RecurringExpenseServiceTest {
         );
 
         // Act
-        AddedRecurringExpenseDTO result = recurringExpenseService.createRecurringExpense(command);
+        AddedRecurringExpenseRepresentation result = recurringExpenseService.createRecurringExpense(command);
 
         // Assert
         assertNotNull(result.id());

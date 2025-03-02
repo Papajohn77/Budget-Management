@@ -10,8 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.SendInvitationCommand;
-import gr.aueb.budgetmanagement.application.dto.InvitationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.representations.InvitationRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
@@ -106,7 +106,7 @@ class SendInvitationServiceTest {
         );
 
         // Act
-        InvitationDTO result = sendInvitationService.sendInvitation(command);
+        InvitationRepresentation result = sendInvitationService.sendInvitation(command);
 
         // Assert
         assertNotNull(result);

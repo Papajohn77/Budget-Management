@@ -10,8 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.CreateGroupCommand;
-import gr.aueb.budgetmanagement.application.dto.CreatedGroupDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.representations.CreatedGroupRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
@@ -75,7 +75,7 @@ class GroupServiceTest {
         );
 
        // Act
-       CreatedGroupDTO result = groupService.createGroup(command);
+       CreatedGroupRepresentation result = groupService.createGroup(command);
 
        // Assert
        assertNotNull(result.id());

@@ -1,9 +1,9 @@
-package gr.aueb.budgetmanagement.application.dto;
+package gr.aueb.budgetmanagement.application.representations;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
-public record CreatedPersonalPiggyBankDTO(
+public record CreatedPersonalPiggyBankRepresentation(
     Long id,
     String name,
     Money targetAmount,

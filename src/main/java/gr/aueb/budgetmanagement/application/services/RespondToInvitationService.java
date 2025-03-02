@@ -2,11 +2,11 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.RespondToInvitationCommand;
-import gr.aueb.budgetmanagement.application.dto.InvitationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.InvitationRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.InvitationRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
@@ -30,7 +30,7 @@ public class RespondToInvitationService {
     }
 
     @Transactional
-    public InvitationDTO respondToInvitation(@Valid RespondToInvitationCommand command) {
+    public InvitationRepresentation respondToInvitation(@Valid RespondToInvitationCommand command) {
         Group group = groupRepository.findById(command.groupId())
             .orElseThrow(() -> new NotFoundException("Group not found with id: " + command.groupId()));
 
@@ -45,7 +45,7 @@ public class RespondToInvitationService {
 
         invitationRepository.save(invitation);
 
-        return new InvitationDTO(
+        return new InvitationRepresentation(
             invitation.getGroup().getId(),
             invitation.getAdmin().getEmail(),
             invitation.getInvitee().getEmail(),

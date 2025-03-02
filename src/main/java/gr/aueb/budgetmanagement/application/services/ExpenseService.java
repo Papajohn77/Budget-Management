@@ -1,9 +1,9 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.AddExpenseCommand;
-import gr.aueb.budgetmanagement.application.dto.AddedExpenseDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.AddedExpenseRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Expense;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.transaction.Transactional;
@@ -17,7 +17,7 @@ public class ExpenseService {
     }
 
     @Transactional
-    public AddedExpenseDTO createExpense(@Valid AddExpenseCommand command) {
+    public AddedExpenseRepresentation createExpense(@Valid AddExpenseCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found"));
 
@@ -29,7 +29,7 @@ public class ExpenseService {
 
         userRepository.save(user);
 
-        return new AddedExpenseDTO(
+        return new AddedExpenseRepresentation(
             expense.getId(),
             expense.getAmount(),
             expense.getDate(),

@@ -12,10 +12,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.AllocateToPiggyBankCommand;
-import gr.aueb.budgetmanagement.application.dto.PiggyBankAllocationDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.PiggyBankAllocationRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.GroupPiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBank;
@@ -113,7 +113,7 @@ class PiggyBankAllocationServiceTest {
         );
 
         // Act
-        PiggyBankAllocationDTO result = allocationService.allocateToPiggyBank(command);
+        PiggyBankAllocationRepresentation result = allocationService.allocateToPiggyBank(command);
 
         // Assert
         assertNotNull(result.id());
@@ -137,7 +137,7 @@ class PiggyBankAllocationServiceTest {
         );
 
         // Act
-        PiggyBankAllocationDTO result = allocationService.allocateToPiggyBank(command);
+        PiggyBankAllocationRepresentation result = allocationService.allocateToPiggyBank(command);
 
         // Assert
         assertNotNull(result.id());

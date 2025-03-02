@@ -12,10 +12,10 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.application.commands.AuthenticateUserCommand;
 import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
-import gr.aueb.budgetmanagement.application.dto.RegisteredUserDTO;
 import gr.aueb.budgetmanagement.application.exceptions.AlreadyExistsException;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.RegisteredUserRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Savings;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidEmailAddressException;
@@ -69,7 +69,7 @@ class UserServiceTest {
         );
 
         // Act
-        RegisteredUserDTO result = userService.registerUser(command);
+        RegisteredUserRepresentation result = userService.registerUser(command);
 
         // Assert
         assertNotNull(result);
@@ -193,7 +193,7 @@ class UserServiceTest {
         );
 
         // Act
-        RegisteredUserDTO result = userService.registerUser(command);
+        RegisteredUserRepresentation result = userService.registerUser(command);
 
         // Assert
         String storedPassword = entityManager.createQuery(

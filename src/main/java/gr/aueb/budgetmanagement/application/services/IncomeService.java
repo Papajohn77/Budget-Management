@@ -1,9 +1,9 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.AddIncomeCommand;
-import gr.aueb.budgetmanagement.application.dto.AddedIncomeDTO;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.AddedIncomeRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Income;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.transaction.Transactional;
@@ -17,7 +17,7 @@ public class IncomeService {
     }
 
     @Transactional
-    public AddedIncomeDTO createIncome(@Valid AddIncomeCommand command) {
+    public AddedIncomeRepresentation createIncome(@Valid AddIncomeCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found"));
 
@@ -29,7 +29,7 @@ public class IncomeService {
 
         userRepository.save(user);
 
-        return new AddedIncomeDTO(
+        return new AddedIncomeRepresentation(
             income.getId(),
             income.getAmount(),
             income.getDate(),
