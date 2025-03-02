@@ -6,12 +6,12 @@ import java.time.LocalDate;
 import jakarta.validation.constraints.NotNull;
 
 public record AllocateSavingsCommand(
-    @NotNull(message = "User ID is required.")
-    Long userId,
-
     @NotNull(message = "Amount is required.")
     BigDecimal amount,
 
     @NotNull(message = "Date is required.")
-    LocalDate date
+    LocalDate date,
+
+    @NotNull(message = "User ID is required.")
+    Long userId
 ) {}

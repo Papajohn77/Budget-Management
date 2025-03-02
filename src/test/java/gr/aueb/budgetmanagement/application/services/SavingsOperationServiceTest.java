@@ -71,9 +71,9 @@ class SavingsOperationServiceTest {
     @Test
     void testSuccessfulAllocation() {
         AllocateSavingsCommand command = new AllocateSavingsCommand(
-            user.getId(),
             AMOUNT,
-            TODAY
+            TODAY, 
+            user.getId()
         );
 
         SavingsOperationDTO result = savingsOperationService.allocate(command);
@@ -92,9 +92,9 @@ class SavingsOperationServiceTest {
     @Test
     void testAllocationWithNonexistentUser() {
         AllocateSavingsCommand command = new AllocateSavingsCommand(
-            999L,
             AMOUNT,
-            TODAY
+            TODAY, 
+            999L
         );
 
         assertThrows(
@@ -107,15 +107,15 @@ class SavingsOperationServiceTest {
     void testSuccessfulDeallocation() {
         // First allocate
         savingsOperationService.allocate(
-            new AllocateSavingsCommand(user.getId(), AMOUNT, TODAY)
+            new AllocateSavingsCommand(AMOUNT, TODAY, user.getId())
         );
 
         // Then deallocate half
         BigDecimal deallocationAmount = AMOUNT.divide(new BigDecimal("2"));
         DeallocateSavingsCommand command = new DeallocateSavingsCommand(
-            user.getId(),
             deallocationAmount,
-            TODAY
+            TODAY, 
+            user.getId()
         );
 
         SavingsOperationDTO result = savingsOperationService.deallocate(command);
@@ -134,9 +134,9 @@ class SavingsOperationServiceTest {
     @Test
     void testDeallocationWithNonexistentUser() {
         DeallocateSavingsCommand command = new DeallocateSavingsCommand(
-            999L,
             AMOUNT,
-            TODAY
+            TODAY, 
+            999L
         );
 
         assertThrows(
@@ -149,14 +149,14 @@ class SavingsOperationServiceTest {
     void testDeallocationWithInsufficientFunds() {
         // First allocate
         savingsOperationService.allocate(
-            new AllocateSavingsCommand(user.getId(), AMOUNT, TODAY)
+            new AllocateSavingsCommand(AMOUNT, TODAY, user.getId())
         );
 
         // Try to deallocate more than allocated
         DeallocateSavingsCommand command = new DeallocateSavingsCommand(
-            user.getId(),
             AMOUNT.add(BigDecimal.ONE),
-            TODAY
+            TODAY, 
+            user.getId()
         );
 
         assertThrows(

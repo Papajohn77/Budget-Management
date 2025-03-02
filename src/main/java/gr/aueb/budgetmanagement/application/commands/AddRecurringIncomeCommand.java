@@ -1,15 +1,13 @@
 package gr.aueb.budgetmanagement.application.commands;
 
+import java.time.LocalDate;
+
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import java.time.LocalDate;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record AddRecurringIncomeCommand(
-    @NotNull(message = "User ID cannot be null")
-    Long userId,
-
     @NotBlank(message = "Name cannot be blank")
     String name,
 
@@ -23,5 +21,8 @@ public record AddRecurringIncomeCommand(
     LocalDate startDate,
 
     @NotNull(message = "End date cannot be null")
-    LocalDate endDate
+    LocalDate endDate, 
+
+    @NotNull(message = "User ID cannot be null")
+    Long userId
 ) {}
