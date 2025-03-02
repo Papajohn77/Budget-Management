@@ -15,7 +15,6 @@ import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.enums.InvitationOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
@@ -103,7 +102,6 @@ class SendInvitationServiceTest {
         SendInvitationCommand command = new SendInvitationCommand(
             group.getId(), 
             INVITEE_EMAIL, 
-            InvitationOperationType.CREATE, 
             admin.getId()
         );
 
@@ -136,7 +134,6 @@ class SendInvitationServiceTest {
         SendInvitationCommand command = new SendInvitationCommand(
             999L, 
             INVITEE_EMAIL, 
-            InvitationOperationType.CREATE,
             admin.getId()
         );
 
@@ -154,7 +151,6 @@ class SendInvitationServiceTest {
         SendInvitationCommand command = new SendInvitationCommand(
             group.getId(), 
             "nonexistent@example.com", 
-            InvitationOperationType.CREATE, 
             admin.getId()
         );
 
@@ -172,7 +168,6 @@ class SendInvitationServiceTest {
         SendInvitationCommand command = new SendInvitationCommand(
             group.getId(), 
             ADMIN_EMAIL, 
-            InvitationOperationType.CREATE, 
             admin.getId()
         );
 
@@ -192,7 +187,6 @@ class SendInvitationServiceTest {
         SendInvitationCommand command = new SendInvitationCommand(
             group.getId(), 
             INVITEE_EMAIL, 
-            InvitationOperationType.CREATE, 
             admin.getId());
 
         // Act & Assert
@@ -208,7 +202,6 @@ class SendInvitationServiceTest {
         SendInvitationCommand command = new SendInvitationCommand(
             group.getId(), 
             INVITEE_EMAIL, 
-            InvitationOperationType.CREATE,
             admin.getId()
         );
 
