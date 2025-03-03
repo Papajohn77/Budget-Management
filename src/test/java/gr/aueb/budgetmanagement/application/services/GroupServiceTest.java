@@ -5,72 +5,49 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.CreateGroupCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.CreatedGroupRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
-import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaGroupRepository;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 
+@QuarkusTest
 class GroupServiceTest {
-    private static final String TEST_USERNAME = "testuser";
-    private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "Test123!@#";
+    private static final String TEST_GROUP_NAME = "Other Test Group";
 
-    private EntityManager entityManager;
-    private EntityTransaction transaction;
-    private JpaUserRepository userRepository;
-    private JpaGroupRepository groupRepository;
+    @Inject
+    private UserRepository userRepository;
+
+    @Inject
+    private GroupRepository groupRepository;
+
+    @Inject
     private GroupService groupService;
+
     private User user;
 
     @BeforeEach
     void setUp() {
-        entityManager = JPAUtil.getCurrentEntityManager();
-        transaction = entityManager.getTransaction();
-        transaction.begin();
-
-        userRepository = new JpaUserRepository(entityManager);
-        groupRepository = new JpaGroupRepository(entityManager);
-        groupService = new GroupService(groupRepository, userRepository);
-
-        createTestUser();
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (transaction.isActive()) {
-            transaction.rollback();
-        }
-        entityManager.close();
-    }
-
-    private void createTestUser() {
-        user = User.create(
-            TEST_USERNAME,
-            TEST_EMAIL,
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-        entityManager.persist(user);
+        user = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
     }
 
    @Test
+   @TestTransaction
    void createGroupWithValidData() {
        // Arrange
         CreateGroupCommand command = new CreateGroupCommand(
-            "Test Group", 
+            TEST_GROUP_NAME, 
             user.getId()
         );
 
@@ -79,21 +56,22 @@ class GroupServiceTest {
 
        // Assert
        assertNotNull(result.id());
-       assertEquals("Test Group", result.name());
+       assertEquals(TEST_GROUP_NAME, result.name());
        assertTrue(result.isAdmin());
        
-       Group savedGroup = entityManager.find(Group.class, result.id());
+       Group savedGroup = groupRepository.findById(result.id()).orElseThrow();
        assertNotNull(savedGroup);
-       assertEquals("Test Group", savedGroup.getName());
+       assertEquals(TEST_GROUP_NAME, savedGroup.getName());
        assertEquals(user.getId(), savedGroup.getAdmin().getId());
        assertTrue(savedGroup.getMembers().contains(user));
    }
 
    @Test
+   @TestTransaction
    void createGroupWithNonExistentUser() {
        // Arrange
         CreateGroupCommand command = new CreateGroupCommand(
-            "Test Group", 
+            TEST_GROUP_NAME, 
             999L
         );
 
@@ -105,10 +83,11 @@ class GroupServiceTest {
    }
 
    @Test
+   @TestTransaction
    void createGroupWithExistingGroupName() {
        // Arrange
         CreateGroupCommand command = new CreateGroupCommand(
-            "Test Group", 
+            TEST_GROUP_NAME, 
             user.getId()
         );
        groupService.createGroup(command);
@@ -121,13 +100,14 @@ class GroupServiceTest {
    }
 
    @Test
+   @TestTransaction
    void createGroupWithInvalidCommand() {
        // Arrange
        CreateGroupCommand command = new CreateGroupCommand("", user.getId());
 
        // Act & Assert
        assertThrows(
-           InvalidDomainArgumentException.class,
+            ConstraintViolationException.class,
            () -> groupService.createGroup(command)
        );
    }

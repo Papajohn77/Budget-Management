@@ -3,7 +3,9 @@ package gr.aueb.budgetmanagement.infrastructure.security;
 import org.mindrot.jbcrypt.BCrypt;
 
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
+import jakarta.enterprise.context.ApplicationScoped;
 
+@ApplicationScoped
 public class BCryptPasswordEncoder implements PasswordHasher {
     private final int logRounds;
 

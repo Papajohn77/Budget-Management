@@ -7,103 +7,54 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.AllocateToPiggyBankCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.PiggyBankAllocationRepresentation;
-import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.GroupPiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaPiggyBankRepository;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 
+@QuarkusTest
 class PiggyBankAllocationServiceTest {
-    private static final String TEST_USERNAME = "testuser";
-    private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "Test123!@#";
     private static final LocalDate TODAY = LocalDate.now();
     private static final BigDecimal AMOUNT = new BigDecimal("100.00");
-    
-    private EntityManager entityManager;
-    private EntityTransaction transaction;
+
+    @Inject
     private UserRepository userRepository;
+
+    @Inject
     private PiggyBankRepository piggyBankRepository;
+
+    @Inject
     private PiggyBankAllocationService allocationService;
+
     private User user;
+    private User otherUser;
     private PersonalPiggyBank personalPiggyBank;
     private GroupPiggyBank groupPiggyBank;
-    private Group group;
 
     @BeforeEach
     void setUp() {
-        entityManager = JPAUtil.getCurrentEntityManager();
-        transaction = entityManager.getTransaction();
-        transaction.begin();
-        
-        userRepository = new JpaUserRepository(entityManager);
-        piggyBankRepository = new JpaPiggyBankRepository(entityManager);
-        
-        allocationService = new PiggyBankAllocationService(
-            piggyBankRepository,
-            userRepository
-        );
-        
-        createTestEntities();
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (transaction.isActive()) {
-            transaction.rollback();
-        }
-        entityManager.close();
-    }
-
-    private void createTestEntities() {
-        user = User.create(
-            TEST_USERNAME,
-            TEST_EMAIL,
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-        entityManager.persist(user);
-
-        personalPiggyBank = PersonalPiggyBank.create(
-            "Personal Savings",
-            new Money(new BigDecimal("1000.00")),
-            ExpenseCategory.ENTERTAINMENT,
-            user
-        );
-        entityManager.persist(personalPiggyBank);
-
-        group = Group.create("Test Group", user);
-        entityManager.persist(group);
-
-        groupPiggyBank = GroupPiggyBank.create(
-            "Group Savings",
-            new Money(new BigDecimal("2000.00")),
-            ExpenseCategory.ENTERTAINMENT,
-            group, 
-            user
-        );
-        entityManager.persist(groupPiggyBank);
+        user = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
+        otherUser = userRepository.findById(Fixture.Users.TESTUSER2_ID).orElseThrow();
+        personalPiggyBank = (PersonalPiggyBank) piggyBankRepository.findById(Fixture.PiggyBanks.PERSONAL_PIGGY_BANK_ID).orElseThrow();
+        groupPiggyBank = (GroupPiggyBank) piggyBankRepository.findById(Fixture.PiggyBanks.GROUP_PIGGY_BANK_ID).orElseThrow();
     }
 
     @Test
+    @TestTransaction
     void testSuccessfulPersonalPiggyBankAllocation() {
         // Arrange
         AllocateToPiggyBankCommand command = new AllocateToPiggyBankCommand(
@@ -128,6 +79,7 @@ class PiggyBankAllocationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testSuccessfulGroupPiggyBankAllocation() {
         // Arrange
         AllocateToPiggyBankCommand command = new AllocateToPiggyBankCommand(
@@ -152,6 +104,7 @@ class PiggyBankAllocationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testAllocationWithNonexistentUser() {
         // Arrange
         AllocateToPiggyBankCommand command = new AllocateToPiggyBankCommand(
@@ -169,6 +122,7 @@ class PiggyBankAllocationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testAllocationWithNonexistentPiggyBank() {
         // Arrange
         AllocateToPiggyBankCommand command = new AllocateToPiggyBankCommand(
@@ -186,21 +140,14 @@ class PiggyBankAllocationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testAllocationToUnauthorizedPersonalPiggyBank() {
         // Arrange
-        User unauthorizedUser = User.create(
-            "unauthorized",
-            "unauthorized@example.com",
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-        entityManager.persist(unauthorizedUser);
-
         AllocateToPiggyBankCommand command = new AllocateToPiggyBankCommand(
             TODAY,
             new Money(AMOUNT),
             personalPiggyBank.getId(),
-            unauthorizedUser.getId()
+            otherUser.getId()
         );
 
         // Act & Assert
@@ -211,21 +158,14 @@ class PiggyBankAllocationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testAllocationToUnauthorizedGroupPiggyBank() {
         // Arrange
-        User nonMember = User.create(
-            "nonmember",
-            "nonmember@example.com",
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-        entityManager.persist(nonMember);
-
         AllocateToPiggyBankCommand command = new AllocateToPiggyBankCommand(
             TODAY,
             new Money(AMOUNT),
             groupPiggyBank.getId(),
-            nonMember.getId()
+            otherUser.getId()
         );
 
         // Act & Assert

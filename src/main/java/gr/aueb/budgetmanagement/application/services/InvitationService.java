@@ -1,4 +1,3 @@
-// Service implementation
 package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.RespondToInvitationCommand;
@@ -12,9 +11,11 @@ import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
+@ApplicationScoped
 public class InvitationService {
     private final InvitationRepository invitationRepository;
     private final GroupRepository groupRepository;

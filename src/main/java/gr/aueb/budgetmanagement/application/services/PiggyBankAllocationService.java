@@ -8,9 +8,11 @@ import gr.aueb.budgetmanagement.application.representations.PiggyBankAllocationR
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
 import gr.aueb.budgetmanagement.domain.entities.User;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
+@ApplicationScoped
 public class PiggyBankAllocationService {
     private final PiggyBankRepository piggyBankRepository;
     private final UserRepository userRepository;

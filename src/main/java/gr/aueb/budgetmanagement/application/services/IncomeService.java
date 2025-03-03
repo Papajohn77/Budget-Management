@@ -6,9 +6,11 @@ import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedIncomeRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Income;
 import gr.aueb.budgetmanagement.domain.entities.User;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
+@ApplicationScoped
 public class IncomeService {
     private final UserRepository userRepository;
 

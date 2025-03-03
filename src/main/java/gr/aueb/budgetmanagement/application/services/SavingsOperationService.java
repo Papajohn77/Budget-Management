@@ -7,9 +7,11 @@ import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.SavingsOperationRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.SavingsOperation;
 import gr.aueb.budgetmanagement.domain.entities.User;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
+@ApplicationScoped
 public class SavingsOperationService {
     private final UserRepository userRepository;
 

@@ -1,160 +1,120 @@
 package gr.aueb.budgetmanagement.infrastructure.persistence.repositories;
 
-import java.util.Optional;
-
-import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
+import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
 
+@QuarkusTest
 class JpaGroupRepositoryTest {
-   private static final String TEST_PASSWORD = "Test123!@#";
+    private static final String NEW_GROUP_NAME = "Test Group";
+    private static final String EXISTING_GROUP_NAME = "testgroup";
 
-   private EntityManager entityManager;
-   private EntityTransaction transaction;
-   private JpaUserRepository userRepository;
-   private JpaGroupRepository groupRepository;
-   private User user;
+    @Inject
+    private EntityManager entityManager;
 
-   @BeforeEach
-   void setUp() {
-       entityManager = JPAUtil.getCurrentEntityManager();
-       transaction = entityManager.getTransaction();
-       transaction.begin();
+    @Inject
+    private UserRepository userRepository;
 
-       userRepository = new JpaUserRepository(entityManager);
-       groupRepository = new JpaGroupRepository(entityManager);
+    @Inject
+    private GroupRepository groupRepository;
 
-       user = createTestUser();
-       userRepository.save(user);
-   }
+    private User user;
+    private User noMember;
+    private User alreadyMember;
 
-   @AfterEach
-   void tearDown() {
-       if (transaction.isActive()) {
-           transaction.rollback();
-       }
-       entityManager.close();
-   }
-
-   @Test
-   void saveShouldPersistGroup() {
-       // Arrange
-       Group group = Group.create("Test Group", user);
-
-       // Act
-       groupRepository.save(group);
-
-       // Assert
-       Group foundGroup = entityManager.find(Group.class, group.getId());
-       assertNotNull(foundGroup);
-       assertEquals("Test Group", foundGroup.getName());
-       assertEquals(user.getId(), foundGroup.getAdmin().getId());
-       assertTrue(foundGroup.getMembers().contains(user));
-   }
-
-   @Test
-   void existsByNameAndMemberIdWhenGroupExistsShouldReturnTrue() {
-       // Arrange
-       Group group = Group.create("Test Group", user);
-       groupRepository.save(group);
-
-       // Act
-       boolean exists = groupRepository.existsByNameAndMemberId("Test Group", user.getId());
-
-       // Assert
-       assertTrue(exists);
-   }
-
-   @Test
-   void existsByNameAndMemberIdWhenGroupDoesNotExistShouldReturnFalse() {
-       // Act
-       boolean exists = groupRepository.existsByNameAndMemberId("Non Existing Group", user.getId());
-
-       // Assert
-       assertFalse(exists);
-   }
-
-   @Test
-   void existsByNameAndMemberIdWhenUserNotMemberShouldReturnFalse() {
-       // Arrange
-       User otherUser = createOtherTestUser();
-       entityManager.persist(otherUser);
-       
-       Group group = Group.create("Test Group", user);
-       groupRepository.save(group);
-
-       // Act
-       boolean exists = groupRepository.existsByNameAndMemberId("Test Group", otherUser.getId());
-
-       // Assert
-       assertFalse(exists);
-   }
-
-   @Test
-   void existsByNameAndMemberIdWithMultipleMembersShouldReturnTrue() {
-       // Arrange
-       User otherUser = createOtherTestUser();
-       entityManager.persist(otherUser);
-       
-       Group group = Group.create("Test Group", user);
-       group.addMember(otherUser);
-       groupRepository.save(group);
-
-       // Act
-       boolean exists = groupRepository.existsByNameAndMemberId("Test Group", otherUser.getId());
-
-       // Assert
-       assertTrue(exists);
-   }
-
-    @Test
-    void testFindByIdExistingGroup() {
-        Group group = Group.create("Test Group", user);
-        groupRepository.save(group);
-        
-        Optional<Group> found = groupRepository.findById(group.getId());
-        
-        assertTrue(found.isPresent());
-        assertEquals(group.getId(), found.get().getId());
-        assertEquals(group.getName(), found.get().getName());
-        assertEquals(group.getAdmin(), found.get().getAdmin());
-        assertTrue(found.get().getMembers().contains(user));
+    @BeforeEach
+    void setUp() {
+        user = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
+        noMember = userRepository.findById(Fixture.Users.TESTUSER2_ID).orElseThrow();
+        alreadyMember = userRepository.findById(Fixture.Users.TESTUSER3_ID).orElseThrow();
     }
 
     @Test
+    @TestTransaction
+    void saveShouldPersistGroup() {
+        // Arrange
+        Group group = Group.create(NEW_GROUP_NAME, user);
+
+        // Act
+        groupRepository.save(group);
+
+        // Assert
+        Group foundGroup = entityManager.find(Group.class, group.getId());
+        assertNotNull(foundGroup);
+        assertEquals(NEW_GROUP_NAME, foundGroup.getName());
+        assertEquals(user.getId(), foundGroup.getAdmin().getId());
+        assertTrue(foundGroup.getMembers().contains(user));
+    }
+
+    @Test
+    @TestTransaction
+    void existsByNameAndMemberIdWhenGroupExistsShouldReturnTrue() {
+        // Act
+        boolean exists = groupRepository.existsByNameAndMemberId(EXISTING_GROUP_NAME, user.getId());
+
+        // Assert
+        assertTrue(exists);
+    }
+
+    @Test
+    @TestTransaction
+    void existsByNameAndMemberIdWhenGroupDoesNotExistShouldReturnFalse() {
+        // Act
+        boolean exists = groupRepository.existsByNameAndMemberId("Non Existing Group", user.getId());
+
+        // Assert
+        assertFalse(exists);
+    }
+
+    @Test
+    @TestTransaction
+    void existsByNameAndMemberIdWhenUserNotMemberShouldReturnFalse() {
+        // Act
+        boolean exists = groupRepository.existsByNameAndMemberId(EXISTING_GROUP_NAME, noMember.getId());
+
+        // Assert
+        assertFalse(exists);
+    }
+
+    @Test
+    @TestTransaction
+    void existsByNameAndMemberIdWithMultipleMembersShouldReturnTrue() {
+        // Act
+        boolean exists = groupRepository.existsByNameAndMemberId(EXISTING_GROUP_NAME, alreadyMember.getId());
+
+        // Assert
+        assertTrue(exists);
+    }
+
+    @Test
+    @TestTransaction
+    void testFindByIdExistingGroup() {
+        Optional<Group> found = groupRepository.findById(Fixture.Groups.TESTGROUP_ID);
+        assertTrue(found.isPresent());
+    }
+
+    @Test
+    @TestTransaction
     void testFindByIdNonexistentUser() {
-        Long nonexistentId = 999L;
-        Optional<Group> found = groupRepository.findById(nonexistentId);
+        Long nonExistentGroupId = 999L;
+        Optional<Group> found = groupRepository.findById(nonExistentGroupId);
         
         assertFalse(found.isPresent());
-    }
-
-    private User createTestUser() {
-        return User.create(
-            "testuser",
-            "test@example.com",
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-    }
-
-    private User createOtherTestUser() {
-        return User.create(
-            "otheruser", 
-            "other@example.com", 
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
     }
 }

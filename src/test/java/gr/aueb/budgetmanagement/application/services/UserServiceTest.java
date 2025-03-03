@@ -6,62 +6,52 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.AuthenticateUserCommand;
 import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
 import gr.aueb.budgetmanagement.application.exceptions.AlreadyExistsException;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.RegisteredUserRepresentation;
-import gr.aueb.budgetmanagement.domain.entities.Savings;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidEmailAddressException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidPasswordException;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
-import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 
+@QuarkusTest
 class UserServiceTest {
-    private static final String TEST_USERNAME = "testuser";
-    private static final String TEST_EMAIL = "test@example.com";
+    private static final String TEST_USERNAME = "othertestuser";
+    private static final String TEST_EMAIL = "other@example.com";
     private static final String TEST_PASSWORD = "Test123!@#";
 
-    private EntityManager entityManager;
-    private EntityTransaction transaction;
+    @Inject
     private UserRepository userRepository;
+
+    @Inject
     private UserService userService;
+
+    @Inject
     private PasswordHasher passwordHasher;
+
+    private User user;
 
     @BeforeEach
     void setUp() {
-        entityManager = JPAUtil.getCurrentEntityManager();
-        transaction = entityManager.getTransaction();
-        transaction.begin();
-        
-        userRepository = new JpaUserRepository(entityManager);
-        passwordHasher = new BCryptPasswordEncoder();
-        userService = new UserService(userRepository, passwordHasher);
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (transaction.isActive()) {
-            transaction.rollback();
-        }
-        entityManager.close();
+        user = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
     }
 
     @Test
+    @TestTransaction
     void testSuccessfulUserRegistration() {
         // Arrange
-        String username = "testuser";
-        String email = "test@example.com";
+        String username = TEST_USERNAME;
+        String email = TEST_EMAIL;
         RegisterUserCommand command = new RegisterUserCommand(
             username,
             email,
@@ -74,50 +64,29 @@ class UserServiceTest {
         // Assert
         assertNotNull(result);
         assertNotNull(result.id());
-        assertEquals("testuser", result.username());
-        assertEquals("test@example.com", result.email());
+        assertEquals(username, result.username());
+        assertEquals(email, result.email());
 
         // Verify user was persisted
         assertTrue(userRepository.existsByUsername(username));
         assertTrue(userRepository.existsByEmail(email));
 
         // Verify Savings was created as part of user registration
-        Long userId = entityManager.createQuery(
-                "SELECT u.id FROM User u WHERE u.username = :username", 
-                Long.class
-            )
-            .setParameter("username", username)
-            .getSingleResult();
-
-        Savings savings = entityManager.createQuery(
-                "SELECT s FROM Savings s WHERE s.user.id = :userId",
-                Savings.class
-            )
-            .setParameter("userId", userId)
-            .getSingleResult();
-
-        assertNotNull(savings);
-        assertEquals(userId, savings.getUser().getId());
+        User registeredUser = userRepository.findById(result.id()).orElseThrow();
+        assertNotNull(registeredUser.getSavings());
     }
 
     @Test
+    @TestTransaction
     void testDuplicateUsername() {
         // Arrange
-        RegisterUserCommand firstUser = new RegisterUserCommand(
-            "testuser",
-            "test1@example.com",
-            TEST_PASSWORD
-        );
         RegisterUserCommand duplicateUsername = new RegisterUserCommand(
-            "testuser",
-            "test2@example.com",
+            user.getUsername(), 
+            TEST_EMAIL,
             TEST_PASSWORD
         );
 
         // Act & Assert
-        assertDoesNotThrow(
-            () -> userService.registerUser(firstUser)
-        );
         assertThrows(
             AlreadyExistsException.class, 
             () -> userService.registerUser(duplicateUsername))
@@ -125,23 +94,16 @@ class UserServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testDuplicateEmail() {
         // Arrange
-        RegisterUserCommand firstUser = new RegisterUserCommand(
-            "user1",
-            "test@example.com",
-            TEST_PASSWORD
-        );
         RegisterUserCommand duplicateEmail = new RegisterUserCommand(
-            "user2",
-            "test@example.com",
+            TEST_USERNAME,
+            user.getEmail().getValue(), 
             TEST_PASSWORD
         );
 
         // Act & Assert
-        assertDoesNotThrow(
-            () -> userService.registerUser(firstUser)
-        );
         assertThrows(
                 AlreadyExistsException.class, 
             () -> userService.registerUser(duplicateEmail)
@@ -149,10 +111,11 @@ class UserServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testInvalidEmail() {
         // Arrange
         RegisterUserCommand invalidEmail = new RegisterUserCommand(
-            "testuser",
+            TEST_USERNAME,
             "invalid-email",
             TEST_PASSWORD
         );
@@ -165,11 +128,12 @@ class UserServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testInvalidPassword() {
         // Arrange
         RegisterUserCommand weakPassword = new RegisterUserCommand(
-            "testuser",
-            "test@example.com",
+            TEST_USERNAME,
+            TEST_EMAIL,
             "weak"
         );
 
@@ -181,37 +145,28 @@ class UserServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testPasswordEncryption() {
         // Arrange
-        String username = "testuser";
-        String email = "test@example.com";
-        String rawPassword = TEST_PASSWORD;
         RegisterUserCommand command = new RegisterUserCommand(
-            username,
-            email,
-            rawPassword
+            TEST_USERNAME,
+            TEST_EMAIL,
+            TEST_PASSWORD
         );
 
         // Act
         RegisteredUserRepresentation result = userService.registerUser(command);
 
         // Assert
-        String storedPassword = entityManager.createQuery(
-                "SELECT u.password FROM User u WHERE u.id = :id",
-                String.class
-            )
-            .setParameter("id", result.id())
-            .getSingleResult();
-
-        assertTrue(passwordHasher.verifyPassword(rawPassword, storedPassword));
+        User registeredUser = userRepository.findById(result.id()).orElseThrow();
+        assertTrue(registeredUser.verifyPassword(TEST_PASSWORD, passwordHasher));
     }
 
     @Test
+    @TestTransaction
     void testSuccessfulAuthentication() {
-        createTestUser();
-
         AuthenticateUserCommand command = new AuthenticateUserCommand(
-            TEST_EMAIL,
+            user.getEmail().getValue(),
             TEST_PASSWORD
         );
 
@@ -219,9 +174,8 @@ class UserServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testAuthenticationWithNonexistentEmail() {
-        createTestUser();
-
         AuthenticateUserCommand command = new AuthenticateUserCommand(
             "nonexistent@example.com",
             TEST_PASSWORD
@@ -234,11 +188,10 @@ class UserServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testAuthenticationWithWrongPassword() {
-        createTestUser();
-
         AuthenticateUserCommand command = new AuthenticateUserCommand(
-            TEST_EMAIL,
+            user.getEmail().getValue(),
             "WrongPassword123!@#"
         );
 
@@ -246,15 +199,5 @@ class UserServiceTest {
             InvalidCredentialsException.class,
             () -> userService.authenticate(command)
         );
-    }
-
-    private void createTestUser() {
-        User user = User.create(
-            TEST_USERNAME,
-            TEST_EMAIL,
-            TEST_PASSWORD,
-            passwordHasher
-        );
-        entityManager.persist(user);
     }
 }

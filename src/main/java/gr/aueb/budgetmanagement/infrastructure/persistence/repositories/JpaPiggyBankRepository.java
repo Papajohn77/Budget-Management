@@ -4,8 +4,10 @@ import java.util.Optional;
 
 import gr.aueb.budgetmanagement.application.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 
+@ApplicationScoped
 public class JpaPiggyBankRepository implements PiggyBankRepository {
     private final EntityManager em;
 

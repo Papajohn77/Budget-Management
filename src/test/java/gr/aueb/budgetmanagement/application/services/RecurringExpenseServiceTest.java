@@ -1,77 +1,51 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.AddRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpenseRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
+import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
+import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 
+@QuarkusTest
 class RecurringExpenseServiceTest {
-    private static final String TEST_USERNAME = "testuser";
-    private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "Test123!@#";
     private static final ExpenseCategory VALID_CATEGORY = ExpenseCategory.FOOD;
     private static final Money VALID_MONEY = new Money(new BigDecimal("9.99"));
 
-    private EntityManager entityManager;
-    private EntityTransaction transaction;
-    private JpaUserRepository userRepository;
+    @Inject
+    private UserRepository userRepository;
+
+    @Inject
     private RecurringExpenseService recurringExpenseService;
+
     private User user;
 
     @BeforeEach
     void setUp() {
-        entityManager = JPAUtil.getCurrentEntityManager();
-        transaction = entityManager.getTransaction();
-        transaction.begin();
-
-        userRepository = new JpaUserRepository(entityManager);
-        recurringExpenseService = new RecurringExpenseService(userRepository);
-
-        createTestUser();
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (transaction.isActive()) {
-            transaction.rollback();
-        }
-        entityManager.close();
-    }
-
-    private void createTestUser() {
-        user = User.create(
-            TEST_USERNAME,
-            TEST_EMAIL,
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-
-        entityManager.persist(user);
+        user = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
     }
 
     @Test
-    void createRecurringExpense_WithValidData() {
+    @TestTransaction
+    void createRecurringExpenseWithValidData() {
         // Arrange
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusMonths(12);
@@ -97,7 +71,7 @@ class RecurringExpenseServiceTest {
         assertFalse(result.isStopped());
 
         // Verify the recurring expense was saved in the database
-        User updatedUser = entityManager.find(User.class, user.getId());
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
         assertNotNull(updatedUser);
 
         RecurringExpense savedExpense = null;
@@ -118,6 +92,7 @@ class RecurringExpenseServiceTest {
     }
 
     @Test
+    @TestTransaction
     void createRecurringExpense_WithNonExistentUser() {
         // Arrange
         LocalDate startDate = LocalDate.now();
@@ -139,6 +114,7 @@ class RecurringExpenseServiceTest {
     }
 
     @Test
+    @TestTransaction
     void createRecurringExpense_WithInvalidCommand() {
         // Arrange - Create command with empty name
         LocalDate startDate = LocalDate.now();
@@ -154,12 +130,13 @@ class RecurringExpenseServiceTest {
 
         // Act & Assert - Assuming RecurringExpense.create() validates the name
         assertThrows(
-            InvalidDomainArgumentException.class,
+            ConstraintViolationException.class,
             () -> recurringExpenseService.createRecurringExpense(command)
         );
     }
 
     @Test
+    @TestTransaction
     void createRecurringExpense_WithInvalidDateRange() {
         // Arrange - Create command with end date before start date
         LocalDate startDate = LocalDate.now();

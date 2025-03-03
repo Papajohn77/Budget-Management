@@ -8,8 +8,10 @@ import gr.aueb.budgetmanagement.application.representations.CreatedGroupRepresen
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.validation.Valid;
 
+@ApplicationScoped
 public class GroupService {
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;

@@ -1,6 +1,7 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
@@ -130,5 +131,24 @@ public class Invitation {
             case REJECT -> reject();
         }
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Invitation invitation = (Invitation) o;
+        return Objects.equals(id, invitation.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }
