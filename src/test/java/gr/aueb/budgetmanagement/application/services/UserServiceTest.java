@@ -1,13 +1,18 @@
 package gr.aueb.budgetmanagement.application.services;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Base64;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.AuthenticateUserCommand;
@@ -15,7 +20,7 @@ import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
 import gr.aueb.budgetmanagement.application.exceptions.AlreadyExistsException;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.RegisteredUserRepresentation;
+import gr.aueb.budgetmanagement.application.representations.AccessTokenRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidEmailAddressException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidPasswordException;
@@ -48,7 +53,7 @@ class UserServiceTest {
 
     @Test
     @TestTransaction
-    void testSuccessfulUserRegistration() {
+    void testSuccessfulUserRegistration() throws JsonProcessingException {
         // Arrange
         String username = TEST_USERNAME;
         String email = TEST_EMAIL;
@@ -59,20 +64,34 @@ class UserServiceTest {
         );
 
         // Act
-        RegisteredUserRepresentation result = userService.registerUser(command);
+        AccessTokenRepresentation result = userService.registerUser(command);
 
         // Assert
         assertNotNull(result);
-        assertNotNull(result.id());
-        assertEquals(username, result.username());
-        assertEquals(email, result.email());
+        assertNotNull(result.accessToken());
+        assertEquals("Bearer", result.tokenType());
+
+        // Assert - Verify token is properly formatted
+        String token = result.accessToken();
+        String[] parts = token.split("\\.");
+        assertEquals(3, parts.length, "JWT should have 3 parts");
+        
+        // Decode and verify essential claims
+        String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode claims = mapper.readTree(payload);
+        
+        // Verify essential user claims
+        assertEquals(TEST_EMAIL, claims.get("sub").asText());
+        assertTrue(claims.has("user_id"));
+        assertNotNull(claims.get("exp"));
 
         // Verify user was persisted
         assertTrue(userRepository.existsByUsername(username));
         assertTrue(userRepository.existsByEmail(email));
 
         // Verify Savings was created as part of user registration
-        User registeredUser = userRepository.findById(result.id()).orElseThrow();
+        User registeredUser = userRepository.findByEmail(email).orElseThrow();
         assertNotNull(registeredUser.getSavings());
     }
 
@@ -155,22 +174,43 @@ class UserServiceTest {
         );
 
         // Act
-        RegisteredUserRepresentation result = userService.registerUser(command);
+        userService.registerUser(command);
 
         // Assert
-        User registeredUser = userRepository.findById(result.id()).orElseThrow();
+        User registeredUser = userRepository.findByEmail(TEST_EMAIL).orElseThrow();
         assertTrue(registeredUser.verifyPassword(TEST_PASSWORD, passwordHasher));
     }
 
     @Test
     @TestTransaction
-    void testSuccessfulAuthentication() {
+    void testSuccessfulAuthentication() throws JsonProcessingException {
         AuthenticateUserCommand command = new AuthenticateUserCommand(
             user.getEmail().getValue(),
             TEST_PASSWORD
         );
 
-        assertDoesNotThrow(() -> userService.authenticate(command));
+        // Act
+        AccessTokenRepresentation result = userService.authenticateUser(command);
+
+        // Assert
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertEquals("Bearer", result.tokenType());
+
+        // Assert - Verify token is properly formatted
+        String token = result.accessToken();
+        String[] parts = token.split("\\.");
+        assertEquals(3, parts.length, "JWT should have 3 parts");
+
+        // Decode and verify essential claims
+        String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode claims = mapper.readTree(payload);
+
+        // Verify essential user claims
+        assertEquals(user.getEmail().getValue(), claims.get("sub").asText());
+        assertTrue(claims.has("user_id"));
+        assertNotNull(claims.get("exp"));
     }
 
     @Test
@@ -183,7 +223,7 @@ class UserServiceTest {
 
         assertThrows(
             InvalidCredentialsException.class,
-            () -> userService.authenticate(command)
+            () -> userService.authenticateUser(command)
         );
     }
 
@@ -197,7 +237,7 @@ class UserServiceTest {
 
         assertThrows(
             InvalidCredentialsException.class,
-            () -> userService.authenticate(command)
+            () -> userService.authenticateUser(command)
         );
     }
 }

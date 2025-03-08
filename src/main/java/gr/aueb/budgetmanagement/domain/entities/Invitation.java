@@ -8,7 +8,7 @@ import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
-import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
+import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -58,7 +58,7 @@ public class Invitation {
         }
 
         if (admin != group.getAdmin()) {
-            throw new UnauthorizedOperationException("Only the group admin can send invitations");
+            throw new ForbiddenOperationDomainException("Only the group admin can send invitations");
         }
 
         if (group.getAdmin().equals(invitee)) {
@@ -124,7 +124,7 @@ public class Invitation {
 
     public Invitation respond(InvitationResponseOperationType operationType, User user) {
         if (!user.containsInvitation(this)) {
-            throw new UnauthorizedOperationException("User cannot respond to invitation");
+            throw new ForbiddenOperationDomainException("User cannot respond to invitation");
         }
         switch (operationType) {
             case ACCEPT -> accept();

@@ -26,7 +26,7 @@ import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
+import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -178,7 +178,7 @@ class PiggyBankServiceTest {
         );
 
         assertThrows(
-            UnauthorizedOperationException.class,
+            ForbiddenOperationDomainException.class,
             () -> piggyBankService.createGroupPiggyBank(command)
         );
     }
