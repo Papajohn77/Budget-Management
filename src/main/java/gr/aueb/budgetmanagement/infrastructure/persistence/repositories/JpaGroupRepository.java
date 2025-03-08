@@ -4,8 +4,10 @@ import java.util.Optional;
 
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 
+@ApplicationScoped
 public class JpaGroupRepository implements GroupRepository {
     private final EntityManager em;
 

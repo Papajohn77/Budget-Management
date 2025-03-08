@@ -6,9 +6,11 @@ import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpenseRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.User;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
+@ApplicationScoped
 public class RecurringExpenseService {
     private final UserRepository userRepository;
 

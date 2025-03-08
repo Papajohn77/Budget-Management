@@ -2,7 +2,7 @@ package gr.aueb.budgetmanagement.domain.entities;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
+import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -39,7 +39,7 @@ public class GroupPiggyBank extends PiggyBank {
         }
 
         if (!group.isAdmin(user)) {
-            throw new UnauthorizedOperationException("Only group admin can create group piggy banks");
+            throw new ForbiddenOperationDomainException("Only group admin can create group piggy banks");
         }
 
         return new GroupPiggyBank(name, targetAmount, category, group);

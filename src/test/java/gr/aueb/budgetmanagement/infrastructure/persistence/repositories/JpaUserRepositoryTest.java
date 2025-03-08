@@ -7,73 +7,71 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
+import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
 
+@QuarkusTest
 class JpaUserRepositoryTest {
     private static final String TEST_PASSWORD = "Test123!@#";
 
+    @Inject
     private EntityManager entityManager;
-    private EntityTransaction transaction;
-    private JpaUserRepository repository;
+
+    @Inject
+    private UserRepository userRepository;
+
+    @Inject
+    private PasswordHasher passwordHasher;
+
+    private User user;
 
     @BeforeEach
     void setUp() {
-        entityManager = JPAUtil.getCurrentEntityManager();
-        transaction = entityManager.getTransaction();
-        transaction.begin();
-
-        repository = new JpaUserRepository(entityManager);
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (transaction.isActive()) {
-            transaction.rollback();
-        }
-        entityManager.close();
+        user = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
     }
 
     @Test
+    @TestTransaction
     void testSaveUser() {
-        User user = createTestUser();
-        repository.save(user);
+        User newUser = User.create(
+            "newuser",
+            "new@example.com",
+            TEST_PASSWORD,
+            passwordHasher
+        );
+        userRepository.save(newUser);
 
-        assertNotNull(user.getId());
-        assertTrue(entityManager.contains(user));
+        assertNotNull(newUser.getId());
+        assertTrue(entityManager.contains(newUser));
     }
 
     @Test
+    @TestTransaction
     void testExistsByUsername() {
-        User user = createTestUser();
-        repository.save(user);
-
-        assertTrue(repository.existsByUsername(user.getUsername()));
-        assertFalse(repository.existsByUsername("nonexistent"));
+        assertTrue(userRepository.existsByUsername(user.getUsername()));
+        assertFalse(userRepository.existsByUsername("nonexistent"));
     }
 
     @Test
+    @TestTransaction
     void testExistsByEmail() {
-        User user = createTestUser();
-        repository.save(user);
-
-        assertTrue(repository.existsByEmail(user.getEmail().getValue()));
-        assertFalse(repository.existsByEmail("nonexistent@example.com"));
+        assertTrue(userRepository.existsByEmail(user.getEmail().getValue()));
+        assertFalse(userRepository.existsByEmail("nonexistent@example.com"));
     }
 
     @Test
+    @TestTransaction
     void testFindByEmailExistingUser() {
-        User user = createTestUser();
-        repository.save(user);
-
-        Optional<User> found = repository.findByEmail(user.getEmail().getValue());
+        Optional<User> found = userRepository.findByEmail(user.getEmail().getValue());
 
         assertTrue(found.isPresent());
         assertEquals(user.getEmail(), found.get().getEmail());
@@ -81,11 +79,9 @@ class JpaUserRepositoryTest {
     }
 
     @Test
+    @TestTransaction
     void testFindByIdExistingUser() {
-        User user = createTestUser();
-        repository.save(user);
-
-        Optional<User> found = repository.findById(user.getId());
+        Optional<User> found = userRepository.findById(user.getId());
 
         assertTrue(found.isPresent());
         assertEquals(user.getId(), found.get().getId());
@@ -94,19 +90,11 @@ class JpaUserRepositoryTest {
     }
 
     @Test
+    @TestTransaction
     void testFindByIdNonexistentUser() {
         Long nonexistentId = 999L;
-        Optional<User> found = repository.findById(nonexistentId);
+        Optional<User> found = userRepository.findById(nonexistentId);
         
         assertFalse(found.isPresent());
-    }
-
-    private User createTestUser() {
-        return User.create(
-            "testuser",
-            "test@example.com",
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
     }
 }

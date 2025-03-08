@@ -1,13 +1,14 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
-import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
+import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -57,7 +58,7 @@ public class Invitation {
         }
 
         if (admin != group.getAdmin()) {
-            throw new UnauthorizedOperationException("Only the group admin can send invitations");
+            throw new ForbiddenOperationDomainException("Only the group admin can send invitations");
         }
 
         if (group.getAdmin().equals(invitee)) {
@@ -123,12 +124,31 @@ public class Invitation {
 
     public Invitation respond(InvitationResponseOperationType operationType, User user) {
         if (!user.containsInvitation(this)) {
-            throw new UnauthorizedOperationException("User cannot respond to invitation");
+            throw new ForbiddenOperationDomainException("User cannot respond to invitation");
         }
         switch (operationType) {
             case ACCEPT -> accept();
             case REJECT -> reject();
         }
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Invitation invitation = (Invitation) o;
+        return Objects.equals(id, invitation.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

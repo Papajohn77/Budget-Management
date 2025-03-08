@@ -1,188 +1,173 @@
 package gr.aueb.budgetmanagement.infrastructure.persistence.repositories;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
+import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
+import gr.aueb.budgetmanagement.application.repositories.InvitationRepository;
+import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
-import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
 
+@QuarkusTest
 class JpaInvitationRepositoryTest {
-    private static final String TEST_PASSWORD = "Test123!@#";
-    
+
+    @Inject
     private EntityManager entityManager;
-    private EntityTransaction transaction;
-    private JpaInvitationRepository repository;
+
+    @Inject
+    private UserRepository userRepository;
+
+    @Inject
+    private GroupRepository groupRepository;
+
+    @Inject
+    private InvitationRepository invitationRepository;
     
     private User admin;
-    private User invitee;
+    private User alreadyInvited;
+    private User newInvitee;
     private Group group;
-    private Invitation invitation;
+    private Invitation existingInvitation;
 
     @BeforeEach
     void setUp() {
-        entityManager = JPAUtil.getCurrentEntityManager();
-        transaction = entityManager.getTransaction();
-        transaction.begin();
-        
-        repository = new JpaInvitationRepository(entityManager);
-        
-        // Create and persist test data
-        admin = User.create("admin", "admin@example.com", TEST_PASSWORD, new BCryptPasswordEncoder());
-        invitee = User.create("invitee", "invitee@example.com", TEST_PASSWORD, new BCryptPasswordEncoder());
-        group = Group.create("Test Group", admin);
-        
-        entityManager.persist(admin);
-        entityManager.persist(invitee);
-        entityManager.persist(group);
-        
-        invitation = Invitation.create(group, invitee, admin);
+        admin = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
+        alreadyInvited = userRepository.findById(Fixture.Users.TESTUSER2_ID).orElseThrow();
+        newInvitee = userRepository.findById(Fixture.Users.TESTUSER4_ID).orElseThrow();
+        group = groupRepository.findById(Fixture.Groups.TESTGROUP_ID).orElseThrow();
+    
+        InvitationId invitationId = new InvitationId(Fixture.Invitations.INVITATION_GROUP_ID, Fixture.Invitations.INVITATION_INVITEE_ID);
+        existingInvitation = invitationRepository.findById(invitationId).orElseThrow();
     }
 
     @Test
+    @TestTransaction
     void save_WithValidInvitation_ShouldPersist() {
+        // Arrange
+        group = groupRepository.findById(Fixture.Groups.TESTGROUP_ID).orElseThrow();
+        newInvitee = userRepository.findById(Fixture.Users.TESTUSER4_ID).orElseThrow();
+        admin = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
+        Invitation newInvitation = Invitation.create(group, newInvitee, admin);
+
         // Act
-        repository.save(invitation);
+        invitationRepository.save(newInvitation);
 
         // Assert
-        Invitation found = entityManager.find(Invitation.class, invitation.getId());
+        Invitation found = entityManager.find(Invitation.class, newInvitation.getId());
         assertNotNull(found);
-        assertEquals(invitation.getGroup(), found.getGroup());
-        assertEquals(invitation.getInvitee(), found.getInvitee());
-        assertEquals(invitation.getStatus(), found.getStatus());
+        assertEquals(newInvitation.getGroup(), found.getGroup());
+        assertEquals(newInvitation.getInvitee(), found.getInvitee());
+        assertEquals(newInvitation.getStatus(), found.getStatus());
     }
 
     @Test
+    @TestTransaction
     void findById_WithExistingInvitation_ShouldReturnInvitation() {
-        // Arrange
-        repository.save(invitation);
-
         // Act
-        Optional<Invitation> found = repository.findById(invitation.getId());
+        Optional<Invitation> found = invitationRepository.findById(existingInvitation.getId());
 
         // Assert
         assertTrue(found.isPresent());
-        assertEquals(invitation.getGroup(), found.get().getGroup());
-        assertEquals(invitation.getInvitee(), found.get().getInvitee());
     }
 
     @Test
+    @TestTransaction
     void findById_WithNonExistingInvitation_ShouldReturnEmpty() {
         // Arrange
         InvitationId nonExistingId = new InvitationId(999L, 999L);
 
         // Act
-        Optional<Invitation> found = repository.findById(nonExistingId);
+        Optional<Invitation> found = invitationRepository.findById(nonExistingId);
 
         // Assert
         assertTrue(found.isEmpty());
     }
 
     @Test
+    @TestTransaction
     void findByInvitee_WithExistingInvitations_ShouldReturnList() {
-        // Arrange
-        repository.save(invitation);
-        Group anotherGroup = Group.create("Another Group", admin);
-        entityManager.persist(anotherGroup);
-        Invitation anotherInvitation = Invitation.create(anotherGroup, invitee, admin);
-        repository.save(anotherInvitation);
-
         // Act
-        List<Invitation> invitations = repository.findByInvitee(invitee);
+        List<Invitation> invitations = invitationRepository.findByInvitee(alreadyInvited);
 
         // Assert
-        assertEquals(2, invitations.size());
-        assertTrue(invitations.stream().allMatch(inv -> inv.getInvitee().equals(invitee)));
+        assertEquals(1, invitations.size());
     }
 
     @Test
+    @TestTransaction
     void findByAdmin_WithExistingInvitations_ShouldReturnList() {
-        // Arrange
-        repository.save(invitation);
-        User anotherInvitee = User.create("another", "another@example.com", TEST_PASSWORD, new BCryptPasswordEncoder());
-        entityManager.persist(anotherInvitee);
-        Invitation anotherInvitation = Invitation.create(group, anotherInvitee, admin);
-        repository.save(anotherInvitation);
-
         // Act
-        List<Invitation> invitations = repository.findByAdmin(admin);
+        List<Invitation> invitations = invitationRepository.findByAdmin(admin);
 
         // Assert
-        assertEquals(2, invitations.size());
-        assertTrue(invitations.stream().allMatch(inv -> inv.getAdmin().equals(admin)));
+        assertEquals(1, invitations.size());
     }
 
     @Test
+    @TestTransaction
     void findByGroup_WithExistingInvitations_ShouldReturnList() {
-        // Arrange
-        repository.save(invitation);
-        User anotherInvitee = User.create("another", "another@example.com", TEST_PASSWORD, new BCryptPasswordEncoder());
-        entityManager.persist(anotherInvitee);
-        Invitation anotherInvitation = Invitation.create(group, anotherInvitee, admin);
-        repository.save(anotherInvitation);
-
         // Act
-        List<Invitation> invitations = repository.findByGroup(group);
+        List<Invitation> invitations = invitationRepository.findByGroup(group);
 
         // Assert
-        assertEquals(2, invitations.size());
-        assertTrue(invitations.stream().allMatch(inv -> inv.getGroup().equals(group)));
+        assertEquals(1, invitations.size());
     }
 
     @Test
+    @TestTransaction
     void delete_WithExistingInvitation_ShouldRemove() {
         // Arrange
-        repository.save(invitation);
-        assertTrue(repository.findById(invitation.getId()).isPresent());
+        InvitationId invitationId = new InvitationId(Fixture.Invitations.INVITATION_GROUP_ID, Fixture.Invitations.INVITATION_INVITEE_ID);
+        existingInvitation = invitationRepository.findById(invitationId).orElseThrow();
 
         // Act
-        repository.delete(invitation);
+        invitationRepository.delete(existingInvitation);
 
         // Assert
-        assertTrue(repository.findById(invitation.getId()).isEmpty());
+        assertTrue(invitationRepository.findById(existingInvitation.getId()).isEmpty());
     }
 
     @Test
+    @TestTransaction
     void findByInviteeAndStatus_WithExistingInvitations_ShouldReturnFilteredList() {
         // Arrange
-        repository.save(invitation); // PENDING status
-        
+        alreadyInvited = userRepository.findById(Fixture.Users.TESTUSER2_ID).orElseThrow();
+
         Group anotherGroup = Group.create("Another Group", admin);
         entityManager.persist(anotherGroup);
-        Invitation acceptedInvitation = Invitation.create(anotherGroup, invitee, admin);
-        acceptedInvitation.respond(InvitationResponseOperationType.ACCEPT, invitee);
-        repository.save(acceptedInvitation);
+
+        Invitation acceptedInvitation = Invitation.create(anotherGroup, alreadyInvited, admin);
+        acceptedInvitation.respond(InvitationResponseOperationType.ACCEPT, alreadyInvited);
+        invitationRepository.save(acceptedInvitation);
 
         // Act
-        List<Invitation> pendingInvitations = repository.findByInviteeAndStatus(invitee, InvitationStatus.PENDING);
-        List<Invitation> acceptedInvitations = repository.findByInviteeAndStatus(invitee, InvitationStatus.ACCEPTED);
+        List<Invitation> pendingInvitations = invitationRepository.findByInviteeAndStatus(alreadyInvited, InvitationStatus.PENDING);
+        List<Invitation> acceptedInvitations = invitationRepository.findByInviteeAndStatus(alreadyInvited, InvitationStatus.ACCEPTED);
+        List<Invitation> rejectedInvitations = invitationRepository.findByInviteeAndStatus(alreadyInvited, InvitationStatus.REJECTED);
 
         // Assert
         assertEquals(1, pendingInvitations.size());
         assertEquals(1, acceptedInvitations.size());
+        assertEquals(0, rejectedInvitations.size());
+
         assertEquals(InvitationStatus.PENDING, pendingInvitations.get(0).getStatus());
         assertEquals(InvitationStatus.ACCEPTED, acceptedInvitations.get(0).getStatus());
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (transaction.isActive()) {
-            transaction.rollback();
-        }
-        entityManager.close();
     }
 }

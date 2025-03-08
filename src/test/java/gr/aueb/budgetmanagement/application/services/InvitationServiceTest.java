@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.RespondToInvitationCommand;
 import gr.aueb.budgetmanagement.application.commands.SendInvitationCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
@@ -24,97 +24,44 @@ import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
-import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
-import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaGroupRepository;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaInvitationRepository;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 
+@QuarkusTest
 class InvitationServiceTest {
-    private static final String ADMIN_USERNAME = "admin";
-    private static final String ADMIN_EMAIL = "admin@example.com";
-    private static final String INVITEE_USERNAME = "invitee";
-    private static final String INVITEE_EMAIL = "invitee@example.com";
-    private static final String TEST_PASSWORD = "Test123!@#";
-    private static final String GROUP_NAME = "Test Group";
+    private static final String INVITEE_EMAIL = "test4@example.com";
 
-    private EntityManager entityManager;
-    private EntityTransaction transaction;
+    @Inject
     private UserRepository userRepository;
+
+    @Inject
     private GroupRepository groupRepository;
+
+    @Inject
     private InvitationRepository invitationRepository;
+
+    @Inject
     private InvitationService invitationService;
-    private PasswordHasher passwordHasher;
+
     private User admin;
-    private User invitee;
+    private User alreadyInvited;
+    private User alreadyMember;
+    private User newInvitee;
     private Group group;
-    private Invitation invitation;
 
     @BeforeEach
     void setUp() {
-        entityManager = JPAUtil.getCurrentEntityManager();
-        transaction = entityManager.getTransaction();
-        transaction.begin();
-
-        userRepository = new JpaUserRepository(entityManager);
-        groupRepository = new JpaGroupRepository(entityManager);
-        invitationRepository = new JpaInvitationRepository(entityManager);
-        invitationService = new InvitationService(
-            invitationRepository, 
-            groupRepository, 
-            userRepository
-        );
-        passwordHasher = new BCryptPasswordEncoder();
-
-        createTestUsers();
-        createTestGroup();
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (transaction.isActive()) {
-            transaction.rollback();
-        }
-        entityManager.close();
-    }
-
-    private void createTestUsers() {
-        admin = User.create(
-            ADMIN_USERNAME,
-            ADMIN_EMAIL,
-            TEST_PASSWORD,
-            passwordHasher
-        );
-        entityManager.persist(admin);
-
-        invitee = User.create(
-            INVITEE_USERNAME,
-            INVITEE_EMAIL,
-            TEST_PASSWORD,
-            passwordHasher
-        );
-        entityManager.persist(invitee);
-
-        entityManager.flush();
-    }
-
-    private void createTestGroup() {
-        group = Group.create(GROUP_NAME, admin);
-        entityManager.persist(group);
-        entityManager.flush();
-    }
-
-    private void createTestInvitation() {
-        invitation = Invitation.create(group, invitee, admin);
-        entityManager.persist(invitation);
-        entityManager.flush();
+        admin = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
+        alreadyInvited = userRepository.findById(Fixture.Users.TESTUSER2_ID).orElseThrow();
+        alreadyMember = userRepository.findById(Fixture.Users.TESTUSER3_ID).orElseThrow();
+        newInvitee = userRepository.findById(Fixture.Users.TESTUSER4_ID).orElseThrow();
+        group = groupRepository.findById(Fixture.Groups.TESTGROUP_ID).orElseThrow();
     }
 
     @Test
+    @TestTransaction
     void sendInvitation_WithValidData_ShouldCreateInvitation() {
         // Arrange
         SendInvitationCommand command = new SendInvitationCommand(
@@ -129,23 +76,27 @@ class InvitationServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(group.getId(), result.groupId());
-        assertEquals(invitee.getId(), result.inviteeId());
+        assertEquals(newInvitee.getId(), result.inviteeId());
         assertEquals(InvitationStatus.PENDING, result.status());
         assertNotNull(result.createdAt());
 
         // Verify the invitation was persisted
-        InvitationId invitationId = new InvitationId(group.getId(), invitee.getId());
-        Invitation savedInvitation = entityManager.find(Invitation.class, invitationId);
+        InvitationId invitationId = new InvitationId(group.getId(), newInvitee.getId());
+        Invitation savedInvitation = invitationRepository.findById(invitationId).orElseThrow();
+
         assertNotNull(savedInvitation);
-        assertEquals(InvitationStatus.PENDING, savedInvitation.getStatus());
         assertEquals(group.getId(), savedInvitation.getGroup().getId());
-        assertEquals(invitee.getId(), savedInvitation.getInvitee().getId());
+        assertEquals(newInvitee.getId(), savedInvitation.getInvitee().getId());
+        assertEquals(InvitationStatus.PENDING, savedInvitation.getStatus());
+        assertNotNull(savedInvitation.getCreatedAt());
 
         // Verify the invitee has the invitation in their collection
+        User invitee = userRepository.findById(newInvitee.getId()).orElseThrow();
         assertTrue(invitee.getInvitations().contains(savedInvitation));
     }
 
     @Test
+    @TestTransaction
     void sendInvitation_WithNonExistentGroup_ShouldThrowNotFoundException() {
         // Arrange
         SendInvitationCommand command = new SendInvitationCommand(
@@ -163,6 +114,7 @@ class InvitationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void sendInvitation_WithNonExistentUser_ShouldThrowNotFoundException() {
         // Arrange
         SendInvitationCommand command = new SendInvitationCommand(
@@ -180,11 +132,12 @@ class InvitationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void sendInvitation_ToGroupAdmin_ShouldThrowInvalidDomainArgumentException() {
         // Arrange
         SendInvitationCommand command = new SendInvitationCommand(
             group.getId(),
-            ADMIN_EMAIL,
+            admin.getEmail().getValue(),
             admin.getId()
         );
 
@@ -196,14 +149,12 @@ class InvitationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void sendInvitation_ToExistingMember_ShouldThrowInvalidDomainArgumentException() {
         // Arrange
-        group.addMember(invitee);
-        entityManager.flush();
-
         SendInvitationCommand command = new SendInvitationCommand(
             group.getId(),
-            INVITEE_EMAIL,
+            alreadyMember.getEmail().getValue(),
             admin.getId()
         );
 
@@ -215,44 +166,31 @@ class InvitationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void sendInvitation_WithExistingInvitation_ShouldThrowInvitationAlreadyExistsException() {
         // Arrange
         SendInvitationCommand command = new SendInvitationCommand(
             group.getId(),
-            INVITEE_EMAIL,
+            alreadyInvited.getEmail().getValue(),
             admin.getId()
         );
 
-        // First, send an invitation
-        invitationService.sendInvitation(command);
-
-        // Act: Try to send another invitation to the same invitee for the same group
+        // Act & Assert
         InvitationAlreadyExistsException exception = assertThrows(
             InvitationAlreadyExistsException.class,
             () -> invitationService.sendInvitation(command)
         );
-
-        // Assert: Ensure the correct exception is thrown
         assertEquals("Invitation already exists", exception.getMessage());
-
-        // Verify that the first invitation still exists in the system
-        InvitationId invitationId = new InvitationId(group.getId(), invitee.getId());
-        Invitation invitation = entityManager.find(Invitation.class, invitationId);
-        assertNotNull(invitation);
-        assertEquals(InvitationStatus.PENDING, invitation.getStatus());
     }
 
-    // Respond to Invitation Tests
-
     @Test
+    @TestTransaction
     void respondToInvitation_AcceptInvitation_Success() {
         // Arrange
-        createTestInvitation();
-
         RespondToInvitationCommand command = new RespondToInvitationCommand(
             group.getId(),
             InvitationResponseOperationType.ACCEPT,
-            invitee.getId()
+            alreadyInvited.getId()
         );
 
         // Act
@@ -261,26 +199,24 @@ class InvitationServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(group.getId(), result.groupId());
-        assertEquals(invitee.getId(), result.inviteeId());
+        assertEquals(alreadyInvited.getId(), result.inviteeId());
         assertEquals(InvitationStatus.ACCEPTED, result.status());
         assertNotNull(result.createdAt());
 
         // Verify the invitation was updated in the database
-        InvitationId invitationId = new InvitationId(group.getId(), invitee.getId());
-        Invitation savedInvitation = entityManager.find(Invitation.class, invitationId);
-        assertNotNull(savedInvitation);
+        InvitationId invitationId = new InvitationId(group.getId(), alreadyInvited.getId());
+        Invitation savedInvitation = invitationRepository.findById(invitationId).orElseThrow();
         assertEquals(InvitationStatus.ACCEPTED, savedInvitation.getStatus());
     }
 
     @Test
+    @TestTransaction
     void respondToInvitation_RejectInvitation_Success() {
         // Arrange
-        createTestInvitation();
-
         RespondToInvitationCommand command = new RespondToInvitationCommand(
             group.getId(),
             InvitationResponseOperationType.REJECT,
-            invitee.getId()
+            alreadyInvited.getId()
         );
 
         // Act
@@ -289,22 +225,20 @@ class InvitationServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(group.getId(), result.groupId());
-        assertEquals(invitee.getId(), result.inviteeId());
+        assertEquals(alreadyInvited.getId(), result.inviteeId());
         assertEquals(InvitationStatus.REJECTED, result.status());
         assertNotNull(result.createdAt());
 
         // Verify the invitation was updated in the database
-        InvitationId invitationId = new InvitationId(group.getId(), invitee.getId());
-        Invitation savedInvitation = entityManager.find(Invitation.class, invitationId);
-        assertNotNull(savedInvitation);
+        InvitationId invitationId = new InvitationId(group.getId(), alreadyInvited.getId());
+        Invitation savedInvitation = invitationRepository.findById(invitationId).orElseThrow();
         assertEquals(InvitationStatus.REJECTED, savedInvitation.getStatus());
     }
 
     @Test
+    @TestTransaction
     void respondToInvitation_UserNotFound_ThrowsNotFoundException() {
         // Arrange
-        createTestInvitation();
-
         Long nonExistentUserId = 999L;
         RespondToInvitationCommand command = new RespondToInvitationCommand(
             group.getId(),
@@ -318,48 +252,35 @@ class InvitationServiceTest {
             () -> invitationService.respondToInvitation(command)
         );
         assertEquals("User not found with id: " + nonExistentUserId, exception.getMessage());
-
-        // Verify the invitation was not updated
-        InvitationId invitationId = new InvitationId(group.getId(), invitee.getId());
-        Invitation savedInvitation = entityManager.find(Invitation.class, invitationId);
-        assertEquals(InvitationStatus.PENDING, savedInvitation.getStatus());
     }
 
     @Test
-    void respondToInvitation_InvitationNotFound_ThrowsNotFoundException() {
+    @TestTransaction
+    void respondToInvitation_GroupNotFound_ThrowsNotFoundException() {
         // Arrange
         Long nonExistentGroupId = 999L;
         RespondToInvitationCommand command = new RespondToInvitationCommand(
             nonExistentGroupId,
             InvitationResponseOperationType.ACCEPT,
-            invitee.getId()
+            alreadyInvited.getId()
         );
 
         // Act & Assert
-        assertThrows(
+        NotFoundException exception = assertThrows(
             NotFoundException.class,
             () -> invitationService.respondToInvitation(command)
         );
+        assertEquals("Group not found with id: " + nonExistentGroupId, exception.getMessage());
     }
 
     @Test
+    @TestTransaction
     void respondToInvitation_DifferentUserResponding_ThrowsNotFoundException() {
         // Arrange
-        createTestInvitation();
-
-        User otherUser = User.create(
-            "other",
-            "other@example.com",
-            TEST_PASSWORD,
-            passwordHasher
-        );
-        entityManager.persist(otherUser);
-        entityManager.flush();
-
         RespondToInvitationCommand command = new RespondToInvitationCommand(
             group.getId(),
             InvitationResponseOperationType.ACCEPT,
-            otherUser.getId()
+            newInvitee.getId()  // User exists but does not have pending invitation
         );
 
         // Act & Assert

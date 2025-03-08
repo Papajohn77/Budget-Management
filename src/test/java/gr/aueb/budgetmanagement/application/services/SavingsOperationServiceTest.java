@@ -7,10 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.AllocateSavingsCommand;
 import gr.aueb.budgetmanagement.application.commands.DeallocateSavingsCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
@@ -20,56 +20,30 @@ import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 
+@QuarkusTest
 class SavingsOperationServiceTest {
-    private static final String TEST_USERNAME = "testuser";
-    private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "Test123!@#";
     private static final LocalDate TODAY = LocalDate.now();
     private static final Money AMOUNT = new Money(new BigDecimal("100.00"));
 
-    private EntityManager entityManager;
-    private EntityTransaction transaction;
+    @Inject
     private UserRepository userRepository;
+
+    @Inject
     private SavingsOperationService savingsOperationService;
+
     private User user;
 
     @BeforeEach
     void setUp() {
-        entityManager = JPAUtil.getCurrentEntityManager();
-        transaction = entityManager.getTransaction();
-        transaction.begin();
-
-        userRepository = new JpaUserRepository(entityManager);
-        savingsOperationService = new SavingsOperationService(userRepository);
-
-        createTestUser();
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (transaction.isActive()) {
-            transaction.rollback();
-        }
-        entityManager.close();
-    }
-
-    private void createTestUser() {
-        user = User.create(
-            TEST_USERNAME,
-            TEST_EMAIL,
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-        entityManager.persist(user);
+        user = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
     }
 
     @Test
+    @TestTransaction
     void testSuccessfulAllocation() {
         AllocateSavingsCommand command = new AllocateSavingsCommand(
             AMOUNT,
@@ -91,6 +65,7 @@ class SavingsOperationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testAllocationWithNonexistentUser() {
         AllocateSavingsCommand command = new AllocateSavingsCommand(
             AMOUNT,
@@ -105,6 +80,7 @@ class SavingsOperationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testSuccessfulDeallocation() {
         // First allocate
         savingsOperationService.allocate(
@@ -133,6 +109,7 @@ class SavingsOperationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testDeallocationWithNonexistentUser() {
         DeallocateSavingsCommand command = new DeallocateSavingsCommand(
             AMOUNT,
@@ -147,6 +124,7 @@ class SavingsOperationServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testDeallocationWithInsufficientFunds() {
         // First allocate
         savingsOperationService.allocate(

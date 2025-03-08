@@ -1,6 +1,7 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,10 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.CreateGroupPiggyBankCommand;
 import gr.aueb.budgetmanagement.application.commands.CreatePersonalPiggyBankCommand;
 import gr.aueb.budgetmanagement.application.commands.DissolvePiggyBankCommand;
@@ -25,78 +26,57 @@ import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
+import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.infrastructure.persistence.JPAUtil;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaGroupRepository;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaPiggyBankRepository;
-import gr.aueb.budgetmanagement.infrastructure.persistence.repositories.JpaUserRepository;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
 
+@QuarkusTest
 class PiggyBankServiceTest {
-    private static final String TEST_USERNAME = "testuser";
-    private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "Test123!@#";
-    private static final String TEST_GROUP_NAME = "testgroup";
     private static final BigDecimal TARGET_AMOUNT = new BigDecimal("1000.00");
     private static final String PIGGY_BANK_NAME = "Test Piggy Bank";
 
-    private EntityManager entityManager;
-    private EntityTransaction transaction;
+    @Inject
+    EntityManager entityManager;
+
+    @Inject
     private UserRepository userRepository;
+
+    @Inject
     private GroupRepository groupRepository;
+
+    @Inject
     private PiggyBankRepository piggyBankRepository;
+
+    @Inject
     private PiggyBankService piggyBankService;
-    private User user;
+
+    private User admin;
+
+    private User nonAdmin;
+
     private Group group;
 
     @BeforeEach
     void setUp() {
-        entityManager = JPAUtil.getCurrentEntityManager();
-        transaction = entityManager.getTransaction();
-        transaction.begin();
-
-        userRepository = new JpaUserRepository(entityManager);
-        groupRepository = new JpaGroupRepository(entityManager);
-        piggyBankRepository = new JpaPiggyBankRepository(entityManager);
-        piggyBankService = new PiggyBankService(userRepository, groupRepository, piggyBankRepository);
-
-        createTestUser();
-        createTestGroup();
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (transaction.isActive()) {
-            transaction.rollback();
-        }
-        entityManager.close();
-    }
-
-    private void createTestUser() {
-        user = User.create(
-            TEST_USERNAME,
-            TEST_EMAIL,
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-        entityManager.persist(user);
-    }
-
-    private void createTestGroup() {
-        group = Group.create(TEST_GROUP_NAME, user);
-        entityManager.persist(group);
+        admin = userRepository.findById(Fixture.Users.TESTUSER_ID).orElseThrow();
+        nonAdmin = userRepository.findById(Fixture.Users.TESTUSER2_ID).orElseThrow();
+        group = groupRepository.findById(Fixture.Groups.TESTGROUP_ID).orElseThrow();
     }
 
     @Test
+    @TestTransaction
     void testCreatePersonalPiggyBank() {
+        int adminNumOfPiggyBanks = 1;
+        assertEquals(adminNumOfPiggyBanks, admin.getPiggyBanks().size());
+
         CreatePersonalPiggyBankCommand command = new CreatePersonalPiggyBankCommand(
             PIGGY_BANK_NAME,
             new Money(TARGET_AMOUNT),
             ExpenseCategory.OTHER,
-            user.getId()
+            admin.getId()
         );
 
         var result = piggyBankService.createPersonalPiggyBank(command);
@@ -106,11 +86,12 @@ class PiggyBankServiceTest {
         assertEquals(TARGET_AMOUNT, result.targetAmount().getValue());
         assertEquals(ExpenseCategory.OTHER, result.category());
 
-        User persistedUser = userRepository.findById(user.getId()).orElseThrow();
-        assertEquals(1, persistedUser.getPiggyBanks().size());
+        User persistedUser = userRepository.findById(admin.getId()).orElseThrow();
+        assertEquals(adminNumOfPiggyBanks + 1, persistedUser.getPiggyBanks().size());
     }
 
     @Test
+    @TestTransaction
     void testCreatePersonalPiggyBankUserNotFound() {
         CreatePersonalPiggyBankCommand command = new CreatePersonalPiggyBankCommand(
             PIGGY_BANK_NAME,
@@ -126,13 +107,17 @@ class PiggyBankServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testCreateGroupPiggyBank() {
+        int groupNumOfPiggyBanks = 1;
+        assertEquals(groupNumOfPiggyBanks, admin.getPiggyBanks().size());
+
         CreateGroupPiggyBankCommand command = new CreateGroupPiggyBankCommand(
             PIGGY_BANK_NAME,
             new Money(TARGET_AMOUNT),
             ExpenseCategory.OTHER,
             group.getId(),
-            user.getId()
+            admin.getId()
         );
 
         var result = piggyBankService.createGroupPiggyBank(command);
@@ -144,17 +129,18 @@ class PiggyBankServiceTest {
         assertEquals(group.getId(), result.groupId());
 
         Group persistedGroup = groupRepository.findById(group.getId()).orElseThrow();
-        assertEquals(1, persistedGroup.getPiggyBanks().size());
+        assertEquals(groupNumOfPiggyBanks + 1, persistedGroup.getPiggyBanks().size());
     }
 
     @Test
+    @TestTransaction
     void testCreateGroupPiggyBankGroupNotFound() {
         CreateGroupPiggyBankCommand command = new CreateGroupPiggyBankCommand(
             PIGGY_BANK_NAME,
             new Money(TARGET_AMOUNT),
             ExpenseCategory.OTHER,
             999L,
-            user.getId()
+            admin.getId()
         );
 
         assertThrows(
@@ -164,6 +150,7 @@ class PiggyBankServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testCreateGroupPiggyBankAdminNotFound() {
         CreateGroupPiggyBankCommand command = new CreateGroupPiggyBankCommand(
             PIGGY_BANK_NAME,
@@ -180,15 +167,8 @@ class PiggyBankServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testCreateGroupPiggyBankNotAdmin() {
-        User nonAdmin = User.create(
-            "other", 
-            "other@example.com", 
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-        entityManager.persist(nonAdmin);
-
         CreateGroupPiggyBankCommand command = new CreateGroupPiggyBankCommand(
             PIGGY_BANK_NAME,
             new Money(TARGET_AMOUNT),
@@ -198,19 +178,20 @@ class PiggyBankServiceTest {
         );
 
         assertThrows(
-            UnauthorizedOperationException.class,
+            ForbiddenOperationDomainException.class,
             () -> piggyBankService.createGroupPiggyBank(command)
         );
     }
 
     @Test
+    @TestTransaction
     void testDissolvePersonalPiggyBank() {
         // Arrange
         CreatePersonalPiggyBankCommand createCommand = new CreatePersonalPiggyBankCommand(
             PIGGY_BANK_NAME,
             new Money(TARGET_AMOUNT),
             ExpenseCategory.OTHER,
-            user.getId()
+            admin.getId()
         );
         var created = piggyBankService.createPersonalPiggyBank(createCommand);
 
@@ -221,23 +202,24 @@ class PiggyBankServiceTest {
         PiggyBankAllocation allocation = personalPiggyBank.allocate(
             new Money(BigDecimal.valueOf(500)),
             LocalDate.now(),
-            user
+            admin
         );
         entityManager.persist(allocation);
 
         // Act
         DissolvePiggyBankCommand dissolveCommand = new DissolvePiggyBankCommand(
             created.id(),
-            user.getId()
+            admin.getId()
         );
         piggyBankService.dissolvePiggyBank(dissolveCommand);
 
         // Assert
-        assertNull(entityManager.find(PiggyBank.class, created.id()));
+        assertFalse(piggyBankRepository.findById(created.id()).isPresent());
         assertNull(entityManager.find(PiggyBankAllocation.class, allocation.getId()));
     }
 
     @Test
+    @TestTransaction
     void testDissolveGroupPiggyBank() {
         // Arrange
         CreateGroupPiggyBankCommand createCommand = new CreateGroupPiggyBankCommand(
@@ -245,7 +227,7 @@ class PiggyBankServiceTest {
             new Money(TARGET_AMOUNT),
             ExpenseCategory.OTHER,
             group.getId(),
-            user.getId()
+            admin.getId()
         );
         var created = piggyBankService.createGroupPiggyBank(createCommand);
 
@@ -256,25 +238,26 @@ class PiggyBankServiceTest {
         PiggyBankAllocation allocation = groupPiggyBank.allocate(
             new Money(BigDecimal.valueOf(500)),
             LocalDate.now(),
-            user
+            admin
         );
         entityManager.persist(allocation);
 
         // Act
         DissolvePiggyBankCommand dissolveCommand = new DissolvePiggyBankCommand(
             created.id(),
-            user.getId()
+            admin.getId()
         );
         piggyBankService.dissolvePiggyBank(dissolveCommand);
 
         // Assert
-        assertNull(entityManager.find(PiggyBank.class, created.id()));
+        assertFalse(piggyBankRepository.findById(created.id()).isPresent());
         assertNull(entityManager.find(PiggyBankAllocation.class, allocation.getId()));
     }
 
     @Test
+    @TestTransaction
     void testDissolvePiggyBankPiggyBankNotFound() {
-        DissolvePiggyBankCommand command = new DissolvePiggyBankCommand(999L, user.getId());
+        DissolvePiggyBankCommand command = new DissolvePiggyBankCommand(999L, admin.getId());
         assertThrows(
             NotFoundException.class,
             () -> piggyBankService.dissolvePiggyBank(command)
@@ -282,26 +265,19 @@ class PiggyBankServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testDissolvePersonalPiggyBankNotOwner() {
         // Arrange
         CreatePersonalPiggyBankCommand createCommand = new CreatePersonalPiggyBankCommand(
             PIGGY_BANK_NAME,
             new Money(TARGET_AMOUNT),
             ExpenseCategory.OTHER,
-            user.getId()
+            admin.getId()
         );
         var created = piggyBankService.createPersonalPiggyBank(createCommand);
 
-        User otherUser = User.create(
-            "other", 
-            "other@example.com", 
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-        entityManager.persist(otherUser);
-
         // Act & Assert
-        DissolvePiggyBankCommand dissolveCommand = new DissolvePiggyBankCommand(created.id(), otherUser.getId());
+        DissolvePiggyBankCommand dissolveCommand = new DissolvePiggyBankCommand(created.id(), nonAdmin.getId());
         assertThrows(
             ForbiddenException.class,
             () -> piggyBankService.dissolvePiggyBank(dissolveCommand)
@@ -309,6 +285,7 @@ class PiggyBankServiceTest {
     }
 
     @Test
+    @TestTransaction
     void testDissolveGroupPiggyBankNotAdmin() {
         // Arrange
         CreateGroupPiggyBankCommand createCommand = new CreateGroupPiggyBankCommand(
@@ -316,17 +293,9 @@ class PiggyBankServiceTest {
             new Money(TARGET_AMOUNT),
             ExpenseCategory.OTHER,
             group.getId(),
-            user.getId()
+            admin.getId()
         );
         var created = piggyBankService.createGroupPiggyBank(createCommand);
-
-        User nonAdmin = User.create(
-            "nonadmin", 
-            "nonadmin@example.com", 
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
-        entityManager.persist(nonAdmin);
 
         group.addMember(nonAdmin);
 

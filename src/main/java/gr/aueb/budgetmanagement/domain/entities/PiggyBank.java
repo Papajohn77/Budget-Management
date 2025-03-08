@@ -7,7 +7,7 @@ import java.util.Set;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.exceptions.UnauthorizedOperationException;
+import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -96,7 +96,7 @@ public abstract class PiggyBank {
         User user
     ) {
         if (!isAuthorizedUser(user)) {
-            throw new UnauthorizedOperationException("User is not authorized to access this piggy bank");
+            throw new ForbiddenOperationDomainException("User is not authorized to access this piggy bank");
         }
 
         PiggyBankAllocation allocation = PiggyBankAllocation.create(

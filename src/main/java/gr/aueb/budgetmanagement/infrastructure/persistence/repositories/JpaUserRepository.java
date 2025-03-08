@@ -6,8 +6,10 @@ import java.util.Optional;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 
+@ApplicationScoped
 public class JpaUserRepository implements UserRepository {
     private final EntityManager em;
 
