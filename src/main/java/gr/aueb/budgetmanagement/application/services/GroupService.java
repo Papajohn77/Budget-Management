@@ -1,10 +1,14 @@
 package gr.aueb.budgetmanagement.application.services;
 
+import java.util.List;
+import java.util.Set;
+
 import gr.aueb.budgetmanagement.application.commands.CreateGroupCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.CreatedGroupRepresentation;
+import gr.aueb.budgetmanagement.application.representations.GroupsRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
@@ -40,5 +44,25 @@ public class GroupService {
             group.getName(),
             true
         );
+    }
+
+    @Transactional
+    public GroupsRepresentation getGroups(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
+
+        return new GroupsRepresentation(
+            toCreatedGroupRepresentationList(user.getGroups(), user)
+        );
+    }
+
+    private List<CreatedGroupRepresentation> toCreatedGroupRepresentationList(Set<Group> groups, User user) {
+        return groups.stream()
+            .map(group -> new CreatedGroupRepresentation(
+                group.getId(),
+                group.getName(),
+                group.isAdmin(user)
+            ))
+            .toList();
     }
 }
