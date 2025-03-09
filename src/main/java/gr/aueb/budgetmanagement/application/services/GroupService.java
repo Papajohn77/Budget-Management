@@ -9,6 +9,7 @@ import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
 @ApplicationScoped
@@ -21,6 +22,7 @@ public class GroupService {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public CreatedGroupRepresentation createGroup(@Valid CreateGroupCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
