@@ -4,27 +4,34 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.is;
 
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreateGroupRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
-import io.restassured.response.Response;
 
 @QuarkusTest
 class GroupResourceTest extends IntegrationBase {
     private static final String GROUPS_ENDPOINT = "/api/v1/groups";
     private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
+    private static final String REGISTER_ENDPOINT = "/api/v1/users/register";
     private static final String TEST_GROUP_NAME = "Test Group";
     private static final String EXISTING_EMAIL = "test@example.com"; // From test fixture
     private static final String EXISTING_PASSWORD = "Test123!@#"; // From test fixture
 
     @Test
     void testSuccessfulGroupCreation() {
-        String authToken = getAuthToken();
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
         CreateGroupRequest request = new CreateGroupRequest(TEST_GROUP_NAME);
 
         given()
@@ -43,7 +50,12 @@ class GroupResourceTest extends IntegrationBase {
 
     @Test
     void testGroupCreationWithBlankName() {
-        String authToken = getAuthToken();
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
         CreateGroupRequest request = new CreateGroupRequest("");
 
         given()
@@ -59,7 +71,11 @@ class GroupResourceTest extends IntegrationBase {
 
     @Test
     void testGroupCreationWithDuplicateName() {
-        String authToken = getAuthToken();
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
 
         CreateGroupRequest request = new CreateGroupRequest(TEST_GROUP_NAME);
 
@@ -111,21 +127,116 @@ class GroupResourceTest extends IntegrationBase {
             .statusCode(401);
     }
 
-    private String getAuthToken() {
+    @Test
+    void testGetUserGroups() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
             EXISTING_EMAIL,
             EXISTING_PASSWORD
         );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+        
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(GROUPS_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("groups", notNullValue())
+            .body("groups.size()", is(1))
+            .body("groups[0].id", equalTo(1))
+            .body("groups[0].name", equalTo("testgroup"))
+            .body("groups[0].is_admin", equalTo(true));
+    }
 
-        Response loginResponse = given()
+    @Test
+    void testGetGroupsForUserWithNoGroups() {
+        // Create a new user for this test who doesn't belong to any groups
+        RegisterUserRequest registerRequest = new RegisterUserRequest(
+            "nogroups", 
+            "nogroups@example.com", 
+            "Test123!@#"
+        );
+        
+        String authToken = getAuthTokenRegister(registerRequest);
+        
+        // Get groups for the user (should be empty)
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(GROUPS_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("groups", notNullValue())
+            .body("groups.size()", is(0));
+    }
+
+    @Test
+    void testGetGroupsWithoutAuthentication() {
+        given()
+            .contentType(ContentType.JSON)
+            .when()
+            .get(GROUPS_ENDPOINT)
+            .then()
+            .statusCode(401)
+            .body("message", containsString("Missing Authorization header"));
+    }
+
+    @Test
+    void testGetGroupsWithInvalidToken() {
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer invalid.token.here")
+            .when()
+            .get(GROUPS_ENDPOINT)
+            .then()
+            .statusCode(401);
+    }
+
+    @Test
+    void testGetGroupsForNonAdminMember() {
+        // Login as testuser3, who is a member but not an admin of testgroup
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            "test3@example.com",
+            "Test123!@#"
+        );
+        
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+        
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(GROUPS_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("groups", notNullValue())
+            .body("groups.size()", is(1))
+            .body("groups[0].id", equalTo(1))
+            .body("groups[0].name", equalTo("testgroup"))
+            .body("groups[0].is_admin", equalTo(false));
+    }
+
+    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
+        return given()
+            .contentType(ContentType.JSON)
+            .body(registerRequest)
+            .when()
+            .post(REGISTER_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getString("access_token");
+    }
+
+    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
+        return given()
             .contentType(ContentType.JSON)
             .body(loginRequest)
             .when()
             .post(LOGIN_ENDPOINT)
             .then()
             .statusCode(200)
-            .extract().response();
-
-        return loginResponse.jsonPath().getString("access_token");
+            .extract().jsonPath().getString("access_token");
     }
 }

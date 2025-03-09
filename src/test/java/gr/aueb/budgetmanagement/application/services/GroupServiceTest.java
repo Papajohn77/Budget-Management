@@ -1,6 +1,7 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,6 +15,7 @@ import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.CreatedGroupRepresentation;
+import gr.aueb.budgetmanagement.application.representations.GroupsRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.GroupAlreadyExistsException;
@@ -111,4 +113,66 @@ class GroupServiceTest {
            () -> groupService.createGroup(command)
        );
    }
+
+    @Test
+    @TestTransaction
+    void getGroupsForExistingUser() {
+        // Act
+        GroupsRepresentation result = groupService.getGroups(user.getId());
+        
+        // Assert
+        assertNotNull(result);
+        assertNotNull(result.groups());
+        assertEquals(1, result.groups().size());
+        
+        CreatedGroupRepresentation groupRepresentation = result.groups().get(0);
+        assertEquals(Fixture.Groups.TESTGROUP_ID, groupRepresentation.id());
+        assertEquals("testgroup", groupRepresentation.name());
+        assertTrue(groupRepresentation.isAdmin());
+    }
+
+    @Test
+    @TestTransaction
+    void getGroupsForUserWithNoGroups() {
+        // Arrange - Use testuser2 who is not in any group based on test data
+        User userWithNoGroups = userRepository.findById(Fixture.Users.TESTUSER2_ID).orElseThrow();
+        
+        // Act
+        GroupsRepresentation result = groupService.getGroups(userWithNoGroups.getId());
+        
+        // Assert
+        assertNotNull(result);
+        assertNotNull(result.groups());
+        assertEquals(0, result.groups().size());
+    }
+
+    @Test
+    @TestTransaction
+    void getGroupsForUserWhoIsGroupMemberButNotAdmin() {
+        // Arrange - Use testuser3 who is member but not admin of testgroup
+        User memberUser = userRepository.findById(Fixture.Users.TESTUSER3_ID).orElseThrow();
+        
+        // Act
+        GroupsRepresentation result = groupService.getGroups(memberUser.getId());
+        
+        // Assert
+        assertNotNull(result);
+        assertNotNull(result.groups());
+        assertEquals(1, result.groups().size());
+        
+        CreatedGroupRepresentation groupRepresentation = result.groups().get(0);
+        assertEquals(Fixture.Groups.TESTGROUP_ID, groupRepresentation.id());
+        assertEquals("testgroup", groupRepresentation.name());
+        assertFalse(groupRepresentation.isAdmin());
+    }
+
+    @Test
+    @TestTransaction
+    void getGroupsForNonExistentUser() {
+        // Act & Assert
+        assertThrows(
+            NotFoundException.class,
+            () -> groupService.getGroups(999L)
+        );
+    }
 }
