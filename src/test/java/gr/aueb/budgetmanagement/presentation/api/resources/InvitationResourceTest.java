@@ -6,9 +6,11 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.is;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.SendInvitationRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.UpdateInvitationStatusRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import static io.restassured.RestAssured.given;
 import io.restassured.http.ContentType;
@@ -252,6 +254,169 @@ class InvitationResourceTest extends IntegrationBase {
             .then()
             .statusCode(401)
             .body("message", containsString("Missing Authorization header"));
+    }
+
+    @Test
+    void testAcceptInvitation() {
+        // Login as invitee to accept invitation
+        AuthenticateUserRequest inviteeLoginRequest = new AuthenticateUserRequest(
+            "test2@example.com", // This user already has a pending invitation
+            "Test123!@#"
+        );
+        String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
+
+        // Accept invitation
+        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest("ACCEPTED");
+        
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + inviteeAuthToken)
+            .body(updateRequest)
+            .when()
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
+            .then()
+            .statusCode(200)
+            .body("groupId", equalTo(TEST_GROUP_ID.intValue()))
+            .body("inviteeId", equalTo(Fixture.Users.TESTUSER2_ID.intValue()))
+            .body("status", equalTo("ACCEPTED"));
+        
+        // Verify the user is now a member of the group
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + inviteeAuthToken)
+            .when()
+            .get("/api/v1/groups")
+            .then()
+            .statusCode(200)
+            .body("groups.size()", is(1))
+            .body("groups[0].id", equalTo(TEST_GROUP_ID.intValue()))
+            .body("groups[0].is_admin", equalTo(false));
+    }
+
+    @Test
+    void testRejectInvitation() {
+        // Login as invitee to reject invitation
+        AuthenticateUserRequest inviteeLoginRequest = new AuthenticateUserRequest(
+            "test2@example.com", // This user already has a pending invitation
+            "Test123!@#"
+        );
+        String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
+
+        // Reject invitation
+        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest("REJECTED");
+        
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + inviteeAuthToken)
+            .body(updateRequest)
+            .when()
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
+            .then()
+            .statusCode(200)
+            .body("groupId", equalTo(TEST_GROUP_ID.intValue()))
+            .body("inviteeId", equalTo(Fixture.Users.TESTUSER2_ID.intValue()))
+            .body("status", equalTo("REJECTED"));
+    }
+
+    @Test
+    void testUpdateInvitationWithInvalidStatus() {
+        // Login as invitee
+        AuthenticateUserRequest inviteeLoginRequest = new AuthenticateUserRequest(
+            "test2@example.com",
+            "Test123!@#"
+        );
+        String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
+
+        // Update invitation with invalid status
+        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest("INVALID_STATUS");
+        
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + inviteeAuthToken)
+            .body(updateRequest)
+            .when()
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
+            .then()
+            .statusCode(400)
+            .body("message", containsString("Invalid status"));
+    }
+
+    @Test
+    void testUpdateInvitationNonExistentInvitation() {
+        // Login as invitee
+        AuthenticateUserRequest inviteeLoginRequest = new AuthenticateUserRequest(
+            "test2@example.com",
+            "Test123!@#"
+        );
+        String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
+
+        // Update non-existent invitation
+        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest("ACCEPTED");
+        
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + inviteeAuthToken)
+            .body(updateRequest)
+            .when()
+            .patch(INVITATIONS_ENDPOINT + "/999/" + Fixture.Users.TESTUSER2_ID) // Non-existent group ID
+            .then()
+            .statusCode(404);
+    }
+
+    @Test
+    void testUpdateInvitationByNonInvitee() {
+        // Login as admin (non-invitee)
+        AuthenticateUserRequest adminLoginRequest = new AuthenticateUserRequest(
+            ADMIN_EMAIL,
+            ADMIN_PASSWORD
+        );
+        String adminAuthToken = getAuthTokenAuthenticate(adminLoginRequest);
+
+        // Try to update invitation as non-invitee
+        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest("ACCEPTED");
+        
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + adminAuthToken)
+            .body(updateRequest)
+            .when()
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
+            .then()
+            .statusCode(403)
+            .body("message", containsString("Only the invitee can respond to an invitation"));
+    }
+
+    @Test
+    void testUpdateAlreadyAcceptedInvitation() {
+        // Login as invitee
+        AuthenticateUserRequest inviteeLoginRequest = new AuthenticateUserRequest(
+            "test2@example.com",
+            "Test123!@#"
+        );
+        String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
+
+        // First accept the invitation
+        UpdateInvitationStatusRequest acceptRequest = new UpdateInvitationStatusRequest("ACCEPTED");
+        
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + inviteeAuthToken)
+            .body(acceptRequest)
+            .when()
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
+            .then()
+            .statusCode(200);
+        
+        // Try to update again
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + inviteeAuthToken)
+            .body(acceptRequest)
+            .when()
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
+            .then()
+            .statusCode(409)
+            .body("message", containsString("Can only accept pending invitations"));
     }
 
     private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
