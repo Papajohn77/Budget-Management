@@ -1,5 +1,8 @@
 package gr.aueb.budgetmanagement.application.services;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import gr.aueb.budgetmanagement.application.commands.RespondToInvitationCommand;
 import gr.aueb.budgetmanagement.application.commands.SendInvitationCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
@@ -7,9 +10,11 @@ import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.InvitationRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.InvitationRepresentation;
+import gr.aueb.budgetmanagement.application.representations.InvitationsRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
+import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -76,5 +81,29 @@ public class InvitationService {
             invitation.getStatus(),
             invitation.getCreatedAt()
         );
+    }
+
+    @Transactional
+    public InvitationsRepresentation getInvitations(Long userId, InvitationStatus status) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
+
+        List<Invitation> invitations;
+        if (status != null) {
+            invitations = invitationRepository.findByInviteeAndStatus(user, status);
+        } else {
+            invitations = invitationRepository.findByInvitee(user);
+        }
+
+        List<InvitationRepresentation> invitationRepresentations = invitations.stream()
+            .map(invitation -> new InvitationRepresentation(
+                invitation.getGroup().getId(),
+                invitation.getInvitee().getId(),
+                invitation.getStatus(),
+                invitation.getCreatedAt()
+            ))
+            .collect(Collectors.toList());
+
+        return new InvitationsRepresentation(invitationRepresentations);
     }
 }

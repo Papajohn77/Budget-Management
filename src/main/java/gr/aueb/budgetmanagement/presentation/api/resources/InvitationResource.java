@@ -1,15 +1,22 @@
 package gr.aueb.budgetmanagement.presentation.api.resources;
 
+import java.util.Map;
+
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 
 import gr.aueb.budgetmanagement.application.commands.SendInvitationCommand;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
 import gr.aueb.budgetmanagement.application.representations.InvitationRepresentation;
+import gr.aueb.budgetmanagement.application.representations.InvitationsRepresentation;
 import gr.aueb.budgetmanagement.application.services.InvitationService;
+import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.presentation.api.requests.SendInvitationRequest;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
@@ -41,6 +48,22 @@ public class InvitationResource {
 
         return Response
             .status(Response.Status.CREATED)
+            .entity(result)
+            .build();
+    }
+    
+    @GET
+    public Response getInvitations(@Context SecurityContext ctx, @QueryParam("status") InvitationStatus status) {
+        JsonWebToken jwt = (JsonWebToken) ctx.getUserPrincipal();
+        if (jwt == null) {
+            throw new InvalidCredentialsException("Missing Authorization header with JWT token");
+        }
+        Long authenticatedUserId = Long.valueOf(jwt.getClaim("user_id").toString());
+        
+        InvitationsRepresentation result = invitationService.getInvitations(authenticatedUserId, status);
+        
+        return Response
+            .status(Response.Status.OK)
             .entity(result)
             .build();
     }
