@@ -9,6 +9,7 @@ import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
 import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
+import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyRespondedToException;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -109,7 +110,7 @@ public class Invitation {
 
     void accept() {
         if (status != InvitationStatus.PENDING) {
-            throw new InvalidDomainArgumentException("Can only accept pending invitations");
+            throw new InvitationAlreadyRespondedToException("Can only accept pending invitations");
         }
         status = InvitationStatus.ACCEPTED;
         group.addMember(invitee);
@@ -117,7 +118,7 @@ public class Invitation {
 
     void reject() {
         if (status != InvitationStatus.PENDING) {
-            throw new InvalidDomainArgumentException("Can only decline pending invitations");
+            throw new InvitationAlreadyRespondedToException("Can only decline pending invitations");
         }
         status = InvitationStatus.REJECTED;
     }

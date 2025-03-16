@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.IntegrationBase;
+import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.SendInvitationRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.UpdateInvitationStatusRequest;
@@ -19,6 +20,7 @@ import io.restassured.http.ContentType;
 class InvitationResourceTest extends IntegrationBase {
     private static final String INVITATIONS_ENDPOINT = "/api/v1/invitations";
     private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
+    private static final String GROUPS_ENDPOINT = "/api/v1/groups";
     private static final Long TEST_GROUP_ID = 1L; // From test fixture
     private static final String ADMIN_EMAIL = "test@example.com"; // From test fixture
     private static final String ADMIN_PASSWORD = "Test123!@#"; // From test fixture
@@ -49,8 +51,8 @@ class InvitationResourceTest extends IntegrationBase {
             .post(INVITATIONS_ENDPOINT)
             .then()
             .statusCode(201)
-            .body("groupId", equalTo(TEST_GROUP_ID.intValue()))
-            .body("inviteeId", equalTo(4)) // User ID for test4@example.com
+            .body("group_id", equalTo(TEST_GROUP_ID.intValue()))
+            .body("invitee_id", equalTo(4)) // User ID for test4@example.com
             .body("status", equalTo("PENDING"));
     }
 
@@ -200,8 +202,8 @@ class InvitationResourceTest extends IntegrationBase {
             .statusCode(200)
             .body("invitations", notNullValue())
             .body("invitations.size()", is(1))
-            .body("invitations[0].groupId", equalTo(TEST_GROUP_ID.intValue()))
-            .body("invitations[0].inviteeId", equalTo(2))
+            .body("invitations[0].group_id", equalTo(TEST_GROUP_ID.intValue()))
+            .body("invitations[0].invitee_id", equalTo(2))
             .body("invitations[0].status", equalTo("PENDING"));
     }
 
@@ -266,18 +268,18 @@ class InvitationResourceTest extends IntegrationBase {
         String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
 
         // Accept invitation
-        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest("ACCEPTED");
+        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest(InvitationResponseOperationType.ACCEPT);
         
         given()
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + inviteeAuthToken)
             .body(updateRequest)
             .when()
-            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID)
             .then()
             .statusCode(200)
-            .body("groupId", equalTo(TEST_GROUP_ID.intValue()))
-            .body("inviteeId", equalTo(Fixture.Users.TESTUSER2_ID.intValue()))
+            .body("group_id", equalTo(TEST_GROUP_ID.intValue()))
+            .body("invitee_id", equalTo(Fixture.Users.TESTUSER2_ID.intValue()))
             .body("status", equalTo("ACCEPTED"));
         
         // Verify the user is now a member of the group
@@ -285,7 +287,7 @@ class InvitationResourceTest extends IntegrationBase {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + inviteeAuthToken)
             .when()
-            .get("/api/v1/groups")
+            .get(GROUPS_ENDPOINT)
             .then()
             .statusCode(200)
             .body("groups.size()", is(1))
@@ -303,42 +305,19 @@ class InvitationResourceTest extends IntegrationBase {
         String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
 
         // Reject invitation
-        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest("REJECTED");
+        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest(InvitationResponseOperationType.REJECT);
         
         given()
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + inviteeAuthToken)
             .body(updateRequest)
             .when()
-            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID)
             .then()
             .statusCode(200)
-            .body("groupId", equalTo(TEST_GROUP_ID.intValue()))
-            .body("inviteeId", equalTo(Fixture.Users.TESTUSER2_ID.intValue()))
+            .body("group_id", equalTo(TEST_GROUP_ID.intValue()))
+            .body("invitee_id", equalTo(Fixture.Users.TESTUSER2_ID.intValue()))
             .body("status", equalTo("REJECTED"));
-    }
-
-    @Test
-    void testUpdateInvitationWithInvalidStatus() {
-        // Login as invitee
-        AuthenticateUserRequest inviteeLoginRequest = new AuthenticateUserRequest(
-            "test2@example.com",
-            "Test123!@#"
-        );
-        String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
-
-        // Update invitation with invalid status
-        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest("INVALID_STATUS");
-        
-        given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + inviteeAuthToken)
-            .body(updateRequest)
-            .when()
-            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
-            .then()
-            .statusCode(400)
-            .body("message", containsString("Invalid status"));
     }
 
     @Test
@@ -351,39 +330,16 @@ class InvitationResourceTest extends IntegrationBase {
         String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
 
         // Update non-existent invitation
-        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest("ACCEPTED");
+        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest(InvitationResponseOperationType.ACCEPT);
         
         given()
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + inviteeAuthToken)
             .body(updateRequest)
             .when()
-            .patch(INVITATIONS_ENDPOINT + "/999/" + Fixture.Users.TESTUSER2_ID) // Non-existent group ID
+            .patch(INVITATIONS_ENDPOINT + "/999/") // Non-existent group ID
             .then()
             .statusCode(404);
-    }
-
-    @Test
-    void testUpdateInvitationByNonInvitee() {
-        // Login as admin (non-invitee)
-        AuthenticateUserRequest adminLoginRequest = new AuthenticateUserRequest(
-            ADMIN_EMAIL,
-            ADMIN_PASSWORD
-        );
-        String adminAuthToken = getAuthTokenAuthenticate(adminLoginRequest);
-
-        // Try to update invitation as non-invitee
-        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest("ACCEPTED");
-        
-        given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + adminAuthToken)
-            .body(updateRequest)
-            .when()
-            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
-            .then()
-            .statusCode(403)
-            .body("message", containsString("Only the invitee can respond to an invitation"));
     }
 
     @Test
@@ -396,14 +352,14 @@ class InvitationResourceTest extends IntegrationBase {
         String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
 
         // First accept the invitation
-        UpdateInvitationStatusRequest acceptRequest = new UpdateInvitationStatusRequest("ACCEPTED");
+        UpdateInvitationStatusRequest acceptRequest = new UpdateInvitationStatusRequest(InvitationResponseOperationType.ACCEPT);
         
         given()
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + inviteeAuthToken)
             .body(acceptRequest)
             .when()
-            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID)
             .then()
             .statusCode(200);
         
@@ -413,7 +369,7 @@ class InvitationResourceTest extends IntegrationBase {
             .header("Authorization", "Bearer " + inviteeAuthToken)
             .body(acceptRequest)
             .when()
-            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID + "/" + Fixture.Users.TESTUSER2_ID)
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID)
             .then()
             .statusCode(409)
             .body("message", containsString("Can only accept pending invitations"));
