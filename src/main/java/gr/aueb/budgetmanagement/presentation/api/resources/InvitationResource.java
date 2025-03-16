@@ -12,6 +12,7 @@ import gr.aueb.budgetmanagement.application.representations.InvitationsRepresent
 import gr.aueb.budgetmanagement.application.services.InvitationService;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.presentation.api.requests.SendInvitationRequest;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -52,26 +53,14 @@ public class InvitationResource {
     }
     
     @GET
-    public Response getInvitations(@Context SecurityContext ctx, @QueryParam("status") String status) {
+    public Response getInvitations(@Context SecurityContext ctx, @QueryParam("status") InvitationStatus status) {
         JsonWebToken jwt = (JsonWebToken) ctx.getUserPrincipal();
         if (jwt == null) {
             throw new InvalidCredentialsException("Missing Authorization header with JWT token");
         }
         Long authenticatedUserId = Long.valueOf(jwt.getClaim("user_id").toString());
         
-        InvitationStatus invitationStatus = null;
-        if (status != null) {
-            try {
-                invitationStatus = InvitationStatus.valueOf(status);
-            } catch (IllegalArgumentException e) {
-                return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "Invalid status: " + status))
-                    .build();
-            }
-        }
-        
-        InvitationsRepresentation result = invitationService.getInvitations(authenticatedUserId, invitationStatus);
+        InvitationsRepresentation result = invitationService.getInvitations(authenticatedUserId, status);
         
         return Response
             .status(Response.Status.OK)

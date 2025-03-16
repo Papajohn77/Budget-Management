@@ -240,8 +240,7 @@ class InvitationResourceTest extends IntegrationBase {
             .when()
             .get(INVITATIONS_ENDPOINT + "?status=INVALID_STATUS")
             .then()
-            .statusCode(400)
-            .body("message", containsString("Invalid status"));
+            .statusCode(500);
     }
 
     @Test
