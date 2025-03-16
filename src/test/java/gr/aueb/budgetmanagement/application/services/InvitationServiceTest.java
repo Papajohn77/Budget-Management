@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.InvitationRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.InvitationRepresentation;
+import gr.aueb.budgetmanagement.application.representations.InvitationsRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
@@ -289,5 +289,95 @@ class InvitationServiceTest {
             () -> invitationService.respondToInvitation(command)
         );
         assertEquals("Invitation not found", notFoundException.getMessage());
+    }
+    
+    @Test
+    @TestTransaction
+    void getInvitations_WithStatusFilter_ReturnsFilteredInvitations() {
+        // Arrange
+        // Test with alreadyInvited user who has a PENDING invitation
+        
+        // Act
+        InvitationsRepresentation result = invitationService.getInvitations(
+            alreadyInvited.getId(), 
+            InvitationStatus.PENDING
+        );
+        
+        // Assert
+        assertNotNull(result);
+        assertNotNull(result.invitations());
+        assertEquals(1, result.invitations().size());
+        
+        InvitationRepresentation invitation = result.invitations().get(0);
+        assertEquals(group.getId(), invitation.groupId());
+        assertEquals(alreadyInvited.getId(), invitation.inviteeId());
+        assertEquals(InvitationStatus.PENDING, invitation.status());
+    }
+    
+    @Test
+    @TestTransaction
+    void getInvitations_WithoutStatusFilter_ReturnsAllInvitations() {
+        RespondToInvitationCommand acceptCommand = new RespondToInvitationCommand(
+            group.getId(),
+            InvitationResponseOperationType.ACCEPT,
+            alreadyInvited.getId()
+        );
+        invitationService.respondToInvitation(acceptCommand);
+        
+        SendInvitationCommand sendCommand = new SendInvitationCommand(
+            group.getId(),
+            newInvitee.getEmail().getValue(),
+            admin.getId()
+        );
+        invitationService.sendInvitation(sendCommand);
+        
+        // Act
+        InvitationsRepresentation result = invitationService.getInvitations(
+            alreadyInvited.getId(), 
+            null
+        );
+        
+        // Assert
+        assertNotNull(result);
+        assertNotNull(result.invitations());
+        
+        assertTrue(result.invitations().size() >= 1);
+        
+        // Check that we have at least one ACCEPTED invitation
+        boolean hasAccepted = false;
+        
+        for (InvitationRepresentation invitation : result.invitations()) {
+            if (invitation.status() == InvitationStatus.ACCEPTED) {
+                hasAccepted = true;
+                break;
+            }
+        }
+        
+        assertTrue(hasAccepted, "Should have an ACCEPTED invitation");
+    }
+    
+    @Test
+    @TestTransaction
+    void getInvitations_NoInvitations_ReturnsEmptyList() {
+        // Act
+        InvitationsRepresentation result = invitationService.getInvitations(
+            newInvitee.getId(), // User with no invitations
+            InvitationStatus.PENDING
+        );
+        
+        // Assert
+        assertNotNull(result);
+        assertNotNull(result.invitations());
+        assertEquals(0, result.invitations().size());
+    }
+    
+    @Test
+    @TestTransaction
+    void getInvitations_NonExistentUser_ThrowsNotFoundException() {
+        // Act & Assert
+        assertThrows(
+            NotFoundException.class,
+            () -> invitationService.getInvitations(999L, null)
+        );
     }
 }

@@ -1,21 +1,15 @@
 package gr.aueb.budgetmanagement.presentation.api.resources;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 
 import gr.aueb.budgetmanagement.application.commands.SendInvitationCommand;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
-import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
-import gr.aueb.budgetmanagement.application.repositories.InvitationRepository;
-import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.InvitationRepresentation;
 import gr.aueb.budgetmanagement.application.representations.InvitationsRepresentation;
 import gr.aueb.budgetmanagement.application.services.InvitationService;
-import gr.aueb.budgetmanagement.domain.entities.Invitation;
-import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.presentation.api.requests.SendInvitationRequest;
 import jakarta.ws.rs.GET;
@@ -30,17 +24,9 @@ import jakarta.ws.rs.core.SecurityContext;
 @SecurityRequirement(name = "JWT")
 public class InvitationResource {
     private final InvitationService invitationService;
-    private final UserRepository userRepository;
-    private final InvitationRepository invitationRepository;
 
-    public InvitationResource(
-        InvitationService invitationService, 
-        UserRepository userRepository,
-        InvitationRepository invitationRepository
-    ) {
+    public InvitationResource(InvitationService invitationService) {
         this.invitationService = invitationService;
-        this.userRepository = userRepository;
-        this.invitationRepository = invitationRepository;
     }
 
     @POST
@@ -73,26 +59,19 @@ public class InvitationResource {
         }
         Long authenticatedUserId = Long.valueOf(jwt.getClaim("user_id").toString());
         
-        User user = userRepository.findById(authenticatedUserId)
-            .orElseThrow(() -> new NotFoundException("User not found with id: " + authenticatedUserId));
-        
-        List<Invitation> invitations;
-        if (status != null && status.equals("PENDING")) {
-            invitations = invitationRepository.findByInviteeAndStatus(user, InvitationStatus.PENDING);
-        } else {
-            invitations = invitationRepository.findByInvitee(user);
+        InvitationStatus invitationStatus = null;
+        if (status != null) {
+            try {
+                invitationStatus = InvitationStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("message", "Invalid status: " + status))
+                    .build();
+            }
         }
         
-        List<InvitationRepresentation> invitationRepresentations = invitations.stream()
-            .map(invitation -> new InvitationRepresentation(
-                invitation.getGroup().getId(),
-                invitation.getInvitee().getId(),
-                invitation.getStatus(),
-                invitation.getCreatedAt()
-            ))
-            .collect(Collectors.toList());
-        
-        InvitationsRepresentation result = new InvitationsRepresentation(invitationRepresentations);
+        InvitationsRepresentation result = invitationService.getInvitations(authenticatedUserId, invitationStatus);
         
         return Response
             .status(Response.Status.OK)

@@ -187,7 +187,7 @@ class InvitationResourceTest extends IntegrationBase {
             "Test123!@#"
         );
         String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
-    
+
         // Get pending invitations for invitee
         given()
             .contentType(ContentType.JSON)
@@ -201,6 +201,58 @@ class InvitationResourceTest extends IntegrationBase {
             .body("invitations[0].groupId", equalTo(TEST_GROUP_ID.intValue()))
             .body("invitations[0].inviteeId", equalTo(2))
             .body("invitations[0].status", equalTo("PENDING"));
+    }
+
+    @Test
+    void testGetAllInvitations() {
+        // Login as invitee to check all invitations
+        AuthenticateUserRequest inviteeLoginRequest = new AuthenticateUserRequest(
+            "test2@example.com",
+            "Test123!@#"
+        );
+        String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
+
+        // Get all invitations for invitee
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + inviteeAuthToken)
+            .when()
+            .get(INVITATIONS_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("invitations", notNullValue())
+            .body("invitations.size()", is(1)); // User test2 only has one invitation in the test data
+    }
+
+    @Test
+    void testGetInvitationsWithInvalidStatus() {
+        // Login as invitee
+        AuthenticateUserRequest inviteeLoginRequest = new AuthenticateUserRequest(
+            "test2@example.com",
+            "Test123!@#"
+        );
+        String inviteeAuthToken = getAuthTokenAuthenticate(inviteeLoginRequest);
+
+        // Get invitations with invalid status
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + inviteeAuthToken)
+            .when()
+            .get(INVITATIONS_ENDPOINT + "?status=INVALID_STATUS")
+            .then()
+            .statusCode(400)
+            .body("message", containsString("Invalid status"));
+    }
+
+    @Test
+    void testGetInvitationsWithoutAuthentication() {
+        given()
+            .contentType(ContentType.JSON)
+            .when()
+            .get(INVITATIONS_ENDPOINT)
+            .then()
+            .statusCode(401)
+            .body("message", containsString("Missing Authorization header"));
     }
 
     private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
