@@ -1,6 +1,7 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,6 +39,22 @@ class UserTest {
             new BCryptPasswordEncoder()
         );
         amount = new Money(new BigDecimal("100.00"));
+    }
+
+    @Test
+    void createWithNullUsername() {
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> User.create(null, TEST_EMAIL, TEST_PASSWORD, new BCryptPasswordEncoder())
+        );
+    }
+
+    @Test
+    void createWithEmptyUsername() {
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> User.create("   ", TEST_EMAIL, TEST_PASSWORD, new BCryptPasswordEncoder())
+        );
     }
 
     @Test
@@ -157,6 +174,59 @@ class UserTest {
             UnsupportedOperationException.class,
             () -> piggyBanks.add(new PersonalPiggyBank())
         );
+    }
+
+    @Test
+    void addNullInvitation() {
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> user.addInvitation(null)
+        );
+    }
+
+    @Test
+    void equalsWithNullObject() {
+        assertNotEquals(user, null);
+    }
+
+    @Test
+    void equalsAndHashCode_equalUsers() {
+        User user1 = User.create(
+            TEST_USERNAME,
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
+        );
+
+        User user2 = User.create(
+            TEST_USERNAME,
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
+        );
+
+        assertEquals(user1, user2);
+        assertEquals(user1.hashCode(), user2.hashCode());
+    }
+
+    @Test
+    void equalsAndHashCode_notEqualUsers() {
+        User user1 = User.create(
+            TEST_USERNAME,
+            TEST_EMAIL,
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
+        );
+
+        User user2 = User.create(
+            "validusername",
+            "validemail@example.com",
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
+        );
+
+        assertNotEquals(user1, user2);
+        assertNotEquals(user1.hashCode(), user2.hashCode());
     }
 
     private PersonalPiggyBank createPersonalPiggyBank(User user) {

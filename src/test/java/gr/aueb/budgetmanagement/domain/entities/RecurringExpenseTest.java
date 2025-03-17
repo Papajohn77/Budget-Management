@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
@@ -36,105 +35,156 @@ class RecurringExpenseTest {
         );
     }
 
-    @Nested
-    class RecurringExpenseCreationTest {
-        @Test
-        void createWithValidData() {
-            // Act
-            RecurringExpense recurringExpense = user.addRecurringExpense(
+    @Test
+    void createWithValidData() {
+        // Act
+        RecurringExpense recurringExpense = RecurringExpense.create(
+            VALID_NAME,
+            VALID_AMOUNT,
+            VALID_CATEGORY,
+            VALID_START_DATE,
+            VALID_END_DATE,
+            user
+        );
+
+        // Assert
+        assertNotNull(recurringExpense);
+        assertEquals(VALID_NAME, recurringExpense.getName());
+        assertEquals(VALID_AMOUNT, recurringExpense.getAmount());
+        assertEquals(VALID_CATEGORY, recurringExpense.getCategory());
+        assertEquals(VALID_START_DATE, recurringExpense.getStartDate());
+        assertEquals(VALID_END_DATE, recurringExpense.getEndDate());
+        assertEquals(user, recurringExpense.getUser());
+        assertTrue(recurringExpense.getGeneratedExpenses().isEmpty());
+    }
+
+    @Test
+    void createWithNullName() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> RecurringExpense.create(
+                null,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                VALID_START_DATE,
+                VALID_END_DATE,
+                user
+            )
+        );
+    }
+
+    @Test
+    void createWithEmptyName() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> RecurringExpense.create(
+                "   ",
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                VALID_START_DATE,
+                VALID_END_DATE,
+                user
+            )
+        );
+    }
+
+    @Test
+    void createWithNullAmount() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> RecurringExpense.create(
+                VALID_NAME,
+                null,
+                VALID_CATEGORY,
+                VALID_START_DATE,
+                VALID_END_DATE,
+                user
+            )
+        );
+    }
+
+    @Test
+    void createWithNullCategory() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> RecurringExpense.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                null,
+                VALID_START_DATE,
+                VALID_END_DATE,
+                user
+            )
+        );
+    }
+
+    @Test
+    void createWithNullStartDate() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> RecurringExpense.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                null,
+                VALID_END_DATE,
+                user
+            )
+        );
+    }
+
+    @Test
+    void createWithNullEndDate() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> RecurringExpense.create(
                 VALID_NAME,
                 VALID_AMOUNT,
                 VALID_CATEGORY,
                 VALID_START_DATE,
-                VALID_END_DATE
-            );
+                null,
+                user
+            )
+        );
+    }
 
-            // Assert
-            assertNotNull(recurringExpense);
-            assertEquals(VALID_NAME, recurringExpense.getName());
-            assertEquals(VALID_AMOUNT, recurringExpense.getAmount());
-            assertEquals(VALID_CATEGORY, recurringExpense.getCategory());
-            assertEquals(VALID_START_DATE, recurringExpense.getStartDate());
-            assertEquals(VALID_END_DATE, recurringExpense.getEndDate());
-            assertEquals(user, recurringExpense.getUser());
-            assertTrue(user.getRecurringExpenses().contains(recurringExpense));
-        }
+    @Test
+    void createWithEndDateBeforeStartDate() {
+        // Act & Assert
+        LocalDate invalidEndDate = VALID_START_DATE.minusDays(1);
 
-        @Test
-        void createWithNullAmount() {
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class, () ->
-                user.addRecurringExpense(
-                    VALID_NAME,
-                    null,
-                    VALID_CATEGORY,
-                    VALID_START_DATE,
-                    VALID_END_DATE
-                )
-            );
-        }
+        assertThrows(
+            InvalidDomainArgumentException.class,
+            () -> RecurringExpense.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                VALID_START_DATE,
+                invalidEndDate,
+                user
+            )
+        );
+    }
 
         @Test
-        void createWithNullCategory() {
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class, () ->
-                user.addRecurringExpense(
-                    VALID_NAME,
-                    VALID_AMOUNT,
-                    null,
-                    VALID_START_DATE,
-                    VALID_END_DATE
-                )
-            );
-        }
-
-        @Test
-        void createWithNullStartDate() {
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class, () ->
-                user.addRecurringExpense(
-                    VALID_NAME,
-                    VALID_AMOUNT,
-                    VALID_CATEGORY,
-                    null,
-                    VALID_END_DATE
-                )
-            );
-        }
-
-        @Test
-        void createWithNullEndDate() {
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class, () ->
-                user.addRecurringExpense(
-                    VALID_NAME,
-                    VALID_AMOUNT,
-                    VALID_CATEGORY,
-                    VALID_START_DATE,
-                    null
-                )
-            );
-        }
-
-        @Test
-        void createWithEndDateBeforeStartDate() {
-            // Act & Assert
-            LocalDate invalidEndDate = VALID_START_DATE.minusDays(1);
-
-            assertThrows(
-                InvalidDomainArgumentException.class, () ->
-                user.addRecurringExpense(
-                    VALID_NAME,
-                    VALID_AMOUNT,
-                    VALID_CATEGORY,
-                    VALID_START_DATE,
-                    invalidEndDate
-                )
-            );
-        }
+    void createWithNullUser() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> RecurringExpense.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                VALID_START_DATE,
+                VALID_END_DATE,
+                null
+            )
+        );
     }
 }

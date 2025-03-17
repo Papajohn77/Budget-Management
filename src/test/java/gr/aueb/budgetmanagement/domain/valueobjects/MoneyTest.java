@@ -34,11 +34,27 @@ class MoneyTest {
     }
 
     @Test
-    void equalsWithSameAmount() {
+    void equalsWithNullMoney() {
+        Money money = new Money(new BigDecimal("100.00"));
+
+        assertNotEquals(money, null);
+    }
+
+    @Test
+    void equalsWithDifferentClassObject() {
+        BigDecimal amount = new BigDecimal("100.00");
+        Money money = new Money(new BigDecimal("100.00"));
+
+        assertNotEquals(money, amount);
+    }
+
+    @Test
+    void equalsAndHashCodeWithSameAmount() {
         Money money1 = new Money(new BigDecimal("100.00"));
         Money money2 = new Money(new BigDecimal("100.00"));
 
         assertEquals(money1, money2);
+        assertEquals(money1.hashCode(), money2.hashCode());
     }
 
     @Test
@@ -47,5 +63,6 @@ class MoneyTest {
         Money money2 = new Money(new BigDecimal("50.00"));
 
         assertNotEquals(money1, money2);
+        assertNotEquals(money1.hashCode(), money2.hashCode());
     }
 }

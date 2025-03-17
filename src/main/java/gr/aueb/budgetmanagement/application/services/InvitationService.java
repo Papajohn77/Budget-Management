@@ -1,7 +1,6 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import gr.aueb.budgetmanagement.application.commands.RespondToInvitationCommand;
 import gr.aueb.budgetmanagement.application.commands.SendInvitationCommand;
@@ -102,7 +101,7 @@ public class InvitationService {
                 invitation.getStatus(),
                 invitation.getCreatedAt()
             ))
-            .collect(Collectors.toList());
+            .toList();
 
         return new InvitationsRepresentation(invitationRepresentations);
     }

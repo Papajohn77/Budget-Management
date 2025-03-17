@@ -17,6 +17,14 @@ class PasswordTest {
         assertEquals(validPassword, password.getValue());
     }
 
+    @Test
+    void testNullPassword() {
+        assertThrows(
+            InvalidPasswordException.class, 
+            () -> new Password(null)
+        );
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
         "", 

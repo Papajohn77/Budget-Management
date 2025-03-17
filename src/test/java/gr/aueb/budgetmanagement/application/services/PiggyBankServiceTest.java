@@ -266,6 +266,16 @@ class PiggyBankServiceTest {
 
     @Test
     @TestTransaction
+    void testDissolvePiggyBankPiggyBankOwnerNotFound() {
+        DissolvePiggyBankCommand command = new DissolvePiggyBankCommand(Fixture.PiggyBanks.PERSONAL_PIGGY_BANK_ID, 999L);
+        assertThrows(
+            NotFoundException.class,
+            () -> piggyBankService.dissolvePiggyBank(command)
+        );
+    }
+
+    @Test
+    @TestTransaction
     void testDissolvePersonalPiggyBankNotOwner() {
         // Arrange
         CreatePersonalPiggyBankCommand createCommand = new CreatePersonalPiggyBankCommand(

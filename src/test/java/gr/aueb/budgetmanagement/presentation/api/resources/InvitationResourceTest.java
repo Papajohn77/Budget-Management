@@ -321,6 +321,38 @@ class InvitationResourceTest extends IntegrationBase {
     }
 
     @Test
+    void testUpdateInvitationWithoutAuthentication() {
+        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest(
+            InvitationResponseOperationType.ACCEPT
+        );
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(updateRequest)
+            .when()
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID)
+            .then()
+            .statusCode(401)
+            .body("message", containsString("Missing Authorization header"));
+    }
+
+    @Test
+    void testUpdateInvitationWithInvalidToken() {
+        UpdateInvitationStatusRequest updateRequest = new UpdateInvitationStatusRequest(
+            InvitationResponseOperationType.ACCEPT
+        );
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer invalid.token.here")
+            .body(updateRequest)
+            .when()
+            .patch(INVITATIONS_ENDPOINT + "/" + TEST_GROUP_ID)
+            .then()
+            .statusCode(401);
+    }
+
+    @Test
     void testUpdateInvitationNonExistentInvitation() {
         // Login as invitee
         AuthenticateUserRequest inviteeLoginRequest = new AuthenticateUserRequest(
