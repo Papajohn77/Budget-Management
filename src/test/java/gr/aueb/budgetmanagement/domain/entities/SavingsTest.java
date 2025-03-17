@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
+import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
@@ -36,7 +37,15 @@ class SavingsTest {
     }
 
     @Test
-    void createForShouldCreateSavingsAndSetBidirectionalRelationship() {
+    void createWithNullUser() {
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> Savings.create(null)
+        );
+    }
+
+    @Test
+    void createShouldCreateSavingsAndSetBidirectionalRelationship() {
         assertNotNull(savings.getUser());
         assertEquals(user, savings.getUser());
         assertEquals(savings, user.getSavings());

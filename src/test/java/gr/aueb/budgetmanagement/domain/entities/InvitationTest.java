@@ -1,16 +1,20 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
-import java.lang.reflect.Field;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.lang.reflect.Field;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
+import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyRespondedToException;
 import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
@@ -112,7 +116,6 @@ class InvitationTest {
     @Test
     void getId_ShouldReturnCorrectId() {
         assertNotNull(invitation.getId());
-        // Note: Assuming InvitationId has appropriate equals method
     }
 
     @Test
@@ -141,8 +144,16 @@ class InvitationTest {
     }
 
     @Test
+    void accept_WhenNotInvitee_shouldThrowException() {
+        assertThrows(
+            ForbiddenOperationDomainException.class, 
+            () -> invitation.respond(InvitationResponseOperationType.ACCEPT, admin)
+        );
+    }
+
+    @Test
     void accept_WhenPending_ShouldChangeStatusAndAddMember() {
-        invitation.accept();
+        invitation.respond(InvitationResponseOperationType.ACCEPT, invitee);
         
         assertEquals(InvitationStatus.ACCEPTED, invitation.getStatus());
         assertTrue(group.getMembers().contains(invitee));
@@ -150,27 +161,27 @@ class InvitationTest {
 
     @Test
     void accept_WhenAlreadyAccepted_ShouldThrowException() {
-        invitation.accept();
+        invitation.respond(InvitationResponseOperationType.ACCEPT, invitee);
         
         assertThrows(
             InvitationAlreadyRespondedToException.class,
-            () -> invitation.accept()
+            () -> invitation.respond(InvitationResponseOperationType.ACCEPT, invitee)
         );
     }
 
     @Test
     void accept_WhenRejected_ShouldThrowException() {
-        invitation.reject();
+        invitation.respond(InvitationResponseOperationType.REJECT, invitee);
         
         assertThrows(
             InvitationAlreadyRespondedToException.class,
-            () -> invitation.accept()
+            () -> invitation.respond(InvitationResponseOperationType.ACCEPT, invitee)
         );
     }
 
     @Test
     void reject_WhenPending_ShouldChangeStatus() {
-        invitation.reject();
+        invitation.respond(InvitationResponseOperationType.REJECT, invitee);
         
         assertEquals(InvitationStatus.REJECTED, invitation.getStatus());
         assertFalse(group.getMembers().contains(invitee));
@@ -178,41 +189,77 @@ class InvitationTest {
 
     @Test
     void reject_WhenAlreadyRejected_ShouldThrowException() {
-        invitation.reject();
+        invitation.respond(InvitationResponseOperationType.REJECT, invitee);
         
         assertThrows(
             InvitationAlreadyRespondedToException.class,
-            () -> invitation.reject()
+            () -> invitation.respond(InvitationResponseOperationType.REJECT, invitee)
         );
     }
 
     @Test
     void reject_WhenAccepted_ShouldThrowException() {
-        invitation.accept();
+        invitation.respond(InvitationResponseOperationType.ACCEPT, invitee);
         
         assertThrows(
             InvitationAlreadyRespondedToException.class,
-            () -> invitation.reject()
+            () -> invitation.respond(InvitationResponseOperationType.REJECT, invitee)
         );
     }
 
     @Test
-    void accept_ThenReject_ShouldThrowException() {
-        invitation.accept();
-        
-        assertThrows(
-            InvitationAlreadyRespondedToException.class,
-            () -> invitation.reject()
-        );
+    void equals_WithSameInstance_ShouldBeEqual() {
+        assertEquals(invitation, invitation);
     }
 
     @Test
-    void reject_ThenAccept_ShouldThrowException() {
-        invitation.reject();
-        
-        assertThrows(
-            InvitationAlreadyRespondedToException.class,
-            () -> invitation.accept()
-        );
+    void equals_WithNull_ShouldNotBeEqual() {
+        assertNotEquals(null, invitation);
+    }
+
+    @Test
+    void equals_WithDifferentType_ShouldNotBeEqual() {
+        // Arrange
+        Object other = new Object();
+
+        // Assert
+        assertNotEquals(invitation, other);
+    }
+
+    @Test
+    void equalsAndHashCodeWithDifferentGroup() throws Exception {
+        // Arrange
+        Invitation other = createInvitationForDifferentGroup();
+
+        // Assert
+        assertNotEquals(invitation, other);
+    }
+
+    private Invitation createInvitationForDifferentGroup() throws Exception {
+        try {
+            admin = User.create(
+                ADMIN_USERNAME,
+                ADMIN_EMAIL,
+                TEST_PASSWORD,
+                new BCryptPasswordEncoder()
+            );
+            invitee = User.create(
+                INVITEE_USERNAME,
+                INVITEE_EMAIL,
+                TEST_PASSWORD,
+                new BCryptPasswordEncoder()
+            );
+            group = Group.create(GROUP_NAME, admin);
+
+            // Set IDs using reflection since we're in a test environment
+            setId(admin, 1L);
+            setId(invitee, 2L);
+            setId(group, 4L);
+
+            return Invitation.create(group, invitee, admin);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -3,6 +3,7 @@ package gr.aueb.budgetmanagement.domain.valueobjects;
 import java.io.Serializable;
 import java.util.Objects;
 
+import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import jakarta.persistence.Embeddable;
 
 @Embeddable
@@ -16,11 +17,11 @@ public class InvitationId implements Serializable {
 
     public InvitationId(Long groupId, Long inviteeId) {
         if (groupId == null) {
-            throw new IllegalArgumentException("Group ID cannot be null");
+            throw new InvalidDomainArgumentException("Group ID cannot be null");
         }
 
         if (inviteeId == null) {
-            throw new IllegalArgumentException("Invitee ID cannot be null");
+            throw new InvalidDomainArgumentException("Invitee ID cannot be null");
         }
 
         this.groupId = groupId;

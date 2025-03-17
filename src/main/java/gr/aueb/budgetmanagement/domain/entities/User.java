@@ -88,7 +88,7 @@ public class User {
         user.username = username;
         user.email = emailAddress;
         user.password = hashedPassword;
-        user.savings = Savings.create(user);
+        user.setSavings(Savings.create(user));
         return user;
     }
 

@@ -119,6 +119,24 @@ class InvitationServiceTest {
         // Arrange
         SendInvitationCommand command = new SendInvitationCommand(
             group.getId(),
+            INVITEE_EMAIL,
+            999L
+        );
+
+        // Act & Assert
+        NotFoundException exception = assertThrows(
+            NotFoundException.class,
+            () -> invitationService.sendInvitation(command)
+        );
+        assertEquals("Admin not found with id: 999", exception.getMessage());
+    }
+
+    @Test
+    @TestTransaction
+    void sendInvitation_WithNonExistentUserEmail_ShouldThrowNotFoundException() {
+        // Arrange
+        SendInvitationCommand command = new SendInvitationCommand(
+            group.getId(),
             "nonexistent@example.com",
             admin.getId()
         );

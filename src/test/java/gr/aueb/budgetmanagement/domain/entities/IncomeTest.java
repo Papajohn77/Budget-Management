@@ -1,18 +1,19 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class IncomeTest {
     private static final String TEST_PASSWORD = "Test123!@#";
@@ -31,51 +32,57 @@ class IncomeTest {
         );
     }
 
-    @Nested
-    class IncomeCreationTest {
-        @Test
-        void createWithValidData() {
-            // Act
-            Income income = user.addIncome(
-                VALID_AMOUNT,
-                VALID_DATE,
-                VALID_CATEGORY
-            );
+    @Test
+    void createWithValidData() {
+        // Act
+        Income income = Income.create(
+            VALID_AMOUNT,
+            VALID_DATE,
+            VALID_CATEGORY,
+            user
+        );
 
-            // Assert
-            assertNotNull(income);
-            assertEquals(VALID_AMOUNT, income.getAmount());
-            assertEquals(VALID_DATE, income.getDate());
-            assertEquals(VALID_CATEGORY, income.getCategory());
-            assertEquals(user, income.getUser());
-            assertTrue(user.getIncomes().contains(income));
-        }
+        // Assert
+        assertNotNull(income);
+        assertEquals(VALID_AMOUNT, income.getAmount());
+        assertEquals(VALID_DATE, income.getDate());
+        assertEquals(VALID_CATEGORY, income.getCategory());
+        assertEquals(user, income.getUser());
+    }
 
-        @Test
-        void createWithNullAmount() {
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class, 
-                () -> user.addIncome(null, VALID_DATE, VALID_CATEGORY)
-            );
-        }
+    @Test
+    void createWithNullAmount() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> Income.create(null, VALID_DATE, VALID_CATEGORY, user)
+        );
+    }
 
-        @Test
-        void createWithNullDate() {
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class, 
-                () -> user.addIncome(VALID_AMOUNT, null, VALID_CATEGORY)
-            );
-        }
+    @Test
+    void createWithNullDate() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> Income.create(VALID_AMOUNT, null, VALID_CATEGORY, user)
+        );
+    }
 
-        @Test
-        void createWithNullCategory() {
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class, () ->
-                user.addIncome(VALID_AMOUNT, VALID_DATE, null)
-            );
-        }
+    @Test
+    void createWithNullCategory() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> Income.create(VALID_AMOUNT, VALID_DATE, null, user)
+        );
+    }
+
+    @Test
+    void createWithNullUser() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> Income.create(VALID_AMOUNT, VALID_DATE, VALID_CATEGORY, null)
+        );
     }
 }

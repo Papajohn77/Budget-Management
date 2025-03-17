@@ -1,6 +1,9 @@
 package gr.aueb.budgetmanagement.domain.valueobjects;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -54,6 +57,29 @@ class EmailAddressTest {
     }
 
     @Test
+    void equalsWithNullObject() {
+        EmailAddress email = new EmailAddress("test@example.com");
+
+        assertNotEquals(email, null);
+    }
+
+    @Test
+    void equalsWithDifferentClassObject() {
+        String email = "test@example.com";
+        EmailAddress emailAddress = new EmailAddress("test@example.com");
+
+        assertNotEquals(emailAddress, email);
+    }
+
+    @Test
+    void equalsAndHashCodeWithSameEmailObject() {
+        EmailAddress email = new EmailAddress("test@example.com");
+
+        assertEquals(email, email);
+        assertEquals(email.hashCode(), email.hashCode());
+    }
+
+    @Test
     void equalsAndHashCodeWithSameEmail() {
         String email = "test@example.com";
         EmailAddress email1 = new EmailAddress(email);
@@ -70,5 +96,12 @@ class EmailAddressTest {
 
         assertNotEquals(email1, email2);
         assertNotEquals(email1.hashCode(), email2.hashCode());
+    }
+
+    @Test
+    void testToString() {
+        String email = "test@example.com";
+        EmailAddress emailAddress = new EmailAddress(email);
+        assertEquals(email, emailAddress.toString());
     }
 }

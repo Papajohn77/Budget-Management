@@ -3,13 +3,31 @@ package gr.aueb.budgetmanagement.domain.valueobjects;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullSource;
+
+import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 
 class InvitationIdTest {
     private static final Long GROUP_ID = 1L;
     private static final Long INVITEE_ID = 2L;
+
+    @Test
+    void constructorWithNullGroupId() {
+        assertThrows(
+            InvalidDomainArgumentException.class,
+            () -> new InvitationId(null, INVITEE_ID)
+        );
+    }
+
+    @Test
+    void constructorWithNullInviteeId() {
+        assertThrows(
+            InvalidDomainArgumentException.class,
+            () -> new InvitationId(GROUP_ID, null)
+        );
+    }
 
     @Test
     void createInvitationId_WithValidIds_ShouldSucceed() {
@@ -54,20 +72,19 @@ class InvitationIdTest {
     }
 
     @Test
+    void equals_WithNull_ShouldNotBeEqual() {
+        // Arrange
+        InvitationId invitationId = new InvitationId(GROUP_ID, INVITEE_ID);
+
+        // Assert
+        assertNotEquals(invitationId, null);
+    }
+
+    @Test
     void equals_WithDifferentType_ShouldNotBeEqual() {
         // Arrange
         InvitationId invitationId = new InvitationId(GROUP_ID, INVITEE_ID);
         Object other = new Object();
-
-        // Assert
-        assertNotEquals(invitationId, other);
-    }
-
-    @ParameterizedTest
-    @NullSource
-    void equals_WithNull_ShouldNotBeEqual(Object other) {
-        // Arrange
-        InvitationId invitationId = new InvitationId(GROUP_ID, INVITEE_ID);
 
         // Assert
         assertNotEquals(invitationId, other);

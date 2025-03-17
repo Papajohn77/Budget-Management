@@ -1,18 +1,19 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class ExpenseTest {
     private static final String TEST_PASSWORD = "Test123!@#";
@@ -31,51 +32,57 @@ class ExpenseTest {
         );
     }
 
-    @Nested
-    class ExpenseCreationTest {
-        @Test
-        void createWithValidData() {
-            // Act
-            Expense expense = user.addExpense(
-                VALID_AMOUNT,
-                VALID_DATE,
-                VALID_CATEGORY
-            );
+    @Test
+    void createWithValidData() {
+        // Act
+        Expense expense = Expense.create(
+            VALID_AMOUNT,
+            VALID_DATE,
+            VALID_CATEGORY,
+            user
+        );
 
-            // Assert
-            assertNotNull(expense);
-            assertEquals(VALID_AMOUNT, expense.getAmount());
-            assertEquals(VALID_DATE, expense.getDate());
-            assertEquals(VALID_CATEGORY, expense.getCategory());
-            assertEquals(user, expense.getUser());
-            assertTrue(user.getExpenses().contains(expense));
-        }
+        // Assert
+        assertNotNull(expense);
+        assertEquals(VALID_AMOUNT, expense.getAmount());
+        assertEquals(VALID_DATE, expense.getDate());
+        assertEquals(VALID_CATEGORY, expense.getCategory());
+        assertEquals(user, expense.getUser());
+    }
 
-        @Test
-        void createWithNullAmount() {
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class, 
-                () -> user.addExpense(null, VALID_DATE, VALID_CATEGORY)
-            );
-        }
+    @Test
+    void createWithNullAmount() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> Expense.create(null, VALID_DATE, VALID_CATEGORY, user)
+        );
+    }
 
-        @Test
-        void createWithNullDate() {
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class, 
-                () -> user.addExpense(VALID_AMOUNT, null, VALID_CATEGORY )
-            );
-        }
+    @Test
+    void createWithNullDate() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> Expense.create(VALID_AMOUNT, null, VALID_CATEGORY, user)
+        );
+    }
 
-        @Test
-        void createWithNullCategory() {
-            // Act & Assert
-            assertThrows(
-                InvalidDomainArgumentException.class, 
-                () -> user.addExpense(VALID_AMOUNT, VALID_DATE, null)
-            );
-        }
+    @Test
+    void createWithNullCategory() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> Expense.create(VALID_AMOUNT, VALID_DATE, null, user)
+        );
+    }
+
+    @Test
+    void createWithNullUser() {
+        // Act & Assert
+        assertThrows(
+            InvalidDomainArgumentException.class, 
+            () -> Expense.create(VALID_AMOUNT, VALID_DATE, VALID_CATEGORY, null)
+        );
     }
 }
