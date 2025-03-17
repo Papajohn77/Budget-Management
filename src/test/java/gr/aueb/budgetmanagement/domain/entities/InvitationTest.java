@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
+import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyRespondedToException;
 import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
@@ -152,7 +153,7 @@ class InvitationTest {
         invitation.accept();
         
         assertThrows(
-            InvalidDomainArgumentException.class,
+            InvitationAlreadyRespondedToException.class,
             () -> invitation.accept()
         );
     }
@@ -162,7 +163,7 @@ class InvitationTest {
         invitation.reject();
         
         assertThrows(
-            InvalidDomainArgumentException.class,
+            InvitationAlreadyRespondedToException.class,
             () -> invitation.accept()
         );
     }
@@ -180,7 +181,7 @@ class InvitationTest {
         invitation.reject();
         
         assertThrows(
-            InvalidDomainArgumentException.class,
+            InvitationAlreadyRespondedToException.class,
             () -> invitation.reject()
         );
     }
@@ -190,7 +191,7 @@ class InvitationTest {
         invitation.accept();
         
         assertThrows(
-            InvalidDomainArgumentException.class,
+            InvitationAlreadyRespondedToException.class,
             () -> invitation.reject()
         );
     }
@@ -200,7 +201,7 @@ class InvitationTest {
         invitation.accept();
         
         assertThrows(
-            InvalidDomainArgumentException.class,
+            InvitationAlreadyRespondedToException.class,
             () -> invitation.reject()
         );
     }
@@ -210,7 +211,7 @@ class InvitationTest {
         invitation.reject();
         
         assertThrows(
-            InvalidDomainArgumentException.class,
+            InvitationAlreadyRespondedToException.class,
             () -> invitation.accept()
         );
     }
