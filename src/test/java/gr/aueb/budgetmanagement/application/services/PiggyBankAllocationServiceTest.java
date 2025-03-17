@@ -1,12 +1,11 @@
 package gr.aueb.budgetmanagement.application.services;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -56,6 +55,9 @@ class PiggyBankAllocationServiceTest {
     @Test
     @TestTransaction
     void testSuccessfulPersonalPiggyBankAllocation() {
+        PiggyBank initialPiggyBank = piggyBankRepository.findById(personalPiggyBank.getId()).orElseThrow();
+        int initialCount = initialPiggyBank.getAllocations().size();
+
         // Arrange
         AllocateToPiggyBankCommand command = new AllocateToPiggyBankCommand(
             TODAY,
@@ -75,7 +77,7 @@ class PiggyBankAllocationServiceTest {
 
         // Verify persistence
         PiggyBank persistedPiggyBank = piggyBankRepository.findById(personalPiggyBank.getId()).orElseThrow();
-        assertEquals(1, persistedPiggyBank.getAllocations().size());
+        assertEquals(initialCount + 1, persistedPiggyBank.getAllocations().size());
     }
 
     @Test
