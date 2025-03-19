@@ -11,6 +11,7 @@ import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsExcepti
 import gr.aueb.budgetmanagement.application.representations.CreatedGroupPiggyBankRepresentation;
 import gr.aueb.budgetmanagement.application.representations.CreatedPersonalPiggyBankRepresentation;
 import gr.aueb.budgetmanagement.application.representations.PiggyBankAllocationRepresentation;
+import gr.aueb.budgetmanagement.application.representations.PiggyBanksRepresentation;
 import gr.aueb.budgetmanagement.application.services.PiggyBankAllocationService;
 import gr.aueb.budgetmanagement.application.services.PiggyBankService;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
@@ -18,9 +19,11 @@ import gr.aueb.budgetmanagement.presentation.api.requests.AllocateToPiggyBankReq
 import gr.aueb.budgetmanagement.presentation.api.requests.CreateGroupPiggyBankRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreatePersonalPiggyBankRequest;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
@@ -137,6 +140,26 @@ public class PiggyBankResource {
 
         return Response
             .status(Response.Status.CREATED)
+            .entity(result)
+            .build();
+    }
+
+    @GET
+    public Response getPiggyBanks(
+        @Context SecurityContext ctx, 
+        @QueryParam("type") String type
+    ) {
+        
+        JsonWebToken jwt = (JsonWebToken) ctx.getUserPrincipal();
+        if (jwt == null) {
+            throw new InvalidCredentialsException("Missing Authorization header with JWT token");
+        }
+        Long authenticatedUserId = Long.valueOf(jwt.getClaim("user_id").toString());
+
+        PiggyBanksRepresentation result = piggyBankService.getPiggyBanks(authenticatedUserId, type);
+
+        return Response
+            .status(Response.Status.OK)
             .entity(result)
             .build();
     }

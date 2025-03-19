@@ -1,11 +1,15 @@
 package gr.aueb.budgetmanagement.presentation.api.resources;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import static io.restassured.RestAssured.given;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import static org.hamcrest.CoreMatchers.is;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.Fixture;
@@ -16,7 +20,6 @@ import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserReques
 import gr.aueb.budgetmanagement.presentation.api.requests.CreateGroupPiggyBankRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreatePersonalPiggyBankRequest;
 import io.quarkus.test.junit.QuarkusTest;
-import static io.restassured.RestAssured.given;
 import io.restassured.http.ContentType;
 
 @QuarkusTest
@@ -534,5 +537,94 @@ class PiggyBankResourceTest extends IntegrationBase {
             .then()
             .statusCode(200)
             .extract().jsonPath().getString("access_token");
+    }
+
+    @Test
+    void testGetPiggyBanks() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+    
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(PIGGY_BANKS_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("personal_piggy_banks", notNullValue())
+            .body("personal_piggy_banks.size()", is(1))
+            .body("personal_piggy_banks[0].id", equalTo(1))
+            .body("personal_piggy_banks[0].name", equalTo("testpersonalpiggy"))
+            .body("personal_piggy_banks[0].targetAmount.value", equalTo(1000.00f))
+            .body("personal_piggy_banks[0].category", equalTo("ENTERTAINMENT"))
+            .body("group_piggy_banks", notNullValue())
+            .body("group_piggy_banks.size()", is(1))
+            .body("group_piggy_banks[0].name", equalTo("testgroup"))
+            .body("group_piggy_banks[0].groupId", equalTo(1))
+            .body("group_piggy_banks[0].piggy_banks", notNullValue())
+            .body("group_piggy_banks[0].piggy_banks.size()", is(1))
+            .body("group_piggy_banks[0].piggy_banks[0].id", equalTo(2))
+            .body("group_piggy_banks[0].piggy_banks[0].name", equalTo("testgrouppiggy"))
+            .body("group_piggy_banks[0].piggy_banks[0].targetAmount.value", equalTo(2000.00f))
+            .body("group_piggy_banks[0].piggy_banks[0].category", equalTo("ENTERTAINMENT"))
+            .body("group_piggy_banks[0].piggy_banks[0].groupId", equalTo(1));
+    }
+
+    @Test
+    void testGetPiggyBanksWithoutAuthentication() {
+        given()
+            .contentType(ContentType.JSON)
+            .when()
+            .get(PIGGY_BANKS_ENDPOINT)
+            .then()
+            .statusCode(401)
+            .body("message", containsString("Missing Authorization header"));
+    }
+
+    @Test
+    void testGetPersonalPiggyBanksOnly() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("type", "personal")
+            .when()
+            .get(PIGGY_BANKS_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("personal_piggy_banks", notNullValue())
+            .body("personal_piggy_banks.size()", is(1))
+            .body("group_piggy_banks", notNullValue())
+            .body("group_piggy_banks.size()", is(0));
+    }
+
+    @Test
+    void testGetGroupPiggyBanksOnly() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("type", "group")
+            .when()
+            .get(PIGGY_BANKS_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("personal_piggy_banks", notNullValue())
+            .body("personal_piggy_banks.size()", is(0))
+            .body("group_piggy_banks", notNullValue())
+            .body("group_piggy_banks.size()", is(1));
     }
 }
