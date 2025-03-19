@@ -1,10 +1,11 @@
 package gr.aueb.budgetmanagement.presentation.api.requests;
 
+import java.math.BigDecimal;
+
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
 public record CreateGroupPiggyBankRequest(
     String name,
-    Money targetAmount,
+    BigDecimal targetAmount,
     ExpenseCategory category
 ) {}

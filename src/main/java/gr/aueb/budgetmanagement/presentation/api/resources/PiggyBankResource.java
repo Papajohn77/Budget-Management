@@ -13,6 +13,7 @@ import gr.aueb.budgetmanagement.application.representations.CreatedPersonalPiggy
 import gr.aueb.budgetmanagement.application.representations.PiggyBankAllocationRepresentation;
 import gr.aueb.budgetmanagement.application.services.PiggyBankAllocationService;
 import gr.aueb.budgetmanagement.application.services.PiggyBankService;
+import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.presentation.api.requests.AllocateToPiggyBankRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreateGroupPiggyBankRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreatePersonalPiggyBankRequest;
@@ -33,7 +34,7 @@ public class PiggyBankResource {
     public PiggyBankResource(
         PiggyBankService piggyBankService,
         PiggyBankAllocationService piggyBankAllocationService
-        ) {
+    ) {
         this.piggyBankService = piggyBankService;
         this.piggyBankAllocationService = piggyBankAllocationService;
     }
@@ -48,7 +49,7 @@ public class PiggyBankResource {
 
         CreatePersonalPiggyBankCommand command = new CreatePersonalPiggyBankCommand(
             request.name(),
-            request.targetAmount(),
+            new Money(request.targetAmount()),
             request.category(),
             authenticatedUserId
         );
@@ -63,7 +64,7 @@ public class PiggyBankResource {
 
     @DELETE
     @Path("/{id}")
-    public Response deletePersonalPiggyBank(@Context SecurityContext ctx, @PathParam("id") Long piggyBankId) {
+    public Response deletePiggyBank(@Context SecurityContext ctx, @PathParam("id") Long piggyBankId) {
         JsonWebToken jwt = (JsonWebToken) ctx.getUserPrincipal();
         if (jwt == null) {
             throw new InvalidCredentialsException("Missing Authorization header with JWT token");
@@ -85,9 +86,10 @@ public class PiggyBankResource {
     @POST
     @Path("/groups/{groupId}/piggy-banks")
     public Response createGroupPiggyBank(
-            @Context SecurityContext ctx,
-            @PathParam("groupId") Long groupId,
-            CreateGroupPiggyBankRequest request) {
+        @Context SecurityContext ctx,
+        @PathParam("groupId") Long groupId,
+        CreateGroupPiggyBankRequest request
+    ) {
         
         JsonWebToken jwt = (JsonWebToken) ctx.getUserPrincipal();
         if (jwt == null) {
@@ -97,7 +99,7 @@ public class PiggyBankResource {
 
         CreateGroupPiggyBankCommand command = new CreateGroupPiggyBankCommand(
             request.name(),
-            request.targetAmount(),
+            new Money(request.targetAmount()),
             request.category(),
             groupId,
             authenticatedUserId
@@ -111,38 +113,13 @@ public class PiggyBankResource {
             .build();
     }
 
-    @DELETE
-    @Path("/groups/{groupId}/piggy-banks/{id}")
-    public Response deleteGroupPiggyBank(
-            @Context SecurityContext ctx,
-            @PathParam("groupId") Long groupId,
-            @PathParam("id") Long piggyBankId) {
-        
-        JsonWebToken jwt = (JsonWebToken) ctx.getUserPrincipal();
-        if (jwt == null) {
-            throw new InvalidCredentialsException("Missing Authorization header with JWT token");
-        }
-        Long authenticatedUserId = Long.valueOf(jwt.getClaim("user_id").toString());
-
-        DissolvePiggyBankCommand command = new DissolvePiggyBankCommand(
-            piggyBankId,
-            authenticatedUserId
-        );
-
-        piggyBankService.dissolvePiggyBank(command);
-
-        return Response
-            .status(Response.Status.NO_CONTENT)
-            .build();
-    }
-
     @POST
     @Path("/{piggy_bank_id}/allocations")
     public Response allocateToPiggyBank(
-            @Context SecurityContext ctx,
-            @PathParam("piggy_bank_id") Long piggyBankId,
-            AllocateToPiggyBankRequest request) {
-        
+        @Context SecurityContext ctx,
+        @PathParam("piggy_bank_id") Long piggyBankId,
+        AllocateToPiggyBankRequest request
+    ) {
         JsonWebToken jwt = (JsonWebToken) ctx.getUserPrincipal();
         if (jwt == null) {
             throw new InvalidCredentialsException("Missing Authorization header with JWT token");
@@ -151,7 +128,7 @@ public class PiggyBankResource {
 
         AllocateToPiggyBankCommand command = new AllocateToPiggyBankCommand(
             request.date(),
-            request.amount(),
+            new Money(request.amount()),
             piggyBankId,
             authenticatedUserId
         );

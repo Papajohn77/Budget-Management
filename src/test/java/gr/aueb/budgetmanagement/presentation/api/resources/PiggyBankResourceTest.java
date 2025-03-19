@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.presentation.api.requests.AllocateToPiggyBankRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreateGroupPiggyBankRequest;
@@ -37,22 +36,19 @@ class PiggyBankResourceTest extends IntegrationBase {
     
         CreatePersonalPiggyBankRequest request = new CreatePersonalPiggyBankRequest(
             "Test Piggy Bank",
-            new Money(new BigDecimal("100.00")),
+            new BigDecimal("100.00"),
             ExpenseCategory.ENTERTAINMENT
         );
     
         // Extract the response to inspect its structure
-        String response = given()
+        given()
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + authToken)
             .body(request)
             .when()
             .post(PIGGY_BANKS_ENDPOINT)
             .then()
-            .statusCode(201)
-            .extract().asString();
-        
-        System.out.println("Response: " + response);
+            .statusCode(201);
         
         // Use the correct JSON path based on the actual response structure
         given()
@@ -73,7 +69,7 @@ class PiggyBankResourceTest extends IntegrationBase {
     void testPersonalPiggyBankCreationWithoutAuthentication() {
         CreatePersonalPiggyBankRequest request = new CreatePersonalPiggyBankRequest(
             "Test Piggy Bank",
-            new Money(new BigDecimal("100.00")),
+            new BigDecimal("100.00"),
             ExpenseCategory.ENTERTAINMENT
         );
 
@@ -98,7 +94,7 @@ class PiggyBankResourceTest extends IntegrationBase {
         // Create a piggy bank first
         CreatePersonalPiggyBankRequest createRequest = new CreatePersonalPiggyBankRequest(
             "Piggy Bank To Delete",
-            new Money(new BigDecimal("100.00")),
+            new BigDecimal("100.00"),
             ExpenseCategory.ENTERTAINMENT
         );
 
@@ -142,10 +138,12 @@ class PiggyBankResourceTest extends IntegrationBase {
 
     @Test
     void testDeletingPiggyBankWithoutAuthentication() {
+        long piggyBankId = Fixture.PiggyBanks.PERSONAL_PIGGY_BANK_ID;
+
         given()
             .contentType(ContentType.JSON)
             .when()
-            .delete(PIGGY_BANKS_ENDPOINT + "/1")
+            .delete(PIGGY_BANKS_ENDPOINT + "/"+ piggyBankId)
             .then()
             .statusCode(401)
             .body("message", containsString("Missing Authorization header"));
@@ -163,7 +161,7 @@ class PiggyBankResourceTest extends IntegrationBase {
         // Create a piggy bank as testuser
         CreatePersonalPiggyBankRequest createRequest = new CreatePersonalPiggyBankRequest(
             "Piggy Bank For Auth Test",
-            new Money(new BigDecimal("100.00")),
+            new BigDecimal("100.00"),
             ExpenseCategory.ENTERTAINMENT
         );
 
@@ -205,7 +203,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
         CreateGroupPiggyBankRequest request = new CreateGroupPiggyBankRequest(
             "Group Piggy Bank",
-            new Money(new BigDecimal("200.00")),
+            new BigDecimal("200.00"),
             ExpenseCategory.FOOD
         );
 
@@ -237,7 +235,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
         CreateGroupPiggyBankRequest request = new CreateGroupPiggyBankRequest(
             "Group Piggy Bank",
-            new Money(new BigDecimal("200.00")),
+            new BigDecimal("200.00"),
             ExpenseCategory.FOOD
         );
 
@@ -265,18 +263,16 @@ class PiggyBankResourceTest extends IntegrationBase {
         // Create a group piggy bank first
         CreateGroupPiggyBankRequest createRequest = new CreateGroupPiggyBankRequest(
             "Group Piggy Bank To Delete",
-            new Money(new BigDecimal("200.00")),
+            new BigDecimal("200.00"),
             ExpenseCategory.FOOD
         );
-
-        Long groupId = Fixture.Groups.TESTGROUP_ID; // Using the test group from fixture
 
         Long piggyBankId = given()
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + authToken)
             .body(createRequest)
             .when()
-            .post(PIGGY_BANKS_ENDPOINT + "/groups/" + groupId + "/piggy-banks")
+            .post(PIGGY_BANKS_ENDPOINT)
             .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
@@ -286,7 +282,7 @@ class PiggyBankResourceTest extends IntegrationBase {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + authToken)
             .when()
-            .delete(PIGGY_BANKS_ENDPOINT + "/groups/" + groupId + "/piggy-banks/" + piggyBankId)
+            .delete(PIGGY_BANKS_ENDPOINT + "/" + piggyBankId)
             .then()
             .statusCode(204);
     }
@@ -303,18 +299,16 @@ class PiggyBankResourceTest extends IntegrationBase {
         // Create a group piggy bank as admin
         CreateGroupPiggyBankRequest createRequest = new CreateGroupPiggyBankRequest(
             "Group Piggy Bank For Auth Test",
-            new Money(new BigDecimal("200.00")),
+            new BigDecimal("200.00"),
             ExpenseCategory.FOOD
         );
-
-        Long groupId = Fixture.Groups.TESTGROUP_ID; // Using the test group from fixture
 
         Long piggyBankId = given()
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + adminAuthToken)
             .body(createRequest)
             .when()
-            .post(PIGGY_BANKS_ENDPOINT + "/groups/" + groupId + "/piggy-banks")
+            .post(PIGGY_BANKS_ENDPOINT)
             .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
@@ -331,7 +325,7 @@ class PiggyBankResourceTest extends IntegrationBase {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + nonAdminAuthToken)
             .when()
-            .delete(PIGGY_BANKS_ENDPOINT + "/groups/" + groupId + "/piggy-banks/" + piggyBankId)
+            .delete(PIGGY_BANKS_ENDPOINT + "/" + piggyBankId)
             .then()
             .statusCode(403)
             .body("message", containsString("User is not authorized to dissolve this piggy bank"));
@@ -341,7 +335,7 @@ class PiggyBankResourceTest extends IntegrationBase {
     void testCreateGroupPiggyBankWithoutAuthentication() {
         CreateGroupPiggyBankRequest request = new CreateGroupPiggyBankRequest(
             "Group Piggy Bank",
-            new Money(new BigDecimal("200.00")),
+            new BigDecimal("200.00"),
             ExpenseCategory.FOOD
         );
 
@@ -359,12 +353,11 @@ class PiggyBankResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteGroupPiggyBankWithoutAuthentication() {
-        Long groupId = Fixture.Groups.TESTGROUP_ID;
-        Long piggyBankId = (long) 2; // Using testgrouppiggy from fixtures
+        Long piggyBankId = Fixture.PiggyBanks.GROUP_PIGGY_BANK_ID;
 
         given()
             .when()
-            .delete(PIGGY_BANKS_ENDPOINT + "/groups/" + groupId + "/piggy-banks/" + piggyBankId)
+            .delete(PIGGY_BANKS_ENDPOINT + "/" + piggyBankId)
             .then()
             .statusCode(401)
             .body("message", containsString("Missing Authorization header"));
@@ -381,7 +374,7 @@ class PiggyBankResourceTest extends IntegrationBase {
         // Create a personal piggy bank first
         CreatePersonalPiggyBankRequest createRequest = new CreatePersonalPiggyBankRequest(
             "Piggy Bank For Allocation",
-            new Money(new BigDecimal("300.00")),
+            new BigDecimal("300.00"),
             ExpenseCategory.ENTERTAINMENT
         );
 
@@ -398,7 +391,7 @@ class PiggyBankResourceTest extends IntegrationBase {
         // Then allocate funds to it
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
             LocalDate.now(),
-            new Money(new BigDecimal("50.00"))
+            new BigDecimal("50.00")
         );
 
         given()
@@ -424,7 +417,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
             LocalDate.now(),
-            new Money(new BigDecimal("50.00"))
+            new BigDecimal("50.00")
         );
 
         given()
@@ -450,7 +443,7 @@ class PiggyBankResourceTest extends IntegrationBase {
         // Create a piggy bank as testuser
         CreatePersonalPiggyBankRequest createRequest = new CreatePersonalPiggyBankRequest(
             "Piggy Bank For Auth Test",
-            new Money(new BigDecimal("300.00")),
+            new BigDecimal("300.00"),
             ExpenseCategory.ENTERTAINMENT
         );
 
@@ -474,7 +467,7 @@ class PiggyBankResourceTest extends IntegrationBase {
         // Try to allocate to testuser's piggy bank as testuser2
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
             LocalDate.now(),
-            new Money(new BigDecimal("50.00"))
+            new BigDecimal("50.00")
         );
 
         given()
@@ -499,7 +492,7 @@ class PiggyBankResourceTest extends IntegrationBase {
         // Allocate additional funds to the piggy bank that already has an allocation
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
             LocalDate.now(),
-            new Money(new BigDecimal("50.00"))
+            new BigDecimal("50.00")
         );
 
         given()
@@ -519,7 +512,7 @@ class PiggyBankResourceTest extends IntegrationBase {
     void testAllocateToPiggyBankWithoutAuthentication() {
         AllocateToPiggyBankRequest request = new AllocateToPiggyBankRequest(
             LocalDate.now(),
-            new Money(new BigDecimal("50.00"))
+            new BigDecimal("50.00")
         );
 
         given()
