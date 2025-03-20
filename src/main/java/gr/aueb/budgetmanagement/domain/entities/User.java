@@ -1,14 +1,17 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
+import gr.aueb.budgetmanagement.domain.exceptions.NotFoundDomainException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
@@ -135,6 +138,10 @@ public class User {
         return Collections.unmodifiableSet(expenses);
     }
 
+    public Set<Income> getIncomes() {
+        return Collections.unmodifiableSet(incomes);
+    }
+
     public Expense addExpense(Money amount, LocalDate date, ExpenseCategory category) {
         Expense expense = Expense.create(
             amount,
@@ -146,8 +153,45 @@ public class User {
         return expense;
     }
 
+    public Income addIncome(Money amount, LocalDate date, IncomeCategory category) {
+        Income income = Income.create(
+            amount,
+            date,
+            category,
+            this
+        );
+        incomes.add(income);
+        return income;
+    }
+
+    public void removeExpense(Long expenseId) {
+        boolean expenseExists = getExpenses().stream()
+            .anyMatch(e -> e.getId().equals(expenseId));
+
+        if (!expenseExists) {
+            throw new NotFoundDomainException("Expense not found");
+        }
+
+        this.expenses.removeIf(expense -> expense.getId().equals(expenseId));
+    }
+
+    public void removeIncome(Long incomeId) {
+        boolean incomeExists = getIncomes().stream()
+            .anyMatch(i -> i.getId().equals(incomeId));
+
+        if (!incomeExists) {
+            throw new NotFoundDomainException("Income not found");
+        }
+
+        this.incomes.removeIf(income -> income.getId().equals(incomeId));
+    }
+
     public Set<RecurringExpense> getRecurringExpenses() {
         return Collections.unmodifiableSet(recurringExpenses);
+    }
+
+    public Set<RecurringIncome> getRecurringIncomes() {
+        return Collections.unmodifiableSet(recurringIncomes);
     }
 
     public RecurringExpense addRecurringExpense(
@@ -169,25 +213,6 @@ public class User {
         return recurringExpense;
     }
 
-    public Set<Income> getIncomes() {
-        return Collections.unmodifiableSet(incomes);
-    }
-
-    public Income addIncome(Money amount, LocalDate date, IncomeCategory category) {
-        Income income = Income.create(
-            amount, 
-            date, 
-            category, 
-            this
-        );
-        incomes.add(income);
-        return income;
-    }
-
-    public Set<RecurringIncome> getRecurringIncomes() {
-        return Collections.unmodifiableSet(recurringIncomes);
-    }
-
     public RecurringIncome addRecurringIncome(
         String name,
         Money amount,
@@ -205,6 +230,28 @@ public class User {
         );
         recurringIncomes.add(recurringIncome);
         return recurringIncome;
+    }
+
+    public void removeRecurringExpense(Long recurringExpenseId) {
+        boolean recurringExpenseExists = getRecurringExpenses().stream()
+            .anyMatch(i -> i.getId().equals(recurringExpenseId));
+
+        if (!recurringExpenseExists) {
+            throw new NotFoundDomainException("Recurring expense not found");
+        }
+
+        recurringExpenses.removeIf(re -> re.getId().equals(recurringExpenseId));
+    }
+
+    public void removeRecurringIncome(Long recurringIncomeId) {
+        boolean recurringIncomeExists = getRecurringIncomes().stream()
+            .anyMatch(i -> i.getId().equals(recurringIncomeId));
+
+        if (!recurringIncomeExists) {
+            throw new NotFoundDomainException("Recurring income not found");
+        }
+
+        recurringIncomes.removeIf(re -> re.getId().equals(recurringIncomeId));
     }
 
     public Set<PersonalPiggyBank> getPiggyBanks() {

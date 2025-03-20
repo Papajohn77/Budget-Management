@@ -2,6 +2,7 @@ package gr.aueb.budgetmanagement.presentation.api.exceptions;
 
 import java.util.List;
 
+import gr.aueb.budgetmanagement.domain.exceptions.NotFoundDomainException;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
@@ -97,7 +98,20 @@ public class GlobalExceptionHandler {
             Response.Status.NOT_FOUND.getStatusCode(),
             "Not Found: " + e.getMessage()
         );
-        
+
+        return Response.status(Response.Status.NOT_FOUND)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(error)
+            .build();
+    }
+
+    @ServerExceptionMapper
+    public Response handleDomainNotFound(NotFoundDomainException e) {
+        ErrorResponseRepresentation error = ErrorResponseRepresentation.create(
+            Response.Status.NOT_FOUND.getStatusCode(),
+            "Not Found: " + e.getMessage()
+        );
+
         return Response.status(Response.Status.NOT_FOUND)
             .type(MediaType.APPLICATION_JSON)
             .entity(error)

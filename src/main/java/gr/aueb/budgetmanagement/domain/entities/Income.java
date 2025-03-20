@@ -1,5 +1,6 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
@@ -65,6 +66,12 @@ public class Income {
         income.category = category;
         income.user = user;
         return income;
+    }
+
+    public void update(Money amount, LocalDate date, IncomeCategory category) {
+        this.amount = amount;
+        this.date = date;
+        this.category = category;
     }
 
     public Long getId() {

@@ -149,4 +149,11 @@ public class RecurringExpense {
     public User getUser() {
         return user;
     }
+
+    public void stop(boolean isStopped) {
+        if (!isStopped) {
+            throw new InvalidDomainArgumentException("Cannot restart recurring expense");
+        }
+        this.isStopped = true;
+    }
 }

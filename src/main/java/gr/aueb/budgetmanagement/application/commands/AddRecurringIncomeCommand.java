@@ -1,5 +1,6 @@
 package gr.aueb.budgetmanagement.application.commands;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;

@@ -22,6 +22,7 @@ public record AddRecurringExpenseCommand(
     @NotNull(message = "End date cannot be null")
     LocalDate endDate,
 
-    @NotNull(message = "User ID cannot be null") 
+    @NotNull(message = "User ID cannot be null")
     Long userId
 ) {}
+

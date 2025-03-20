@@ -67,6 +67,12 @@ public class Expense {
         return expense;
     }
 
+    public void update(Money amount, LocalDate date, ExpenseCategory category) {
+        this.amount = amount;
+        this.date = date;
+        this.category = category;
+    }
+
     public Long getId() {
         return id;
     }

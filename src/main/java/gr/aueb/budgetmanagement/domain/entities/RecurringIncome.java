@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
 import java.time.LocalDate;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
@@ -17,6 +18,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
@@ -146,5 +148,12 @@ public class RecurringIncome {
 
     public User getUser() {
         return user;
+    }
+
+    public void stop(boolean isStopped) {
+        if (!isStopped) {
+            throw new InvalidDomainArgumentException("Cannot restart recurring income");
+        }
+        this.isStopped = true;
     }
 }
