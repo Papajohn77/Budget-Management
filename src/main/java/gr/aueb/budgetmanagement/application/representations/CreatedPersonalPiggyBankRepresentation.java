@@ -8,8 +8,14 @@ import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 
 public record CreatedPersonalPiggyBankRepresentation(
     Long id,
+
     String name,
+
     @JsonProperty("target_amount")
     BigDecimal targetAmount,
+
+    @JsonProperty("current_amount")
+    BigDecimal currentAmount,
+
     ExpenseCategory category
 ) {}

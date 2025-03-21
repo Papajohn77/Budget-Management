@@ -1,7 +1,6 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import gr.aueb.budgetmanagement.application.commands.CreateGroupPiggyBankCommand;
 import gr.aueb.budgetmanagement.application.commands.CreatePersonalPiggyBankCommand;
@@ -60,6 +59,7 @@ public class PiggyBankService {
             piggyBank.getId(),
             piggyBank.getName(),
             piggyBank.getTargetAmount().getValue(),
+            piggyBank.getCurrentAmount().getValue(),
             piggyBank.getCategory()
         );
     }
@@ -88,6 +88,7 @@ public class PiggyBankService {
             piggyBank.getId(),
             piggyBank.getName(),
             piggyBank.getTargetAmount().getValue(),
+            piggyBank.getCurrentAmount().getValue(),
             piggyBank.getCategory(),
             group.getId()
         );
@@ -123,9 +124,10 @@ public class PiggyBankService {
                     piggyBank.getId(),
                     piggyBank.getName(),
                     piggyBank.getTargetAmount().getValue(),
+                    piggyBank.getCurrentAmount().getValue(),
                     piggyBank.getCategory()
                 ))
-                .collect(Collectors.toList());
+                .toList();
         }
         
         // Get group piggy banks if needed
@@ -139,12 +141,13 @@ public class PiggyBankService {
                             piggyBank.getId(), 
                             piggyBank.getName(),
                             piggyBank.getTargetAmount().getValue(), 
+                            piggyBank.getCurrentAmount().getValue(),
                             piggyBank.getCategory(),
                             group.getId()
                         ))
-                        .collect(Collectors.toList())
+                        .toList()
                 ))
-                .collect(Collectors.toList());
+                .toList();
         }
 
         return new PiggyBanksRepresentation(personalPiggyBanks, groupPiggyBanks);

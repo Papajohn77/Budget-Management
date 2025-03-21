@@ -1,5 +1,6 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
@@ -107,6 +108,14 @@ public abstract class PiggyBank {
         );
         allocations.add(allocation);
         return allocation;
+    }
+
+    public Money getCurrentAmount() {
+        BigDecimal total = allocations.stream()
+            .map(allocation -> allocation.getAmount().getValue())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new Money(total);
     }
 
     public abstract boolean isAuthorizedUser(User user);

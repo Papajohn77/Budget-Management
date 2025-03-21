@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
+import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
@@ -389,5 +390,99 @@ class PiggyBankTest {
             assertTrue(piggyBank.getAllocations().contains(allocation));
             assertEquals(1, piggyBank.getAllocations().size());
         }
+    }
+
+    @Test
+    void getCurrentAmountShouldReturnZeroForNewPiggyBank() {
+        // Arrange
+        PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+            VALID_NAME,
+            VALID_TARGET,
+            VALID_CATEGORY,
+            user
+        );
+        
+        // Act
+        Money currentAmount = piggyBank.getCurrentAmount();
+        
+        // Assert
+        assertEquals(new Money(BigDecimal.ZERO), currentAmount);
+    }
+    
+    @Test
+    void getCurrentAmountShouldSumAllAllocations() {
+        // Arrange
+        PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+            VALID_NAME,
+            VALID_TARGET,
+            VALID_CATEGORY,
+            user
+        );
+        
+        // Act
+        piggyBank.allocate(new Money(BigDecimal.valueOf(50)), LocalDate.now(), user);
+        piggyBank.allocate(new Money(BigDecimal.valueOf(25.50)), LocalDate.now(), user);
+        piggyBank.allocate(new Money(BigDecimal.valueOf(124.50)), LocalDate.now(), user);
+        Money currentAmount = piggyBank.getCurrentAmount();
+        
+        // Assert
+        assertEquals(new Money(BigDecimal.valueOf(200.00).setScale(2)), currentAmount);
+    }
+    
+    @Test
+    void getCurrentAmountShouldWorkForGroupPiggyBank() {
+        // Arrange
+        GroupPiggyBank piggyBank = GroupPiggyBank.create(
+            VALID_NAME,
+            VALID_TARGET,
+            VALID_CATEGORY,
+            group,
+            group.getAdmin()
+        );
+        User member = User.create(
+            "member",
+            "member@example.com",
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
+        );
+        group.addMember(member);
+        
+        // Act - both admin and member add allocations
+        piggyBank.allocate(new Money(BigDecimal.valueOf(100)), LocalDate.now(), user);
+        piggyBank.allocate(new Money(BigDecimal.valueOf(75)), LocalDate.now(), member);
+        Money currentAmount = piggyBank.getCurrentAmount();
+        
+        // Assert
+        assertEquals(new Money(BigDecimal.valueOf(175)), currentAmount);
+    }
+    
+    @Test
+    void allocateShouldThrowExceptionForUnauthorizedUser() {
+        // Arrange
+        PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+            VALID_NAME,
+            VALID_TARGET,
+            VALID_CATEGORY,
+            user
+        );
+        User unauthorizedUser = User.create(
+            "unauthorized",
+            "unauthorized@example.com",
+            TEST_PASSWORD,
+            new BCryptPasswordEncoder()
+        );
+        
+        // Act & Assert
+        assertThrows(
+            ForbiddenOperationDomainException.class,
+            () -> piggyBank.allocate(
+                new Money(BigDecimal.valueOf(50)),
+                LocalDate.now(),
+                unauthorizedUser
+            )
+        );
+        
+        // The current amount should still be zero
+        assertEquals(new Money(BigDecimal.ZERO), piggyBank.getCurrentAmount());
     }
 }
