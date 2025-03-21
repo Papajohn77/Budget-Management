@@ -19,9 +19,7 @@ import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.GroupPiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
-import gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation;
 import gr.aueb.budgetmanagement.domain.entities.User;
-import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -61,7 +59,7 @@ public class PiggyBankService {
         return new CreatedPersonalPiggyBankRepresentation(
             piggyBank.getId(),
             piggyBank.getName(),
-            piggyBank.getTargetAmount(),
+            piggyBank.getTargetAmount().getValue(),
             piggyBank.getCategory()
         );
     }
@@ -89,7 +87,7 @@ public class PiggyBankService {
         return new CreatedGroupPiggyBankRepresentation(
             piggyBank.getId(),
             piggyBank.getName(),
-            piggyBank.getTargetAmount(),
+            piggyBank.getTargetAmount().getValue(),
             piggyBank.getCategory(),
             group.getId()
         );
@@ -124,7 +122,7 @@ public class PiggyBankService {
                 .map(piggyBank -> new CreatedPersonalPiggyBankRepresentation(
                     piggyBank.getId(),
                     piggyBank.getName(),
-                    piggyBank.getTargetAmount(),
+                    piggyBank.getTargetAmount().getValue(),
                     piggyBank.getCategory()
                 ))
                 .collect(Collectors.toList());
@@ -140,7 +138,7 @@ public class PiggyBankService {
                         .map(piggyBank -> new CreatedGroupPiggyBankRepresentation(
                             piggyBank.getId(), 
                             piggyBank.getName(),
-                            piggyBank.getTargetAmount(), 
+                            piggyBank.getTargetAmount().getValue(), 
                             piggyBank.getCategory(),
                             group.getId()
                         ))

@@ -46,7 +46,7 @@ public class PiggyBankAllocationService {
         return new PiggyBankAllocationRepresentation(
             allocation.getId(),
             allocation.getDate(),
-            allocation.getAmount(),
+            allocation.getAmount().getValue(),
             allocation.getPiggyBank().getId()
         );
     }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record GroupPiggyBanksRepresentation(
     String name,
+    @JsonProperty("group_id")
     Long groupId,
     @JsonProperty("piggy_banks")
     List<CreatedGroupPiggyBankRepresentation> piggyBanks

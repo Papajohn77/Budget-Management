@@ -1,12 +1,17 @@
 package gr.aueb.budgetmanagement.application.representations;
 
+import java.math.BigDecimal;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
 public record CreatedGroupPiggyBankRepresentation(
     Long id,
     String name,
-    Money targetAmount,
+    @JsonProperty("target_amount")
+    BigDecimal targetAmount,
     ExpenseCategory category,
+    @JsonProperty("group_id")
     Long groupId
 ) {}
