@@ -9,6 +9,7 @@ import java.util.List;
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
+import gr.aueb.budgetmanagement.domain.interfaces.BalanceImpact;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -23,7 +24,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "savings")
-public class Savings {
+public class Savings implements BalanceImpact {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "savings_seq")
     @SequenceGenerator(name = "savings_seq", sequenceName = "savings_seq", initialValue = 1, allocationSize = 1)
@@ -97,5 +98,10 @@ public class Savings {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new Money(total);
+    }
+
+    @Override
+    public BigDecimal applyToBalance() {
+        return getCurrentAmount().getValue().negate();
     }
 }

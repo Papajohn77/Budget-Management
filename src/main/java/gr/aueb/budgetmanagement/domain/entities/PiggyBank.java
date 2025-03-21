@@ -8,6 +8,7 @@ import java.util.Set;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
+import gr.aueb.budgetmanagement.domain.interfaces.BalanceImpact;
 import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.persistence.CascadeType;
@@ -30,7 +31,7 @@ import jakarta.persistence.Table;
 @Table(name = "piggy_banks")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.STRING)
-public abstract class PiggyBank {
+public abstract class PiggyBank implements BalanceImpact {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "piggy_bank_seq")
     @SequenceGenerator(name = "piggy_bank_seq", sequenceName = "piggy_bank_seq", initialValue = 1, allocationSize = 1)
@@ -116,6 +117,11 @@ public abstract class PiggyBank {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new Money(total);
+    }
+
+    @Override
+    public BigDecimal applyToBalance() {
+        return getCurrentAmount().getValue().negate();
     }
 
     public abstract boolean isAuthorizedUser(User user);

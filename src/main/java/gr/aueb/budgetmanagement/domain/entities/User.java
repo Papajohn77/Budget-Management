@@ -1,8 +1,11 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -11,6 +14,7 @@ import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.NotFoundDomainException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
+import gr.aueb.budgetmanagement.domain.interfaces.BalanceImpact;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
@@ -281,6 +285,18 @@ public class User {
     boolean hasAlreadyBeenInvitedTo(Group group) {
         return invitations.stream()
             .anyMatch(invitation -> invitation.getGroup().equals(group));
+    }
+
+    public BigDecimal getCurrentBalance() {
+        List<BalanceImpact> financialEntities = new ArrayList<>();
+        financialEntities.addAll(incomes);
+        financialEntities.addAll(expenses);
+        financialEntities.addAll(piggyBanks);
+        financialEntities.add(savings);
+
+        return financialEntities.stream()
+            .map(BalanceImpact::applyToBalance)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
