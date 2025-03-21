@@ -1,14 +1,13 @@
 package gr.aueb.budgetmanagement.application.services;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -83,7 +82,7 @@ class PiggyBankServiceTest {
 
         assertNotNull(result.id());
         assertEquals(PIGGY_BANK_NAME, result.name());
-        assertEquals(TARGET_AMOUNT, result.targetAmount().getValue());
+        assertEquals(TARGET_AMOUNT, result.targetAmount());
         assertEquals(ExpenseCategory.OTHER, result.category());
 
         User persistedUser = userRepository.findById(admin.getId()).orElseThrow();
@@ -124,7 +123,7 @@ class PiggyBankServiceTest {
 
         assertNotNull(result.id());
         assertEquals(PIGGY_BANK_NAME, result.name());
-        assertEquals(TARGET_AMOUNT, result.targetAmount().getValue());
+        assertEquals(TARGET_AMOUNT, result.targetAmount());
         assertEquals(ExpenseCategory.OTHER, result.category());
         assertEquals(group.getId(), result.groupId());
 

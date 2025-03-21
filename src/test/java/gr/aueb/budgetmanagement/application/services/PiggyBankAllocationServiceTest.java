@@ -72,7 +72,7 @@ class PiggyBankAllocationServiceTest {
         // Assert
         assertNotNull(result.id());
         assertEquals(TODAY, result.date());
-        assertEquals(AMOUNT, result.amount().getValue());
+        assertEquals(AMOUNT, result.amount());
         assertEquals(personalPiggyBank.getId(), result.piggyBankId());
 
         // Verify persistence
@@ -97,7 +97,7 @@ class PiggyBankAllocationServiceTest {
         // Assert
         assertNotNull(result.id());
         assertEquals(TODAY, result.date());
-        assertEquals(AMOUNT, result.amount().getValue());
+        assertEquals(AMOUNT, result.amount());
         assertEquals(groupPiggyBank.getId(), result.piggyBankId());
 
         // Verify persistence
