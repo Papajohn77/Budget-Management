@@ -1,11 +1,14 @@
 package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.AddRecurringIncomeCommand;
+import gr.aueb.budgetmanagement.application.commands.UpdateRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateRecurringIncomeCommand;
+import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringIncomeRepresentation;
 import gr.aueb.budgetmanagement.application.representations.RecurringIncomesRepresentation;
+import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.RecurringIncome;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -59,12 +62,14 @@ public class RecurringIncomeService {
     @Transactional
     public void updateRecurringIncome(@Valid UpdateRecurringIncomeCommand command) {
         User user = userRepository.findById(command.userId())
-            .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        RecurringIncome recurringIncome = user.getRecurringIncomes().stream()
-            .filter(re -> re.getId().equals(command.recurringIncomeId()))
-            .findFirst()
-            .orElseThrow(() -> new NotFoundException("Recurring income not found"));
+        RecurringIncome recurringIncome = userRepository.findRecurringIncomeById(command.recurringIncomeId())
+                .orElseThrow(() -> new NotFoundException("Recurring income not found"));
+
+        if (!recurringIncome.canBeStoppedBy(user)) {
+            throw new ForbiddenException("User is not authorized to update this recurring income.");
+        }
 
         recurringIncome.stop(command.isStopped());
 
@@ -104,5 +109,6 @@ public class RecurringIncomeService {
             recurringIncome.isStopped()
         );
     }
+
 }
 

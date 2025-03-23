@@ -156,4 +156,8 @@ public class RecurringIncome {
         }
         this.isStopped = true;
     }
+
+    public boolean canBeStoppedBy(User user) {
+        return this.user == user;
+    }
 }

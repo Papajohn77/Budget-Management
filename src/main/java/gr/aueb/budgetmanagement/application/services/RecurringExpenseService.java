@@ -2,10 +2,12 @@ package gr.aueb.budgetmanagement.application.services;
 
 import gr.aueb.budgetmanagement.application.commands.AddRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateRecurringExpenseCommand;
+import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpenseRepresentation;
 import gr.aueb.budgetmanagement.application.representations.RecurringExpensesRepresentation;
+import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -44,12 +46,14 @@ public class RecurringExpenseService {
     @Transactional
     public void updateRecurringExpense(@Valid UpdateRecurringExpenseCommand command) {
         User user = userRepository.findById(command.userId())
-            .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        RecurringExpense recurringExpense = user.getRecurringExpenses().stream()
-            .filter(re -> re.getId().equals(command.recurringExpenseId()))
-            .findFirst()
-            .orElseThrow(() -> new NotFoundException("Recurring expense not found"));
+        RecurringExpense recurringExpense = userRepository.findRecurringExpenseById(command.recurringExpenseId())
+                .orElseThrow(() -> new NotFoundException("Recurring expense not found"));
+
+        if (!recurringExpense.canBeStoppedBy(user)) {
+            throw new ForbiddenException("User is not authorized to update this recurring expense");
+        }
 
         recurringExpense.stop(command.isStopped());
 
@@ -100,4 +104,6 @@ public class RecurringExpenseService {
             recurringExpense.isStopped()
         );
     }
+
+
 }

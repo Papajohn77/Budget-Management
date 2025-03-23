@@ -42,62 +42,61 @@ class ExpenseResourceTest extends IntegrationBase {
     @Test
     void testGetExpenseCategories() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
 
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .when()
-                .get(EXPENSE_CATEGORIES_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("expense_categories", containsInAnyOrder(
-                        Arrays.stream(ExpenseCategory.values()).map(Enum::name).toArray(String[]::new)
-                ));
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(EXPENSE_CATEGORIES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("expense_categories", containsInAnyOrder(
+                    Arrays.stream(ExpenseCategory.values()).map(Enum::name).toArray(String[]::new)
+            ));
 
     }
 
     @Test
     void testSuccessfulExpenseCreation() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         AddExpenseRequest request = new AddExpenseRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
         );
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(request)
-                .when()
-                .post(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .body("id", notNullValue())
-                .body("amount", equalTo(53.75F))
-                .body("category", equalTo(TEST_CATEGORY.name()))
-                .body("date", notNullValue());
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(request)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .body("id", notNullValue())
+            .body("amount", equalTo(53.75F))
+            .body("category", equalTo(TEST_CATEGORY.name()))
+            .body("date", notNullValue());
     }
 
     @Test
     void testExpenseCreationWithNullAmount() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
-        // Create request with JSON that has null amount
         String requestJson = """
             {
                 "amount": null,
@@ -107,24 +106,23 @@ class ExpenseResourceTest extends IntegrationBase {
             """.formatted(LocalDate.now());
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(requestJson)
-                .when()
-                .post(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(400);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(requestJson)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(400);
     }
 
     @Test
     void testExpenseCreationWithNullCategory() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
-        // Create request with JSON that has null category
         String requestJson = """
             {
                 "amount": 25.50,
@@ -134,24 +132,23 @@ class ExpenseResourceTest extends IntegrationBase {
             """.formatted(LocalDate.now());
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(requestJson)
-                .when()
-                .post(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(400);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(requestJson)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(400);
     }
 
     @Test
     void testExpenseCreationWithNullDate() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
-        // Create request with JSON that has null date
         String requestJson = """
             {
                 "amount": 25.50,
@@ -161,25 +158,24 @@ class ExpenseResourceTest extends IntegrationBase {
             """;
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(requestJson)
-                .when()
-                .post(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(400);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(requestJson)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(400);
     }
 
 
     @Test
     void testExpenseCreationWithInvalidCategory() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
-        // Create request with invalid category
         String requestJson = """
             {
                 "amount": 25.50,
@@ -189,84 +185,83 @@ class ExpenseResourceTest extends IntegrationBase {
             """.formatted(LocalDate.now());
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(requestJson)
-                .when()
-                .post(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(400);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(requestJson)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(400);
     }
 
     @Test
     void testExpenseCreationWithoutAuthentication() {
         AddExpenseRequest request = new AddExpenseRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
         );
 
         given()
-                .contentType(ContentType.JSON)
-                .body(request)
-                .when()
-                .post(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(401)
-                .body("message", containsString("Missing Authorization header"));
+            .contentType(ContentType.JSON)
+            .body(request)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(401)
+            .body("message", containsString("Missing Authorization header"));
     }
 
     @Test
     void testGetUserExpenses() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         AddExpenseRequest expenseRequest = new AddExpenseRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
         );
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(expenseRequest)
-                .when()
-                .post(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(201);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(expenseRequest)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(201);
 
         String responseBody = given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .when()
-                .get(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .extract().body().asString();
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .extract().body().asString();
 
         System.out.println("Response body: " + responseBody);
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .when()
-                .get(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("expenses", notNullValue())
-                .body("expenses[0].amount", is(53.75F));
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("expenses", notNullValue())
+            .body("expenses[0].amount", is(53.75F));
     }
 
     @Test
     void testGetExpensesWithDateFilters() {
-        // Setup
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
@@ -274,32 +269,31 @@ class ExpenseResourceTest extends IntegrationBase {
         LocalDate toDate = LocalDate.now();
 
         AddExpenseRequest expenseRequest = new AddExpenseRequest(
-                LocalDate.now().minusDays(15), // Date between fromDate and toDate
-                TEST_AMOUNT,
-                TEST_CATEGORY
+            LocalDate.now().minusDays(15), // Date between fromDate and toDate
+            TEST_AMOUNT,
+            TEST_CATEGORY
         );
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(expenseRequest)
-                .when()
-                .post(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(201);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(expenseRequest)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(201);
 
-        // Test the filter
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .queryParam("from_date", fromDate.toString())
-                .queryParam("to_date", toDate.toString())
-                .when()
-                .get(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("expenses", notNullValue())
-                .body("expenses.size()", greaterThan(0));
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("from_date", fromDate.toString())
+            .queryParam("to_date", toDate.toString())
+            .when()
+            .get(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("expenses", notNullValue())
+            .body("expenses.size()", greaterThan(0));
 
     }
 
@@ -307,42 +301,199 @@ class ExpenseResourceTest extends IntegrationBase {
     void testGetExpensesWithCategoryFilter() {
 
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
 
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         AddExpenseRequest expenseRequest = new AddExpenseRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
         );
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(expenseRequest)
-                .when()
-                .post(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(201);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(expenseRequest)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(201);
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .queryParam("category", TEST_CATEGORY.name())
-                .when()
-                .get(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("expenses", notNullValue())
-                .body("expenses.size()", greaterThan(0))
-                .body("expenses.findAll { it.category == '" + TEST_CATEGORY.name() + "' }.size()", greaterThan(0));
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("category", TEST_CATEGORY.name())
+            .when()
+            .get(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("expenses", notNullValue())
+            .body("expenses.size()", greaterThan(0))
+            .body("expenses.findAll { it.category == '" + TEST_CATEGORY.name() + "' }.size()", greaterThan(0));
     }
 
     @Test
     void testUpdateExpenseWithInvalidData() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        AddExpenseRequest createRequest = new AddExpenseRequest(
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
+        );
+
+        Long expenseId = given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(createRequest)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getLong("id");
+
+        String invalidUpdateJson = """
+            {
+                "amount": null,
+                "date": null,
+                "category": null
+            }
+            """;
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(invalidUpdateJson)
+            .when()
+            .put(EXPENSES_ENDPOINT + "/" + expenseId)
+            .then()
+            .statusCode(400);
+    }
+
+    @Test
+    void testUpdateExpenseOfAnotherUser() {
+        AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
+
+        AddExpenseRequest createRequest = new AddExpenseRequest(
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
+        );
+
+        Long expenseId = given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + firstUserToken)
+            .body(createRequest)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getLong("id");
+
+        RegisterUserRequest registerRequest = new RegisterUserRequest(
+            "otheruser",
+            "otheruser@example.com",
+            "Test123!@#"
+        );
+
+        String secondUserToken = getAuthTokenRegister(registerRequest);
+
+        UpdateExpenseRequest updateRequest = new UpdateExpenseRequest(
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY_UPDATE
+        );
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + secondUserToken)
+            .body(updateRequest)
+            .when()
+            .put(EXPENSES_ENDPOINT + "/" + expenseId)
+            .then()
+            .statusCode(404);
+    }
+
+    @Test
+    void testDeleteExpense() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        AddExpenseRequest createRequest = new AddExpenseRequest(
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
+        );
+
+        Long expenseId = given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(createRequest)
+            .when()
+            .post(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getLong("id");
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .delete(EXPENSES_ENDPOINT + "/" + expenseId)
+            .then()
+            .statusCode(204);
+
+        String response = given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(EXPENSES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .extract().asString();
+
+        assertFalse(response.contains("\"id\":" + expenseId + ","),
+            "Response still contains the deleted expense ID");
+    }
+
+    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
+        return given()
+            .contentType(ContentType.JSON)
+            .body(registerRequest)
+            .when()
+            .post(REGISTER_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getString("access_token");
+    }
+
+    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
+        return given()
+            .contentType(ContentType.JSON)
+            .body(loginRequest)
+            .when()
+            .post(LOGIN_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .extract().jsonPath().getString("access_token");
+    }
+
+    @Test
+    void testSuccessfulExpenseUpdate() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
                 EXISTING_EMAIL,
                 EXISTING_PASSWORD
@@ -350,12 +501,11 @@ class ExpenseResourceTest extends IntegrationBase {
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         AddExpenseRequest createRequest = new AddExpenseRequest(
-                LocalDate.now(),
+                TEST_DATE,
                 TEST_AMOUNT,
                 TEST_CATEGORY
         );
 
-        // Extract the ID of the created expense
         Long expenseId = given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + authToken)
@@ -366,28 +516,104 @@ class ExpenseResourceTest extends IntegrationBase {
                 .statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        // Try to update with null values
-        String invalidUpdateJson = """
-            {
-                "amount": null,
-                "date": null,
-                "category": null
-            }
-            """;
+        UpdateExpenseRequest updateRequest = new UpdateExpenseRequest(
+                TEST_DATE,
+                TEST_UPDATE_AMOUNT,
+                TEST_CATEGORY_UPDATE
+        );
 
         given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + authToken)
-                .body(invalidUpdateJson)
+                .body(updateRequest)
                 .when()
                 .put(EXPENSES_ENDPOINT + "/" + expenseId)
                 .then()
-                .statusCode(500);
+                .statusCode(200)
+                .body("id", equalTo(expenseId.intValue()))
+                .body("amount", equalTo(150))
+                .body("category", equalTo(TEST_CATEGORY_UPDATE.name()))
+                .body("date", notNullValue());
     }
 
     @Test
-    void testUpdateExpenseOfAnotherUser() {
-        // Login as the first user and create an expense
+    void testUpdateNonExistentExpense() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        UpdateExpenseRequest updateRequest = new UpdateExpenseRequest(
+                TEST_DATE,
+                TEST_UPDATE_AMOUNT,
+                TEST_CATEGORY_UPDATE
+        );
+
+        // Use a non-existent ID (assuming 999999L doesn't exist)
+        Long nonExistentId = 999999L;
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(updateRequest)
+                .when()
+                .put(EXPENSES_ENDPOINT + "/" + nonExistentId)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void testUpdateExpenseWithoutAuthentication() {
+        UpdateExpenseRequest updateRequest = new UpdateExpenseRequest(
+                TEST_DATE,
+                TEST_UPDATE_AMOUNT,
+                TEST_CATEGORY_UPDATE
+        );
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(updateRequest)
+                .when()
+                .put(EXPENSES_ENDPOINT + "/1") // Any ID would work for this test
+                .then()
+                .statusCode(401)
+                .body("message", containsString("Missing Authorization header"));
+    }
+
+    @Test
+    void testDeleteExpenseWithoutAuthentication() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .delete(EXPENSES_ENDPOINT + "/1") // Any ID would work for this test
+                .then()
+                .statusCode(401)
+                .body("message", containsString("Missing Authorization header"));
+    }
+
+    @Test
+    void testDeleteNonExistentExpense() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        // Use a non-existent ID (assuming 999999L doesn't exist)
+        Long nonExistentId = 999999L;
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .when()
+                .delete(EXPENSES_ENDPOINT + "/" + nonExistentId)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void testDeleteExpenseOfAnotherUser() {
         AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
                 EXISTING_EMAIL,
                 EXISTING_PASSWORD
@@ -410,99 +636,82 @@ class ExpenseResourceTest extends IntegrationBase {
                 .statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        // Register a second user
         RegisterUserRequest registerRequest = new RegisterUserRequest(
-                "otheruser",
-                "otheruser@example.com",
+                "otheruser2",
+                "otheruser2@example.com",
                 "Test123!@#"
         );
 
         String secondUserToken = getAuthTokenRegister(registerRequest);
 
-        // Second user tries to update first user's expense
-        UpdateExpenseRequest updateRequest = new UpdateExpenseRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY_UPDATE
-        );
-
         given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + secondUserToken)
-                .body(updateRequest)
                 .when()
-                .put(EXPENSES_ENDPOINT + "/" + expenseId)
+                .delete(EXPENSES_ENDPOINT + "/" + expenseId)
                 .then()
                 .statusCode(404);
     }
 
     @Test
-    void testDeleteExpense() {
+    void testGetExpensesWithoutAuthentication() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get(EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(401)
+                .body("message", containsString("Missing Authorization header"));
+    }
+
+    @Test
+    void testGetExpensesWithInvalidCategory() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
                 EXISTING_EMAIL,
                 EXISTING_PASSWORD
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
-        AddExpenseRequest createRequest = new AddExpenseRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY
-        );
-
-        Long expenseId = given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(createRequest)
-                .when()
-                .post(EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getLong("id");
-
-        // Delete the expense
         given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + authToken)
-                .when()
-                .delete(EXPENSES_ENDPOINT + "/" + expenseId)
-                .then()
-                .statusCode(204);
-
-        //Verify deletion by checking that the expense doesn't appear in the list of all expenses
-        String response = given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
+                .queryParam("category", "INVALID_CATEGORY")
                 .when()
                 .get(EXPENSES_ENDPOINT)
                 .then()
-                .statusCode(200)
-                .extract().asString();
-
-        assertFalse(response.contains("\"id\":" + expenseId + ","),
-                "Response still contains the deleted expense ID");
+                .statusCode(500);
     }
 
-    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
-        return given()
+    @Test
+    void testGetExpensesWithInvalidDateFormat() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        given()
                 .contentType(ContentType.JSON)
-                .body(registerRequest)
+                .header("Authorization", "Bearer " + authToken)
+                .queryParam("from_date", "invalid-date")
                 .when()
-                .post(REGISTER_ENDPOINT)
+                .get(EXPENSES_ENDPOINT)
                 .then()
-                .statusCode(201)
-                .extract().jsonPath().getString("access_token");
+                .statusCode(500);
     }
 
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
+    @Test
+    void testInvalidJWTToken() {
+        String invalidToken = "invalid.jwt.token";
+
+        given()
                 .contentType(ContentType.JSON)
-                .body(loginRequest)
+                .header("Authorization", "Bearer " + invalidToken)
                 .when()
-                .post(LOGIN_ENDPOINT)
+                .get(EXPENSES_ENDPOINT)
                 .then()
-                .statusCode(200)
-                .extract().jsonPath().getString("access_token");
+                .statusCode(401);
     }
 
 }
+

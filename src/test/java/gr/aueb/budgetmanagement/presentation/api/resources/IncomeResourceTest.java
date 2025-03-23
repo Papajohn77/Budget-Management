@@ -41,15 +41,15 @@ class IncomeResourceTest extends IntegrationBase {
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .when()
-                .get(INCOME_CATEGORIES_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("income_categories", containsInAnyOrder(
-                        Arrays.stream(IncomeCategory.values()).map(Enum::name).toArray(String[]::new)
-                ));
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(INCOME_CATEGORIES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("income_categories", containsInAnyOrder(
+                    Arrays.stream(IncomeCategory.values()).map(Enum::name).toArray(String[]::new)
+            ));
 
     }
     @Test
@@ -70,13 +70,13 @@ class IncomeResourceTest extends IntegrationBase {
             """.formatted(LocalDate.now());
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(requestJson)
-                .when()
-                .post(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(400);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(requestJson)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(400);
     }
 
 
@@ -89,13 +89,13 @@ class IncomeResourceTest extends IntegrationBase {
                 TEST_CATEGORY
         );
         given()
-                .contentType(ContentType.JSON)
-                .body(request)
-                .when()
-                .post(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(401)
-                .body("message", containsString("Missing Authorization header"));
+            .contentType(ContentType.JSON)
+            .body(request)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(401)
+            .body("message", containsString("Missing Authorization header"));
     }
 
     @Test
@@ -115,13 +115,13 @@ class IncomeResourceTest extends IntegrationBase {
         """.formatted(LocalDate.now());
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(requestJson)
-                .when()
-                .post(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(500);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(requestJson)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(400);
     }
 
     @Test
@@ -137,16 +137,16 @@ class IncomeResourceTest extends IntegrationBase {
         );
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(request)
-                .when()
-                .post(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .body("id", notNullValue())
-                .body("amount", equalTo(53.75f))
-                .body("category", equalTo("SALARY"));
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(request)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .body("id", notNullValue())
+            .body("amount", equalTo(53.75f))
+            .body("category", equalTo("SALARY"));
     }
 
     @Test
@@ -155,13 +155,13 @@ class IncomeResourceTest extends IntegrationBase {
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .when()
-                .get(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("incomes", notNullValue());
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("incomes", notNullValue());
     }
 
     @Test
@@ -182,78 +182,76 @@ class IncomeResourceTest extends IntegrationBase {
             """;
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(requestJson)
-                .when()
-                .post(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(400);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(requestJson)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(400);
     }
     @Test
     void testGetIncomesWithCategoryFilter() {
 
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
 
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         AddIncomeRequest incomeRequest = new AddIncomeRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
         );
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(incomeRequest)
-                .when()
-                .post(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(201);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(incomeRequest)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(201);
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .queryParam("category", TEST_CATEGORY.name())
-                .when()
-                .get(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("incomes", notNullValue())
-                .body("incomes.size()", greaterThan(0))
-                .body("incomes.findAll { it.category == '" + TEST_CATEGORY.name() + "' }.size()", greaterThan(0));
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("category", TEST_CATEGORY.name())
+            .when()
+            .get(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("incomes", notNullValue())
+            .body("incomes.size()", greaterThan(0))
+            .body("incomes.findAll { it.category == '" + TEST_CATEGORY.name() + "' }.size()", greaterThan(0));
     }
 
     @Test
     void testUpdateExpenseWithInvalidData() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
         );
 
-        // Extract the ID of the created income
         Long expenseId = given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(createRequest)
-                .when()
-                .post(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getLong("id");
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(createRequest)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getLong("id");
 
-        // Try to update with null values
         String invalidUpdateJson = """
             {
                 "amount": null,
@@ -263,41 +261,40 @@ class IncomeResourceTest extends IntegrationBase {
             """;
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(invalidUpdateJson)
-                .when()
-                .put(INCOMES_ENDPOINT + "/" + expenseId)
-                .then()
-                .statusCode(500);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(invalidUpdateJson)
+            .when()
+            .put(INCOMES_ENDPOINT + "/" + expenseId)
+            .then()
+            .statusCode(400);
     }
 
     @Test
     void testUpdateIncomeOfAnotherUser() {
         // Login as the first user and create an income
         AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
         String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
         );
 
         Long expenseId = given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + firstUserToken)
-                .body(createRequest)
-                .when()
-                .post(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getLong("id");
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + firstUserToken)
+            .body(createRequest)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getLong("id");
 
-        // Register a second user
         RegisterUserRequest registerRequest = new RegisterUserRequest(
                 "otheruser",
                 "otheruser@example.com",
@@ -306,93 +303,372 @@ class IncomeResourceTest extends IntegrationBase {
 
         String secondUserToken = getAuthTokenRegister(registerRequest);
 
-        // Second user tries to update first user's income
         UpdateIncomeRequest updateRequest = new UpdateIncomeRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY_UPDATE
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY_UPDATE
         );
 
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + secondUserToken)
-                .body(updateRequest)
-                .when()
-                .put(INCOMES_ENDPOINT + "/" + expenseId)
-                .then()
-                .statusCode(404);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + secondUserToken)
+            .body(updateRequest)
+            .when()
+            .put(INCOMES_ENDPOINT + "/" + expenseId)
+            .then()
+            .statusCode(404);
     }
 
     @Test
     void testDeleteIncome() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
-                LocalDate.now(),
-                TEST_AMOUNT,
-                TEST_CATEGORY
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
         );
 
         Long expenseId = given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(createRequest)
-                .when()
-                .post(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getLong("id");
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(createRequest)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getLong("id");
 
-        // Delete the income
         given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .when()
-                .delete(INCOMES_ENDPOINT + "/" + expenseId)
-                .then()
-                .statusCode(204);
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .delete(INCOMES_ENDPOINT + "/" + expenseId)
+            .then()
+            .statusCode(204);
 
-        //Verify deletion by checking that the expense doesn't appear in the list of all expenses
         String response = given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .when()
-                .get(INCOMES_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .extract().asString();
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .get(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .extract().asString();
 
         assertFalse(response.contains("\"id\":" + expenseId + ","),
                 "Response still contains the deleted expense ID");
     }
 
-
-
     private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
         return given()
-                .contentType(ContentType.JSON)
-                .body(registerRequest)
-                .when()
-                .post(REGISTER_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getString("access_token");
+            .contentType(ContentType.JSON)
+            .body(registerRequest)
+            .when()
+            .post(REGISTER_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getString("access_token");
     }
 
     private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
         return given()
-                .contentType(ContentType.JSON)
-                .body(loginRequest)
-                .when()
-                .post(LOGIN_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .extract().jsonPath().getString("access_token");
+            .contentType(ContentType.JSON)
+            .body(loginRequest)
+            .when()
+            .post(LOGIN_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .extract().jsonPath().getString("access_token");
     }
 
+    @Test
+    void testSuccessfulIncomeUpdate() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
 
+        AddIncomeRequest createRequest = new AddIncomeRequest(
+            TEST_DATE,
+            TEST_AMOUNT,
+            TEST_CATEGORY
+        );
+
+        Long incomeId = given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(createRequest)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getLong("id");
+
+        BigDecimal updatedAmount = BigDecimal.valueOf(150.0);
+        UpdateIncomeRequest updateRequest = new UpdateIncomeRequest(
+            TEST_DATE,
+            updatedAmount,
+            TEST_CATEGORY_UPDATE
+        );
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(updateRequest)
+            .when()
+            .put(INCOMES_ENDPOINT + "/" + incomeId)
+            .then()
+            .statusCode(200)
+            .body("id", equalTo(incomeId.intValue()))
+            .body("amount", equalTo(150.0F))
+            .body("category", equalTo(TEST_CATEGORY_UPDATE.name()))
+            .body("date", notNullValue());
+    }
+
+    @Test
+    void testUpdateNonExistentIncome() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        UpdateIncomeRequest updateRequest = new UpdateIncomeRequest(
+            TEST_DATE,
+            TEST_AMOUNT,
+            TEST_CATEGORY_UPDATE
+        );
+
+        Long nonExistentId = 999999L;
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(updateRequest)
+            .when()
+            .put(INCOMES_ENDPOINT + "/" + nonExistentId)
+            .then()
+            .statusCode(404);
+    }
+
+    @Test
+    void testUpdateIncomeWithoutAuthentication() {
+        UpdateIncomeRequest updateRequest = new UpdateIncomeRequest(
+            TEST_DATE,
+            TEST_AMOUNT,
+            TEST_CATEGORY_UPDATE
+        );
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(updateRequest)
+            .when()
+            .put(INCOMES_ENDPOINT + "/1") // Any ID would work for this test
+            .then()
+            .statusCode(401)
+            .body("message", containsString("Missing Authorization header"));
+}
+
+    @Test
+    void testDeleteIncomeWithoutAuthentication() {
+        given()
+            .contentType(ContentType.JSON)
+            .when()
+            .delete(INCOMES_ENDPOINT + "/1") // Any ID would work for this test
+            .then()
+            .statusCode(401)
+            .body("message", containsString("Missing Authorization header"));
+    }
+
+    @Test
+    void testDeleteNonExistentIncome() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        Long nonExistentId = 999999L;
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .when()
+            .delete(INCOMES_ENDPOINT + "/" + nonExistentId)
+            .then()
+            .statusCode(404);
+    }
+
+    @Test
+    void testDeleteIncomeOfAnotherUser() {
+        AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
+
+        AddIncomeRequest createRequest = new AddIncomeRequest(
+            LocalDate.now(),
+            TEST_AMOUNT,
+            TEST_CATEGORY
+        );
+
+        Long incomeId = given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + firstUserToken)
+            .body(createRequest)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getLong("id");
+
+        RegisterUserRequest registerRequest = new RegisterUserRequest(
+                "otheruser3",
+                "otheruser3@example.com",
+                "Test123!@#"
+        );
+
+        String secondUserToken = getAuthTokenRegister(registerRequest);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + secondUserToken)
+            .when()
+            .delete(INCOMES_ENDPOINT + "/" + incomeId)
+            .then()
+            .statusCode(404);
+    }
+
+    @Test
+    void testGetIncomesWithoutAuthentication() {
+        given()
+            .contentType(ContentType.JSON)
+            .when()
+            .get(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(401)
+            .body("message", containsString("Missing Authorization header"));
+    }
+
+    @Test
+    void testGetIncomesWithInvalidCategory() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("category", "INVALID_CATEGORY")
+            .when()
+            .get(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(500);
+    }
+
+    @Test
+    void testGetIncomesWithInvalidDateFormat() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("from_date", "invalid-date")
+            .when()
+            .get(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(500);
+    }
+
+    @Test
+    void testInvalidJWTTokenForIncomes() {
+        String invalidToken = "invalid.jwt.token";
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + invalidToken)
+            .when()
+            .get(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(401);
+    }
+
+    @Test
+    void testGetIncomesWithDateFilters() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        LocalDate fromDate = LocalDate.now().minusMonths(1);
+        LocalDate toDate = LocalDate.now();
+
+        AddIncomeRequest incomeRequest = new AddIncomeRequest(
+            LocalDate.now().minusDays(15), // Date between fromDate and toDate
+            TEST_AMOUNT,
+            TEST_CATEGORY
+        );
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(incomeRequest)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(201);
+
+        // Test the filter
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("from_date", fromDate.toString())
+            .queryParam("to_date", toDate.toString())
+            .when()
+            .get(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("incomes", notNullValue())
+            .body("incomes.size()", greaterThan(0));
+    }
+
+    @Test
+    void testIncomeCreationWithInvalidCategory() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+            EXISTING_EMAIL,
+            EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        String requestJson = """
+        {
+            "amount": 25.50,
+            "category": "INVALID_CATEGORY",
+            "date": "%s"
+        }
+        """.formatted(LocalDate.now());
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .body(requestJson)
+            .when()
+            .post(INCOMES_ENDPOINT)
+            .then()
+            .statusCode(400);
+    }
 }

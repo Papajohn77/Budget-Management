@@ -156,4 +156,9 @@ public class RecurringExpense {
         }
         this.isStopped = true;
     }
+
+    public boolean canBeStoppedBy(User user) {
+        return this.user == user;
+    }
+
 }

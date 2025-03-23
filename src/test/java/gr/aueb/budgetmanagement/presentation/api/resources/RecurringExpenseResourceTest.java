@@ -11,14 +11,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import gr.aueb.budgetmanagement.presentation.api.requests.*;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.presentation.api.requests.AddRecurringExpenseRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.StopRecurringExpenseRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 
@@ -49,8 +46,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 TEST_START_DATE,
                 TEST_END_DATE,
                 TEST_AMOUNT,
-                TEST_CATEGORY,
-                TEST_IS_STOPPED
+                TEST_CATEGORY
         );
 
         given()
@@ -71,34 +67,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
     }
 
     @Test
-    void testRecurringExpenseCreationWithStopped() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
-
-        AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
-                TEST_EXPENSE_NAME,
-                TEST_START_DATE,
-                TEST_END_DATE,
-                TEST_AMOUNT,
-                TEST_CATEGORY,
-                true // is_stopped = true
-        );
-
-        given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(request)
-                .when()
-                .post(RECURRING_EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .body("is_stopped", equalTo(true));
-    }
-
-    @Test
     void testRecurringExpenseCreationWithNullName() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
                 EXISTING_EMAIL,
@@ -106,7 +74,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
-        // Create request with JSON that has null name
         String requestJson = """
             {
                 "name": null,
@@ -136,7 +103,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
         );
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
-        // Create request with JSON that has null amount
         String requestJson = """
             {
                 "name": "Monthly Rent",
@@ -165,8 +131,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 TEST_START_DATE,
                 TEST_END_DATE,
                 TEST_AMOUNT,
-                TEST_CATEGORY,
-                TEST_IS_STOPPED
+                TEST_CATEGORY
         );
 
         given()
@@ -192,8 +157,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 TEST_START_DATE,
                 TEST_END_DATE,
                 TEST_AMOUNT,
-                TEST_CATEGORY,
-                TEST_IS_STOPPED
+                TEST_CATEGORY
         );
 
         given()
@@ -229,11 +193,9 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 TEST_START_DATE,
                 TEST_END_DATE,
                 TEST_AMOUNT,
-                TEST_CATEGORY,
-                TEST_IS_STOPPED
+                TEST_CATEGORY
         );
 
-        // Create a recurring expense
         Long expenseId = given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + authToken)
@@ -244,7 +206,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        // Stop the recurring expense
         StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
 
         given()
@@ -256,7 +217,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .then()
                 .statusCode(204);
 
-        // Verify the expense is now stopped
         given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + authToken)
@@ -268,49 +228,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
     }
 
     @Test
-    void testStopRecurringExpenseWithIsStopped_False() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
-
-        AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
-                TEST_EXPENSE_NAME,
-                TEST_START_DATE,
-                TEST_END_DATE,
-                TEST_AMOUNT,
-                TEST_CATEGORY,
-                TEST_IS_STOPPED
-        );
-
-        // Create a recurring expense
-        Long expenseId = given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(createRequest)
-                .when()
-                .post(RECURRING_EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getLong("id");
-
-        StopRecurringExpenseRequest invalidRequest = new StopRecurringExpenseRequest(false);
-
-        given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .body(invalidRequest)
-                .when()
-                .patch(RECURRING_EXPENSES_ENDPOINT + "/" + expenseId)
-                .then()
-                .statusCode(400)
-                .body("error", containsString("Only stopping a recurring expense is allowed"));
-    }
-
-    @Test
     void testStopRecurringExpenseOfAnotherUser() {
-        // Login as the first user and create an expense
         AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
                 EXISTING_EMAIL,
                 EXISTING_PASSWORD
@@ -322,8 +240,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 TEST_START_DATE,
                 TEST_END_DATE,
                 TEST_AMOUNT,
-                TEST_CATEGORY,
-                TEST_IS_STOPPED
+                TEST_CATEGORY
         );
 
         Long expenseId = given()
@@ -336,26 +253,22 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        // Register a second user
-        RegisterUserRequest registerRequest = new RegisterUserRequest(
-                "otheruser",
-                "otheruser@example.com",
-                "Test123!@#"
+        AuthenticateUserRequest loginRequest2 = new AuthenticateUserRequest(
+                "test2@example.com", // Another user from test fixture
+                EXISTING_PASSWORD
         );
+        String authToken2 = getAuthTokenAuthenticate(loginRequest2);
 
-        String secondUserToken = getAuthTokenRegister(registerRequest);
-
-        // Second user tries to stop first user's recurring expense
         StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
 
         given()
                 .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + secondUserToken)
+                .header("Authorization", "Bearer " + authToken2)
                 .body(stopRequest)
                 .when()
                 .patch(RECURRING_EXPENSES_ENDPOINT + "/" + expenseId)
                 .then()
-                .statusCode(404);
+                .statusCode(403);
     }
 
     @Test
@@ -371,8 +284,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 TEST_START_DATE,
                 TEST_END_DATE,
                 TEST_AMOUNT,
-                TEST_CATEGORY,
-                TEST_IS_STOPPED
+                TEST_CATEGORY
         );
 
         Long expenseId = given()
@@ -385,7 +297,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        // Delete the recurring expense
         given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + authToken)
@@ -394,7 +305,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .then()
                 .statusCode(204);
 
-        // Verify deletion by checking that the recurring expense doesn't appear in the list
         String response = given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + authToken)
@@ -410,7 +320,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteRecurringExpenseOfAnotherUser() {
-        // Login as the first user and create a recurring expense
         AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
                 EXISTING_EMAIL,
                 EXISTING_PASSWORD
@@ -422,8 +331,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 TEST_START_DATE,
                 TEST_END_DATE,
                 TEST_AMOUNT,
-                TEST_CATEGORY,
-                TEST_IS_STOPPED
+                TEST_CATEGORY
         );
 
         Long expenseId = given()
@@ -436,7 +344,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        // Register a second user
         RegisterUserRequest registerRequest = new RegisterUserRequest(
                 "otheruser2",
                 "otheruser2@example.com",
@@ -445,7 +352,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
         String secondUserToken = getAuthTokenRegister(registerRequest);
 
-        // Second user tries to delete first user's recurring expense
         given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + secondUserToken)
@@ -476,4 +382,640 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .statusCode(200)
                 .extract().jsonPath().getString("access_token");
     }
+
+    @Test
+    void testInvalidJWTForGetRecurringExpenses() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer invalidtoken123")
+                .when()
+                .get(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testInvalidJWTForCreateRecurringExpense() {
+        AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
+                TEST_EXPENSE_NAME,
+                TEST_START_DATE,
+                TEST_END_DATE,
+                TEST_AMOUNT,
+                TEST_CATEGORY
+        );
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer invalidtoken123")
+                .body(request)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testInvalidJWTForUpdateRecurringExpense() {
+        StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer invalidtoken123")
+                .body(stopRequest)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/1")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testInvalidJWTForDeleteRecurringExpense() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer invalidtoken123")
+                .when()
+                .delete(RECURRING_EXPENSES_ENDPOINT + "/1")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testUpdateNonExistentRecurringExpense() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        Long nonExistentId = 99999L;
+        StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(stopRequest)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/" + nonExistentId)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void testDeleteNonExistentRecurringExpense() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        Long nonExistentId = 99999L;
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .when()
+                .delete(RECURRING_EXPENSES_ENDPOINT + "/" + nonExistentId)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void testRecurringExpenseCreationWithNegativeAmount() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
+                TEST_EXPENSE_NAME,
+                TEST_START_DATE,
+                TEST_END_DATE,
+                BigDecimal.valueOf(-100.00),
+                TEST_CATEGORY
+        );
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(request)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    void testRecurringExpenseCreationWithEndDateBeforeStartDate() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
+                TEST_EXPENSE_NAME,
+                TEST_START_DATE,
+                TEST_START_DATE.minusDays(1), // End date before start date
+                TEST_AMOUNT,
+                TEST_CATEGORY
+        );
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(request)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    void testMalformedAuthorizationHeaderForGet() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "invalidtoken123")  // Missing Bearer prefix
+                .when()
+                .get(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testEmptyAuthorizationHeaderForGet() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "")
+                .when()
+                .get(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testMissingRequiredParametersInUpdateRequest() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
+                TEST_EXPENSE_NAME,
+                TEST_START_DATE,
+                TEST_END_DATE,
+                TEST_AMOUNT,
+                TEST_CATEGORY
+        );
+
+        Long expenseId = given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(createRequest)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(201)
+                .extract().jsonPath().getLong("id");
+
+        String malformedUpdateJson = "{}"; // Missing is_stopped field
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(malformedUpdateJson)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/" + expenseId)
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    void testRecurringExpenseCreationWithEmptyName() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
+                "",  // Empty string instead of null
+                TEST_START_DATE,
+                TEST_END_DATE,
+                TEST_AMOUNT,
+                TEST_CATEGORY
+        );
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(request)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    void testRecurringExpenseCreationWithNullCategory() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        String requestJson = """
+        {
+            "name": "Monthly Rent",
+            "amount": 1200.00,
+            "category": null,
+            "start_date": "%s",
+            "end_date": "%s"
+        }
+        """.formatted(TEST_START_DATE, TEST_END_DATE);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(requestJson)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    void testInvalidJWTForUpdateFullRecurringExpense() {
+        UpdateRecurringExpenseRequest updateRequest = new UpdateRecurringExpenseRequest(
+                TEST_START_DATE.plusMonths(1),
+                BigDecimal.valueOf(1500.00),
+                ExpenseCategory.OTHER
+        );
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer invalidtoken123")
+                .body(updateRequest)
+                .when()
+                .put(RECURRING_EXPENSES_ENDPOINT + "/1")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testSuccessfulRecurringExpenseStop() {
+        // Login and get token
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        // First create a recurring expense
+        AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
+                "Test Expense",
+                TEST_START_DATE,
+                TEST_END_DATE,
+                TEST_AMOUNT,
+                TEST_CATEGORY
+        );
+
+        Integer expenseId = given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(createRequest)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(201)
+                .extract().jsonPath().getInt("id");
+
+        // Now stop the recurring expense
+        StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(stopRequest)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/" + expenseId)
+                .then()
+                .statusCode(204);
+    }
+
+    @Test
+    void testStopRecurringExpenseWithInvalidValue() {
+        // Login and get token
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        // First create a recurring expense
+        AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
+                "Test Expense",
+                TEST_START_DATE,
+                TEST_END_DATE,
+                TEST_AMOUNT,
+                TEST_CATEGORY
+        );
+
+        Integer expenseId = given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(createRequest)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(201)
+                .extract().jsonPath().getInt("id");
+
+        // Try to stop with invalid value (false instead of true)
+        StopRecurringExpenseRequest invalidRequest = new StopRecurringExpenseRequest(false);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(invalidRequest)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/" + expenseId)
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    void testStopNonExistentRecurringExpense() {
+        // Login and get token
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        // Use a non-existent ID
+        Long nonExistentId = 999999L;
+        StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(stopRequest)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/" + nonExistentId)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void testStopOtherUserRecurringExpense() {
+        AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
+
+        AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
+                "First User Expense",
+                TEST_START_DATE,
+                TEST_END_DATE,
+                TEST_AMOUNT,
+                TEST_CATEGORY
+        );
+
+        Integer expenseId = given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + firstUserToken)
+                .body(createRequest)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(201)
+                .extract().jsonPath().getInt("id");
+
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                "test2@example.com",
+                EXISTING_PASSWORD
+        );
+
+        String secondUserToken = getAuthTokenAuthenticate(loginRequest);
+
+        StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + secondUserToken)
+                .body(stopRequest)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/" + expenseId)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    void testStopRecurringExpenseWithoutAuthentication() {
+        // Try to stop an expense without authentication
+        StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(stopRequest)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/1")  // Any ID will do as auth should fail first
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testStopRecurringExpenseWithInvalidToken() {
+        // Try to stop an expense with invalid token
+        StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer invalidToken123")
+                .body(stopRequest)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/1")  // Any ID will do as auth should fail first
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testEmptyAuthorizationHeaderForCreateRecurringExpense() {
+        AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
+                TEST_EXPENSE_NAME,
+                TEST_START_DATE,
+                TEST_END_DATE,
+                TEST_AMOUNT,
+                TEST_CATEGORY
+        );
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "")
+                .body(request)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testMalformedAuthorizationHeaderForCreateRecurringExpense() {
+        AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
+                TEST_EXPENSE_NAME,
+                TEST_START_DATE,
+                TEST_END_DATE,
+                TEST_AMOUNT,
+                TEST_CATEGORY
+        );
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "invalidtoken123") // Missing Bearer prefix
+                .body(request)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testEmptyAuthorizationHeaderForUpdateRecurringExpense() {
+        StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "")
+                .body(stopRequest)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/1")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testMalformedAuthorizationHeaderForUpdateRecurringExpense() {
+        StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "invalidtoken123") // Missing Bearer prefix
+                .body(stopRequest)
+                .when()
+                .patch(RECURRING_EXPENSES_ENDPOINT + "/1")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testEmptyAuthorizationHeaderForDeleteRecurringExpense() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "")
+                .when()
+                .delete(RECURRING_EXPENSES_ENDPOINT + "/1")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testMalformedAuthorizationHeaderForDeleteRecurringExpense() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "invalidtoken123") // Missing Bearer prefix
+                .when()
+                .delete(RECURRING_EXPENSES_ENDPOINT + "/1")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testGetRecurringExpensesWithoutAuthentication() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void testRecurringExpenseCreationWithMissingEndDate() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        String requestJson = """
+        {
+            "name": "Monthly Rent",
+            "amount": 1200.00,
+            "category": "HOUSING",
+            "start_date": "%s"
+        }
+        """.formatted(TEST_START_DATE);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(requestJson)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    void testRecurringExpenseCreationWithMissingStartDate() {
+        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
+                EXISTING_EMAIL,
+                EXISTING_PASSWORD
+        );
+        String authToken = getAuthTokenAuthenticate(loginRequest);
+
+        String requestJson = """
+        {
+            "name": "Monthly Rent",
+            "amount": 1200.00,
+            "category": "HOUSING",
+            "end_date": "%s"
+        }
+        """.formatted(TEST_END_DATE);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .body(requestJson)
+                .when()
+                .post(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    void testGetEmptyRecurringExpenses() {
+        // Create a new user with no recurring expenses
+        RegisterUserRequest registerRequest = new RegisterUserRequest(
+                "newuser",
+                "newuser@example.com",
+                "Test123!@#"
+        );
+
+        String newUserToken = getAuthTokenRegister(registerRequest);
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + newUserToken)
+                .when()
+                .get(RECURRING_EXPENSES_ENDPOINT)
+                .then()
+                .statusCode(200)
+                .body("recurring_expenses.size()", equalTo(0));
+    }
+
+
 }

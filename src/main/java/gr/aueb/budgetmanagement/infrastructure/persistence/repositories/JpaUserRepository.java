@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
+import gr.aueb.budgetmanagement.domain.entities.RecurringIncome;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -49,5 +51,17 @@ public class JpaUserRepository implements UserRepository {
     public Optional<User> findById(Long id) {
         User user = em.find(User.class, id);
         return Optional.ofNullable(user);
+    }
+
+    @Override
+    public Optional<RecurringExpense> findRecurringExpenseById(Long id) {
+        RecurringExpense recurringExpense = em.find(RecurringExpense.class, id);
+        return Optional.ofNullable(recurringExpense);
+    }
+
+    @Override
+    public Optional<RecurringIncome> findRecurringIncomeById(Long id) {
+        RecurringIncome recurringIncome = em.find(RecurringIncome.class, id);
+        return Optional.ofNullable(recurringIncome);
     }
 }
