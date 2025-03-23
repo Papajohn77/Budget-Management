@@ -7,7 +7,7 @@ import gr.aueb.budgetmanagement.application.commands.AddExpenseCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateExpenseCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.AddedExpenseRepresentation;
+import gr.aueb.budgetmanagement.application.representations.ExpenseRepresentation;
 import gr.aueb.budgetmanagement.application.representations.ExpensesRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Expense;
 import gr.aueb.budgetmanagement.domain.entities.User;
@@ -25,7 +25,7 @@ public class ExpenseService {
     }
 
     @Transactional
-    public AddedExpenseRepresentation createExpense(@Valid AddExpenseCommand command) {
+    public ExpenseRepresentation createExpense(@Valid AddExpenseCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -37,7 +37,7 @@ public class ExpenseService {
 
         userRepository.save(user);
 
-        return new AddedExpenseRepresentation(
+        return new ExpenseRepresentation(
             expense.getId(),
             expense.getAmount().getValue(),
             expense.getDate(),
@@ -46,7 +46,7 @@ public class ExpenseService {
     }
 
     @Transactional
-    public AddedExpenseRepresentation updateExpense(@Valid UpdateExpenseCommand command) {
+    public ExpenseRepresentation updateExpense(@Valid UpdateExpenseCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -59,7 +59,7 @@ public class ExpenseService {
 
         userRepository.save(user);
 
-        return new AddedExpenseRepresentation(
+        return new ExpenseRepresentation(
             expense.getId(),
             expense.getAmount().getValue(),
             expense.getDate(),
@@ -90,14 +90,14 @@ public class ExpenseService {
         return new ExpensesRepresentation(toAddedExpenseRepresentationList(expenses));
     }
 
-    private List<AddedExpenseRepresentation> toAddedExpenseRepresentationList(List<Expense> expenses) {
+    private List<ExpenseRepresentation> toAddedExpenseRepresentationList(List<Expense> expenses) {
         return expenses.stream()
             .map(this::toAddedExpenseRepresentation)
             .toList();
     }
 
-    private AddedExpenseRepresentation toAddedExpenseRepresentation(Expense expense) {
-        return new AddedExpenseRepresentation(
+    private ExpenseRepresentation toAddedExpenseRepresentation(Expense expense) {
+        return new ExpenseRepresentation(
             expense.getId(),
             expense.getAmount().getValue(),
             expense.getDate(),

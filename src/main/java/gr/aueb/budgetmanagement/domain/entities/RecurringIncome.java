@@ -1,27 +1,27 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-
-import java.time.LocalDate;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collections;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 
 
 @Entity
@@ -157,7 +157,49 @@ public class RecurringIncome {
         this.isStopped = true;
     }
 
-    public boolean canBeStoppedBy(User user) {
-        return this.user == user;
+    public Income apply(LocalDate currentDate) {
+        if (!shouldApply(currentDate)) {
+            return null;
+        }
+
+        LocalDate applicationDate = lastAppliedDate == null 
+            ? startDate 
+            : lastAppliedDate.plusMonths(1);
+
+        Income income = Income.create(
+            amount,
+            applicationDate,
+            category,
+            user
+        );
+
+        income.addRecurringIncome(this);
+        generatedIncomes.add(income);
+
+        lastAppliedDate = applicationDate;
+
+        return income;
+    }
+
+    public boolean shouldApply(LocalDate currentDate) {
+        if (isStopped) {
+            return false;
+        }
+
+        if (lastAppliedDate == null) {
+            return !currentDate.isBefore(startDate);
+        }
+
+        long totalMonthsPermitted = ChronoUnit.MONTHS.between(startDate, endDate);
+        if (startDate.plusMonths(totalMonthsPermitted).isBefore(endDate)) {
+            totalMonthsPermitted++;
+        }
+
+        if (generatedIncomes.size() >= totalMonthsPermitted) {
+            return false;
+        }
+
+        LocalDate nextApplicationDate = lastAppliedDate.plusMonths(1);
+        return !nextApplicationDate.isAfter(currentDate);
     }
 }

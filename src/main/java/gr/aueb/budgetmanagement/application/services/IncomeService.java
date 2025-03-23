@@ -7,7 +7,7 @@ import gr.aueb.budgetmanagement.application.commands.AddIncomeCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateIncomeCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.AddedIncomeRepresentation;
+import gr.aueb.budgetmanagement.application.representations.IncomeRepresentation;
 import gr.aueb.budgetmanagement.application.representations.IncomesRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Income;
 import gr.aueb.budgetmanagement.domain.entities.User;
@@ -25,7 +25,7 @@ public class IncomeService {
     }
 
     @Transactional
-    public AddedIncomeRepresentation createIncome(@Valid AddIncomeCommand command) {
+    public IncomeRepresentation createIncome(@Valid AddIncomeCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -37,7 +37,7 @@ public class IncomeService {
 
         userRepository.save(user);
 
-        return new AddedIncomeRepresentation(
+        return new IncomeRepresentation(
             income.getId(),
             income.getAmount().getValue(),
             income.getDate(),
@@ -46,7 +46,7 @@ public class IncomeService {
     }
 
     @Transactional
-    public AddedIncomeRepresentation updateIncome(@Valid UpdateIncomeCommand command) {
+    public IncomeRepresentation updateIncome(@Valid UpdateIncomeCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -59,7 +59,7 @@ public class IncomeService {
 
         userRepository.save(user);
 
-        return new AddedIncomeRepresentation(
+        return new IncomeRepresentation(
             income.getId(),
             income.getAmount().getValue(),
             income.getDate(),
@@ -90,14 +90,14 @@ public class IncomeService {
         return new IncomesRepresentation(toAddedIncomeRepresentationList(incomes));
     }
 
-    private List<AddedIncomeRepresentation> toAddedIncomeRepresentationList(List<Income> incomes) {
+    private List<IncomeRepresentation> toAddedIncomeRepresentationList(List<Income> incomes) {
         return incomes.stream()
             .map(this::toAddedIncomeRepresentation)
             .toList();
     }
 
-    private AddedIncomeRepresentation toAddedIncomeRepresentation(Income income) {
-        return new AddedIncomeRepresentation(
+    private IncomeRepresentation toAddedIncomeRepresentation(Income income) {
+        return new IncomeRepresentation(
             income.getId(),
             income.getAmount().getValue(),
             income.getDate(),

@@ -6,7 +6,7 @@ import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 import gr.aueb.budgetmanagement.application.commands.AddExpenseCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateExpenseCommand;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
-import gr.aueb.budgetmanagement.application.representations.AddedExpenseRepresentation;
+import gr.aueb.budgetmanagement.application.representations.ExpenseRepresentation;
 import gr.aueb.budgetmanagement.application.representations.ExpensesRepresentation;
 import gr.aueb.budgetmanagement.application.services.ExpenseService;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
@@ -86,7 +86,7 @@ public class ExpenseResource {
             authenticatedUserId
         );
 
-        AddedExpenseRepresentation result = expenseService.createExpense(command);
+        ExpenseRepresentation result = expenseService.createExpense(command);
 
         return Response
             .status(Response.Status.CREATED)
@@ -115,7 +115,7 @@ public class ExpenseResource {
             request.category()
         );
 
-        AddedExpenseRepresentation result = expenseService.updateExpense(command);
+        ExpenseRepresentation result = expenseService.updateExpense(command);
 
         return Response
             .status(Response.Status.OK)

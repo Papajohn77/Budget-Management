@@ -11,7 +11,7 @@ import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 import gr.aueb.budgetmanagement.application.commands.AddIncomeCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateIncomeCommand;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
-import gr.aueb.budgetmanagement.application.representations.AddedIncomeRepresentation;
+import gr.aueb.budgetmanagement.application.representations.IncomeRepresentation;
 import gr.aueb.budgetmanagement.application.representations.IncomesRepresentation;
 import gr.aueb.budgetmanagement.application.services.IncomeService;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
@@ -92,7 +92,7 @@ public class IncomeResource {
             authenticatedUserId
         );
 
-        AddedIncomeRepresentation result = incomeService.createIncome(command);
+        IncomeRepresentation result = incomeService.createIncome(command);
 
         return Response
             .status(Response.Status.CREATED)
@@ -121,7 +121,7 @@ public class IncomeResource {
             request.category()
         );
 
-        AddedIncomeRepresentation result = incomeService.updateIncome(command);
+        IncomeRepresentation result = incomeService.updateIncome(command);
 
         return Response
             .status(Response.Status.OK)

@@ -14,7 +14,7 @@ import gr.aueb.budgetmanagement.application.commands.CreateGroupCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.CreatedGroupRepresentation;
+import gr.aueb.budgetmanagement.application.representations.GroupRepresentation;
 import gr.aueb.budgetmanagement.application.representations.GroupsRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
@@ -54,7 +54,7 @@ class GroupServiceTest {
         );
 
        // Act
-       CreatedGroupRepresentation result = groupService.createGroup(command);
+       GroupRepresentation result = groupService.createGroup(command);
 
        // Assert
        assertNotNull(result.id());
@@ -125,7 +125,7 @@ class GroupServiceTest {
         assertNotNull(result.groups());
         assertEquals(1, result.groups().size());
         
-        CreatedGroupRepresentation groupRepresentation = result.groups().get(0);
+        GroupRepresentation groupRepresentation = result.groups().get(0);
         assertEquals(Fixture.Groups.TESTGROUP_ID, groupRepresentation.id());
         assertEquals("testgroup", groupRepresentation.name());
         assertTrue(groupRepresentation.isAdmin());
@@ -160,7 +160,7 @@ class GroupServiceTest {
         assertNotNull(result.groups());
         assertEquals(1, result.groups().size());
         
-        CreatedGroupRepresentation groupRepresentation = result.groups().get(0);
+        GroupRepresentation groupRepresentation = result.groups().get(0);
         assertEquals(Fixture.Groups.TESTGROUP_ID, groupRepresentation.id());
         assertEquals("testgroup", groupRepresentation.name());
         assertFalse(groupRepresentation.isAdmin());

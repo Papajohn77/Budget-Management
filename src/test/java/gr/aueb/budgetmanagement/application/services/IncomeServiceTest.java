@@ -16,7 +16,7 @@ import gr.aueb.budgetmanagement.application.commands.AddIncomeCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateIncomeCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.AddedIncomeRepresentation;
+import gr.aueb.budgetmanagement.application.representations.IncomeRepresentation;
 import gr.aueb.budgetmanagement.application.representations.IncomesRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
@@ -182,7 +182,7 @@ class IncomeServiceTest {
                 user.getId(), null, null, IncomeCategory.SALARY);
 
         assertEquals(2, result.incomes().size());
-        for (AddedIncomeRepresentation income : result.incomes()) {
+        for (IncomeRepresentation income : result.incomes()) {
             assertEquals(IncomeCategory.SALARY, income.category());
         }
     }
@@ -239,7 +239,7 @@ class IncomeServiceTest {
                 user.getId()
         );
 
-        AddedIncomeRepresentation createdIncome = incomeService.createIncome(createCommand);
+        IncomeRepresentation createdIncome = incomeService.createIncome(createCommand);
 
         // Now update it
         BigDecimal updatedAmount = new BigDecimal("200.00");
@@ -254,7 +254,7 @@ class IncomeServiceTest {
                 updatedCategory
         );
 
-        AddedIncomeRepresentation updatedIncome = incomeService.updateIncome(updateCommand);
+        IncomeRepresentation updatedIncome = incomeService.updateIncome(updateCommand);
 
         assertNotNull(updatedIncome);
         assertEquals(createdIncome.id(), updatedIncome.id());
@@ -279,7 +279,7 @@ class IncomeServiceTest {
                 user.getId()
         );
 
-        AddedIncomeRepresentation createdIncome = incomeService.createIncome(createCommand);
+        IncomeRepresentation createdIncome = incomeService.createIncome(createCommand);
 
         // Now try to update with a non-existent user ID (999L)
         UpdateIncomeCommand updateCommand = new UpdateIncomeCommand(
@@ -324,7 +324,7 @@ class IncomeServiceTest {
                 user.getId()
         );
 
-        AddedIncomeRepresentation createdIncome = incomeService.createIncome(createCommand);
+        IncomeRepresentation createdIncome = incomeService.createIncome(createCommand);
 
         // Verify income was created
         User userBeforeDelete = userRepository.findById(user.getId()).orElseThrow();
@@ -419,7 +419,7 @@ class IncomeServiceTest {
         boolean foundSalary = false;
         boolean foundDividends = false;
 
-        for (AddedIncomeRepresentation income : result.incomes()) {
+        for (IncomeRepresentation income : result.incomes()) {
             if (income.category() == IncomeCategory.SALARY) {
                 assertEquals(INCOME_AMOUNT, income.amount());
                 assertEquals(INCOME_DATE, income.date());

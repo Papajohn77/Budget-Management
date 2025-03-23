@@ -1,5 +1,15 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -11,8 +21,6 @@ import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class RecurringIncomeTest {
     private static final String TEST_PASSWORD = "Test123!@#";
@@ -247,62 +255,6 @@ class RecurringIncomeTest {
         );
     }
 
-    // Tests for canBeStoppedBy method
-    @Test
-    void canBeStoppedByReturnsTrueForOwner() {
-        // Arrange
-        RecurringIncome recurringIncome = RecurringIncome.create(
-                VALID_NAME,
-                VALID_AMOUNT,
-                VALID_CATEGORY,
-                VALID_START_DATE,
-                VALID_END_DATE,
-                user
-        );
-
-        // Act & Assert
-        assertTrue(recurringIncome.canBeStoppedBy(user));
-    }
-
-    @Test
-    void canBeStoppedByReturnsFalseForDifferentUser() {
-        // Arrange
-        RecurringIncome recurringIncome = RecurringIncome.create(
-                VALID_NAME,
-                VALID_AMOUNT,
-                VALID_CATEGORY,
-                VALID_START_DATE,
-                VALID_END_DATE,
-                user
-        );
-
-        User anotherUser = User.create(
-                "anotheruser",
-                "another@example.com",
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
-        );
-
-        // Act & Assert
-        assertFalse(recurringIncome.canBeStoppedBy(anotherUser));
-    }
-
-    @Test
-    void canBeStoppedByReturnsFalseForNullUser() {
-        // Arrange
-        RecurringIncome recurringIncome = RecurringIncome.create(
-                VALID_NAME,
-                VALID_AMOUNT,
-                VALID_CATEGORY,
-                VALID_START_DATE,
-                VALID_END_DATE,
-                user
-        );
-
-        // Act & Assert
-        assertFalse(recurringIncome.canBeStoppedBy(null));
-    }
-
     @Test
     void testProtectedConstructor() {
         // This test is to cover the protected no-arg constructor
@@ -392,7 +344,276 @@ class RecurringIncomeTest {
         assertFalse(recurringIncome.isStopped());
     }
 
+    @Test
+    void testNotShouldApplyWhenIsStopped() {
+        // Arrange
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                VALID_START_DATE,
+                VALID_END_DATE,
+                user
+        );
+        recurringIncome.stop(true);
+        
+        // Act & Assert - using reflection to access private method
+        boolean result = callShouldApply(recurringIncome, LocalDate.now());
+        assertFalse(result, "Stopped recurring income should not apply");
+    }
 
+    @Test
+    void testShouldNotApplyWithNullLastAppliedDateBeforeStartDate() {
+        // Arrange
+        LocalDate futureStartDate = LocalDate.now().plusDays(10);
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                futureStartDate,
+                futureStartDate.plusMonths(12),
+                user
+        );
+        
+        // Act & Assert
+        boolean result = callShouldApply(recurringIncome, LocalDate.now());
+        assertFalse(result, "Should not apply when current date is before start date");
+    }
+
+    @Test
+    void testShouldApplyWithNullLastAppliedDateAtStartDate() {
+        // Arrange
+        LocalDate today = LocalDate.now();
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                today,
+                today.plusMonths(12),
+                user
+        );
+        
+        // Act & Assert
+        boolean result = callShouldApply(recurringIncome, today);
+        assertTrue(result, "Should apply when current date is at start date");
+    }
+
+    @Test
+    void testShouldApplyWithNullLastAppliedDateAfterStartDate() {
+        // Arrange
+        LocalDate pastStartDate = LocalDate.now().minusDays(10);
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                pastStartDate,
+                pastStartDate.plusMonths(12),
+                user
+        );
+        
+        // Act & Assert
+        boolean result = callShouldApply(recurringIncome, LocalDate.now());
+        assertTrue(result, "Should apply when current date is after start date");
+    }
+
+    @Test
+    void testShouldNotApplyAfterMaximumApplicationsReached() {
+        // Arrange
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusMonths(4);
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                startDate,
+                endDate,
+                user
+        );
+        
+        // Simulate having already applied 4 times without calling apply to update the values
+        for (int i = 0; i < 4; i++) {
+            Income income = Income.create(VALID_AMOUNT, startDate.plusMonths(i), VALID_CATEGORY, user);
+            addGeneratedIncome(recurringIncome, income);
+        }
+        setPrivateField(recurringIncome, "lastAppliedDate", LocalDate.now());
+        
+        // Act & Assert
+        boolean result = callShouldApply(recurringIncome, LocalDate.now().plusMonths(2));
+        assertFalse(result, "Should not apply when maximum applications reached");
+    }
+
+    @Test
+    void testShouldNotApplyLessThanOneMonthSinceLastApplied() {
+        // Arrange
+        LocalDate now = LocalDate.now();
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                now.minusMonths(2),
+                now.plusMonths(10),
+                user
+        );
+        setPrivateField(recurringIncome, "lastAppliedDate", now.minusDays(15));
+        
+        // Act & Assert
+        boolean result = callShouldApply(recurringIncome, now);
+        assertFalse(result, "Should not apply when less than one month since last applied");
+    }
+
+    @Test
+    void testShouldApplyExactlyOneMonthSinceLastApplied() {
+        // Arrange
+        LocalDate now = LocalDate.now();
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                now.minusMonths(2),
+                now.plusMonths(10),
+                user
+        );
+        setPrivateField(recurringIncome, "lastAppliedDate", now.minusMonths(1));
+        
+        // Act & Assert
+        boolean result = callShouldApply(recurringIncome, now);
+        assertTrue(result, "Should apply when exactly one month since last applied");
+    }
+
+    @Test
+    void testShouldApplyMoreThanOneMonthSinceLastApplied() {
+        // Arrange
+        LocalDate now = LocalDate.now();
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                now.minusMonths(3),
+                now.plusMonths(9),
+                user
+        );
+        setPrivateField(recurringIncome, "lastAppliedDate", now.minusMonths(2));
+        
+        // Act & Assert
+        boolean result = callShouldApply(recurringIncome, now);
+        assertTrue(result, "Should apply when more than one month since last applied");
+    }
+
+    @Test
+    void testApplyWhenShouldNotApplyReturnsNull() {
+        // Arrange
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                LocalDate.now().plusDays(10), // Future start date
+                VALID_END_DATE,
+                user
+        );
+        
+        // Act
+        Income result = recurringIncome.apply(LocalDate.now());
+        
+        // Assert
+        assertNull(result, "Apply should return null when shouldApply returns false");
+    }
+
+    @Test
+    void testApplyFirstTimeCreatesIncomeWithStartDate() {
+        // Arrange
+        LocalDate startDate = LocalDate.now().minusDays(5);
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                startDate,
+                startDate.plusMonths(12),
+                user
+        );
+        
+        // Act
+        Income result = recurringIncome.apply(LocalDate.now());
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(startDate, result.getDate());
+        assertEquals(VALID_AMOUNT, result.getAmount());
+        assertEquals(VALID_CATEGORY, result.getCategory());
+        assertEquals(user, result.getUser());
+        assertEquals(recurringIncome, result.getRecurringIncome());
+        assertEquals(startDate, recurringIncome.getLastAppliedDate());
+        assertTrue(recurringIncome.getGeneratedIncomes().contains(result));
+    }
+
+    @Test
+    void testShouldApplyAccountsForPartialMonths() {
+        // Arrange
+        LocalDate startDate = LocalDate.now().minusMonths(3);
+        LocalDate endDate = startDate.plusMonths(2).plusDays(5);
+        
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                VALID_NAME,
+                VALID_AMOUNT,
+                VALID_CATEGORY,
+                startDate,
+                endDate,
+                user
+        );
+        
+        // Set up as if 2 applications already happened
+        setPrivateField(recurringIncome, "lastAppliedDate", startDate.plusMonths(1));
+        for (int i = 0; i < 2; i++) {
+                Income income = Income.create(VALID_AMOUNT, startDate.plusMonths(i), VALID_CATEGORY, user);
+                addGeneratedIncome(recurringIncome, income);
+        }
+        
+        // Act & Assert - Third application should be allowed due to partial month
+        boolean result = callShouldApply(recurringIncome, startDate.plusMonths(2));
+        assertTrue(result);
+        
+        // Act & Apply the third application
+        Income thirdIncome = Income.create(VALID_AMOUNT, startDate.plusMonths(2), VALID_CATEGORY, user);
+        addGeneratedIncome(recurringIncome, thirdIncome);
+        setPrivateField(recurringIncome, "lastAppliedDate", startDate.plusMonths(2));
+        
+        // Assert - Fourth application should be denied (reached maximum)
+        result = callShouldApply(recurringIncome, startDate.plusMonths(3));
+        assertFalse(result);
+    }
+
+    private boolean callShouldApply(RecurringIncome recurringIncome, LocalDate date) {
+        try {
+            Method shouldApplyMethod = RecurringIncome.class.getDeclaredMethod("shouldApply", LocalDate.class);
+            shouldApplyMethod.setAccessible(true);
+            return (boolean) shouldApplyMethod.invoke(recurringIncome, date);
+        } catch (Exception e) {
+            fail("Failed to call shouldApply method: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void setPrivateField(Object object, String fieldName, Object value) {
+        try {
+            Field field = object.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(object, value);
+        } catch (Exception e) {
+            fail("Failed to set private field: " + e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addGeneratedIncome(RecurringIncome recurringIncome, Income income) {
+        try {
+            Class<?> clazz = recurringIncome.getClass();
+            Field field = clazz.getDeclaredField("generatedIncomes");
+            field.setAccessible(true);
+            List<Income> generatedIncomes = (List<Income>) field.get(recurringIncome);
+            generatedIncomes.add(income);
+        } catch (Exception e) {
+            fail("Failed to add generated income: " + e.getMessage());
+        }
+    }
 }
 
 

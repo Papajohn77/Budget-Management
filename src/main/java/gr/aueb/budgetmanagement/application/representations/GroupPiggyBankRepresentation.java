@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 
-public record CreatedPersonalPiggyBankRepresentation(
+public record GroupPiggyBankRepresentation(
     Long id,
 
     String name,
@@ -17,5 +17,8 @@ public record CreatedPersonalPiggyBankRepresentation(
     @JsonProperty("current_amount")
     BigDecimal currentAmount,
 
-    ExpenseCategory category
+    ExpenseCategory category,
+
+    @JsonProperty("group_id")
+    Long groupId
 ) {}

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 
-public record AddedIncomeRepresentation(
+public record IncomeRepresentation(
     Long id,
     BigDecimal amount,
     LocalDate date,

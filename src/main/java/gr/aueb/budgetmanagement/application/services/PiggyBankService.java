@@ -10,8 +10,8 @@ import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.PiggyBankRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.CreatedGroupPiggyBankRepresentation;
-import gr.aueb.budgetmanagement.application.representations.CreatedPersonalPiggyBankRepresentation;
+import gr.aueb.budgetmanagement.application.representations.GroupPiggyBankRepresentation;
+import gr.aueb.budgetmanagement.application.representations.PersonalPiggyBankRepresentation;
 import gr.aueb.budgetmanagement.application.representations.GroupPiggyBanksRepresentation;
 import gr.aueb.budgetmanagement.application.representations.PiggyBanksRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
@@ -40,7 +40,7 @@ public class PiggyBankService {
     }
 
     @Transactional
-    public CreatedPersonalPiggyBankRepresentation createPersonalPiggyBank(
+    public PersonalPiggyBankRepresentation createPersonalPiggyBank(
         @Valid CreatePersonalPiggyBankCommand command
     ) {
         User user = userRepository.findById(command.userId())
@@ -55,7 +55,7 @@ public class PiggyBankService {
 
         piggyBankRepository.save(piggyBank);
 
-        return new CreatedPersonalPiggyBankRepresentation(
+        return new PersonalPiggyBankRepresentation(
             piggyBank.getId(),
             piggyBank.getName(),
             piggyBank.getTargetAmount().getValue(),
@@ -65,7 +65,7 @@ public class PiggyBankService {
     }
 
     @Transactional
-    public CreatedGroupPiggyBankRepresentation createGroupPiggyBank(
+    public GroupPiggyBankRepresentation createGroupPiggyBank(
         @Valid CreateGroupPiggyBankCommand command
     ) {
         Group group = groupRepository.findById(command.groupId())
@@ -84,7 +84,7 @@ public class PiggyBankService {
 
         piggyBankRepository.save(piggyBank);
 
-        return new CreatedGroupPiggyBankRepresentation(
+        return new GroupPiggyBankRepresentation(
             piggyBank.getId(),
             piggyBank.getName(),
             piggyBank.getTargetAmount().getValue(),
@@ -114,13 +114,13 @@ public class PiggyBankService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
-        List<CreatedPersonalPiggyBankRepresentation> personalPiggyBanks = List.of();
+        List<PersonalPiggyBankRepresentation> personalPiggyBanks = List.of();
         List<GroupPiggyBanksRepresentation> groupPiggyBanks = List.of();
         
         // Get personal piggy banks if needed
         if (type == null || "personal".equalsIgnoreCase(type)) {
             personalPiggyBanks = user.getPiggyBanks().stream()
-                .map(piggyBank -> new CreatedPersonalPiggyBankRepresentation(
+                .map(piggyBank -> new PersonalPiggyBankRepresentation(
                     piggyBank.getId(),
                     piggyBank.getName(),
                     piggyBank.getTargetAmount().getValue(),
@@ -137,7 +137,7 @@ public class PiggyBankService {
                     group.getName(),
                     group.getId(),
                     group.getPiggyBanks().stream()
-                        .map(piggyBank -> new CreatedGroupPiggyBankRepresentation(
+                        .map(piggyBank -> new GroupPiggyBankRepresentation(
                             piggyBank.getId(), 
                             piggyBank.getName(),
                             piggyBank.getTargetAmount().getValue(), 
