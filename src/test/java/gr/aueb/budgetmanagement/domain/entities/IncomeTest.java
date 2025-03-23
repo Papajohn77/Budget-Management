@@ -85,4 +85,48 @@ class IncomeTest {
             () -> Income.create(VALID_AMOUNT, VALID_DATE, VALID_CATEGORY, null)
         );
     }
+
+    @Test
+    void testAddRecurringExpense() {
+        // Arrange
+        Income income = Income.create(
+            VALID_AMOUNT,
+            VALID_DATE,
+            VALID_CATEGORY,
+            user
+        );
+
+        RecurringIncome recurringIncome = RecurringIncome.create(
+            "Monthly Garage Rent",
+            VALID_AMOUNT,
+            VALID_CATEGORY,
+            LocalDate.now(),
+            LocalDate.now().plusMonths(12),
+            user
+        );
+
+        // Act
+        income.addRecurringIncome(recurringIncome);
+
+        // Assert
+        assertEquals(recurringIncome, income.getRecurringIncome());
+    }
+
+    @Test
+    void testBalanceImpactImplementation() {
+        // Arrange
+        BigDecimal amount = new BigDecimal("150.00");
+        Income expense = Income.create(
+            new Money(amount),
+            VALID_DATE,
+            VALID_CATEGORY,
+            user
+        );
+        
+        // Act
+        BigDecimal impact = expense.applyToBalance();
+        
+        // Assert
+        assertEquals(amount, impact);
+    }
 }

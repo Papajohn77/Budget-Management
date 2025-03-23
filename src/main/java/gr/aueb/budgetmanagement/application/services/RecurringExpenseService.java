@@ -1,14 +1,17 @@
 package gr.aueb.budgetmanagement.application.services;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import gr.aueb.budgetmanagement.application.commands.AddRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.RecurringExpenseRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpenseRepresentation;
 import gr.aueb.budgetmanagement.application.representations.RecurringExpensesRepresentation;
+import gr.aueb.budgetmanagement.domain.entities.Expense;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,9 +21,14 @@ import jakarta.validation.Valid;
 @ApplicationScoped
 public class RecurringExpenseService {
     private final UserRepository userRepository;
+    private final RecurringExpenseRepository recurringExpenseRepository;
 
-    public RecurringExpenseService(UserRepository userRepository) {
+    public RecurringExpenseService(
+        UserRepository userRepository,
+        RecurringExpenseRepository recurringExpenseRepository
+    ) {
         this.userRepository = userRepository;
+        this.recurringExpenseRepository = recurringExpenseRepository;
     }
 
     @Transactional
@@ -77,6 +85,7 @@ public class RecurringExpenseService {
         userRepository.save(user);
     }
 
+    @Transactional
     public RecurringExpensesRepresentation getRecurringExpenses(Long userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
@@ -86,6 +95,17 @@ public class RecurringExpenseService {
         return new RecurringExpensesRepresentation(
             toAddedRecurringExpenseRepresentationList(recurringExpenses)
         );
+    }
+
+    @Transactional
+    public void applyRecurringExpenses(LocalDate currentDate) {
+        List<RecurringExpense> activeRecurringExpenses = recurringExpenseRepository.findNonStoppedRecurringExpenses();
+        for (RecurringExpense recurringExpense : activeRecurringExpenses) {
+            Expense generatedExpense = recurringExpense.apply(currentDate);
+            if (generatedExpense != null) {
+                recurringExpenseRepository.save(recurringExpense);
+            }
+        }
     }
 
     private List<AddedRecurringExpenseRepresentation> toAddedRecurringExpenseRepresentationList(List<RecurringExpense> recurringExpenses) {

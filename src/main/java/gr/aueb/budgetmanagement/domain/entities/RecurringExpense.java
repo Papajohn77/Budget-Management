@@ -1,6 +1,7 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -157,8 +158,49 @@ public class RecurringExpense {
         this.isStopped = true;
     }
 
-    public boolean canBeStoppedBy(User user) {
-        return this.user == user;
+    public Expense apply(LocalDate currentDate) {
+        if (!shouldApply(currentDate)) {
+            return null;
+        }
+
+        LocalDate applicationDate = lastAppliedDate == null 
+            ? startDate 
+            : lastAppliedDate.plusMonths(1);
+
+        Expense expense = Expense.create(
+            amount,
+            applicationDate,
+            category,
+            user
+        );
+
+        expense.addRecurringExpense(this);
+        generatedExpenses.add(expense);
+
+        lastAppliedDate = applicationDate;
+
+        return expense;
     }
 
+    private boolean shouldApply(LocalDate currentDate) {
+        if (isStopped) {
+            return false;
+        }
+
+        if (lastAppliedDate == null) {
+            return !currentDate.isBefore(startDate);
+        }
+
+        long totalMonthsPermitted = ChronoUnit.MONTHS.between(startDate, endDate);
+        if (startDate.plusMonths(totalMonthsPermitted).isBefore(endDate)) {
+            totalMonthsPermitted++;
+        }
+
+        if (generatedExpenses.size() >= totalMonthsPermitted) {
+            return false;
+        }
+
+        LocalDate nextApplicationDate = lastAppliedDate.plusMonths(1);
+        return !nextApplicationDate.isAfter(currentDate);
+    }
 }

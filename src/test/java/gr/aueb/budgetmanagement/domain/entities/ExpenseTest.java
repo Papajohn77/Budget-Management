@@ -85,4 +85,48 @@ class ExpenseTest {
             () -> Expense.create(VALID_AMOUNT, VALID_DATE, VALID_CATEGORY, null)
         );
     }
+
+    @Test
+    void testAddRecurringExpense() {
+        // Arrange
+        Expense expense = Expense.create(
+            VALID_AMOUNT,
+            VALID_DATE,
+            VALID_CATEGORY,
+            user
+        );
+
+        RecurringExpense recurringExpense = RecurringExpense.create(
+            "Monthly Subscription",
+            VALID_AMOUNT,
+            VALID_CATEGORY,
+            LocalDate.now(),
+            LocalDate.now().plusMonths(12),
+            user
+        );
+
+        // Act
+        expense.addRecurringExpense(recurringExpense);
+
+        // Assert
+        assertEquals(recurringExpense, expense.getRecurringExpense());
+    }
+
+    @Test
+    void testBalanceImpactImplementation() {
+        // Arrange
+        BigDecimal amount = new BigDecimal("150.00");
+        Expense expense = Expense.create(
+            new Money(amount),
+            VALID_DATE,
+            VALID_CATEGORY,
+            user
+        );
+        
+        // Act
+        BigDecimal impact = expense.applyToBalance();
+        
+        // Assert
+        assertEquals(amount.negate(), impact);
+    }
 }

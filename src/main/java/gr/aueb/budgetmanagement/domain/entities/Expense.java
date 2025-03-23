@@ -95,6 +95,14 @@ public class Expense implements BalanceImpact {
         return user;
     }
 
+    public RecurringExpense getRecurringExpense() {
+        return recurringExpense;
+    }
+
+    public void addRecurringExpense(RecurringExpense recurringExpense) {
+        this.recurringExpense = recurringExpense;
+    }
+
     @Override
     public BigDecimal applyToBalance() {
         return getAmount().getValue().negate();

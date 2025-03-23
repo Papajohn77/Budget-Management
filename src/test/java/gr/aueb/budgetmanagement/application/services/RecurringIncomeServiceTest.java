@@ -3,6 +3,7 @@ package gr.aueb.budgetmanagement.application.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -16,6 +17,7 @@ import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.AddRecurringIncomeCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateRecurringIncomeCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.RecurringIncomeRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringIncomeRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.RecurringIncome;
@@ -25,6 +27,7 @@ import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.validation.ConstraintViolationException;
 
 @QuarkusTest
@@ -33,7 +36,13 @@ class RecurringIncomeServiceTest {
     private static final Money VALID_MONEY = new Money(new BigDecimal("2500.00"));
 
     @Inject
+    EntityManager entityManager;
+
+    @Inject
     private UserRepository userRepository;
+
+    @Inject
+    private RecurringIncomeRepository recurringIncomeRepository;
 
     @Inject
     private RecurringIncomeService recurringIncomeService;
@@ -310,4 +319,196 @@ class RecurringIncomeServiceTest {
         assertFalse(incomeExists, "The recurring income should no longer exist");
     }
 
+    @Test
+    @TestTransaction
+    void testApplyRecurringIncomesSuccessful() {
+        // Arrange
+        LocalDate today = LocalDate.now();
+        RecurringIncome recurringIncome = RecurringIncome.create(
+            "New Test Income",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            today,  // Start date is today
+            today.plusMonths(12),
+            user
+        );
+        recurringIncomeRepository.save(recurringIncome);
+
+        // Act
+        recurringIncomeService.applyRecurringIncomes(today);
+
+        // Assert
+        RecurringIncome updated = entityManager.find(RecurringIncome.class, recurringIncome.getId());
+        assertNotNull(updated.getLastAppliedDate());
+        assertEquals(today, updated.getLastAppliedDate());
+        assertEquals(1, updated.getGeneratedIncomes().size());
+    }
+
+    @Test
+    @TestTransaction
+    void testApplyRecurringIncomesWithoutEligibleIncomes() {
+        // Arrange
+        LocalDate today = LocalDate.now();
+        RecurringIncome futureIncome = RecurringIncome.create(
+            "Future Income",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            today.plusDays(10),
+            today.plusMonths(12),
+            user
+        );
+        recurringIncomeRepository.save(futureIncome);
+
+        long incomeCountBefore = countIncomes();
+
+        // Act
+        recurringIncomeService.applyRecurringIncomes(today);
+
+        // Assert
+        long incomeCountAfter = countIncomes();
+        assertEquals(incomeCountBefore, incomeCountAfter);
+
+        RecurringIncome updated = entityManager.find(RecurringIncome.class, futureIncome.getId());
+        assertNull(updated.getLastAppliedDate());
+        assertTrue(updated.getGeneratedIncomes().isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    void testApplyRecurringIncomesWithMultipleIncomes() {
+        // Arrange
+        LocalDate today = LocalDate.now();
+
+        RecurringIncome applicableIncome = RecurringIncome.create(
+            "Applicable Income",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            today,
+            today.plusMonths(12),
+            user
+        );
+        recurringIncomeRepository.save(applicableIncome);
+
+        RecurringIncome nonApplicableIncome = RecurringIncome.create(
+            "Non-applicable Income",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            today.plusDays(10),
+            today.plusMonths(12),
+            user
+        );
+        recurringIncomeRepository.save(nonApplicableIncome);
+
+        long incomeCountBefore = countIncomes();
+
+        // Act
+        recurringIncomeService.applyRecurringIncomes(today);
+
+        // Assert
+        long incomeCountAfter = countIncomes();
+        assertEquals(incomeCountBefore + 1, incomeCountAfter);
+
+        RecurringIncome updatedApplicable = entityManager.find(RecurringIncome.class, applicableIncome.getId());
+        assertNotNull(updatedApplicable.getLastAppliedDate());
+        assertEquals(1, updatedApplicable.getGeneratedIncomes().size());
+
+        RecurringIncome updatedNonApplicable = entityManager.find(RecurringIncome.class, nonApplicableIncome.getId());
+        assertNull(updatedNonApplicable.getLastAppliedDate());
+        assertTrue(updatedNonApplicable.getGeneratedIncomes().isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    void testApplyRecurringIncomesTwoConsecutiveApplications() {
+        // Arrange
+        LocalDate today = LocalDate.now();
+        LocalDate lastMonth = today.minusMonths(1);
+
+        RecurringIncome recurringIncome = RecurringIncome.create(
+                "Monthly Income",
+                VALID_MONEY,
+                VALID_CATEGORY,
+                lastMonth,
+                lastMonth.plusMonths(12),
+                user
+        );
+
+        // Manually set up the first month's application
+        recurringIncome.apply(lastMonth); // This will update lastAppliedDate and create an income
+
+        recurringIncomeRepository.save(recurringIncome);
+
+        // Verify initial state
+        assertEquals(lastMonth, recurringIncome.getLastAppliedDate());
+        assertEquals(1, recurringIncome.getGeneratedIncomes().size());
+
+        long incomeCountBefore = countIncomes();
+
+        // Act - apply for current month
+        recurringIncomeService.applyRecurringIncomes(today);
+
+        // Assert
+        long incomeCountAfter = countIncomes();
+        assertEquals(incomeCountBefore + 1, incomeCountAfter);
+
+        RecurringIncome updated = entityManager.find(RecurringIncome.class, recurringIncome.getId());
+        assertEquals(today, updated.getLastAppliedDate());
+        assertEquals(2, updated.getGeneratedIncomes().size());
+    }
+
+    @Test
+    @TestTransaction
+    void testApplyRecurringIncomesExtraApplicationForPartialMonth() {
+        // Arrange
+        LocalDate startDate = LocalDate.now().minusMonths(2);
+        // This should allow 3 applications (2 full months + partial month)
+        LocalDate endDate = startDate.plusMonths(2).plusDays(5);
+        
+        RecurringIncome recurringIncome = RecurringIncome.create(
+            "Partial Month Income",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            startDate,
+            endDate,
+            user
+        );
+        
+        // Apply first time for initial month
+        recurringIncome.apply(startDate);
+        recurringIncomeRepository.save(recurringIncome);
+        
+        // Verify first application
+        assertEquals(startDate, recurringIncome.getLastAppliedDate());
+        assertEquals(1, recurringIncome.getGeneratedIncomes().size());
+        
+        // Act - apply for second month
+        recurringIncomeService.applyRecurringIncomes(startDate.plusMonths(1));
+        
+        // Verify second application
+        RecurringIncome afterSecond = entityManager.find(RecurringIncome.class, recurringIncome.getId());
+        assertEquals(startDate.plusMonths(1), afterSecond.getLastAppliedDate());
+        assertEquals(2, afterSecond.getGeneratedIncomes().size());
+        
+        // Apply for third month
+        recurringIncomeService.applyRecurringIncomes(startDate.plusMonths(2));
+        
+        // Assert - verify third application was allowed
+        RecurringIncome afterThird = entityManager.find(RecurringIncome.class, recurringIncome.getId());
+        assertEquals(startDate.plusMonths(2), afterThird.getLastAppliedDate());
+        assertEquals(3, afterThird.getGeneratedIncomes().size());
+        
+        // Try to apply for fourth month (should not be allowed)
+        recurringIncomeService.applyRecurringIncomes(startDate.plusMonths(3));
+        
+        // Assert - verify fourth application was not allowed
+        RecurringIncome afterFourth = entityManager.find(RecurringIncome.class, recurringIncome.getId());
+        assertEquals(startDate.plusMonths(2), afterFourth.getLastAppliedDate());
+        assertEquals(3, afterFourth.getGeneratedIncomes().size());
+    }
+
+    private long countIncomes() {
+    return entityManager
+        .createQuery("SELECT COUNT(i) FROM Income i", Long.class)
+        .getSingleResult();
+    }
 }

@@ -105,6 +105,14 @@ public class Income implements BalanceImpact {
         return user;
     }
 
+    public RecurringIncome getRecurringIncome() {
+        return recurringIncome;
+    }
+
+    public void addRecurringIncome(RecurringIncome recurringIncome) {
+        this.recurringIncome = recurringIncome;
+    }
+
     @Override
     public BigDecimal applyToBalance() {
         return getAmount().getValue();

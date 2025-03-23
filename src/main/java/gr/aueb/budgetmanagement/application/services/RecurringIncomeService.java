@@ -1,14 +1,17 @@
 package gr.aueb.budgetmanagement.application.services;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import gr.aueb.budgetmanagement.application.commands.AddRecurringIncomeCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateRecurringIncomeCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.RecurringIncomeRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringIncomeRepresentation;
 import gr.aueb.budgetmanagement.application.representations.RecurringIncomesRepresentation;
+import gr.aueb.budgetmanagement.domain.entities.Income;
 import gr.aueb.budgetmanagement.domain.entities.RecurringIncome;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,11 +21,14 @@ import jakarta.validation.Valid;
 @ApplicationScoped
 public class RecurringIncomeService {
     private final UserRepository userRepository;
+    private final RecurringIncomeRepository recurringIncomeRepository;
 
     public RecurringIncomeService(
-        UserRepository userRepository
+        UserRepository userRepository,
+        RecurringIncomeRepository recurringIncomeRepository
     ) {
         this.userRepository = userRepository;
+        this.recurringIncomeRepository = recurringIncomeRepository;
     }
 
     @Transactional
@@ -43,17 +49,6 @@ public class RecurringIncomeService {
         userRepository.save(user);
 
         return toAddedRecurringIncomeRepresentation(recurringIncome);
-    }
-
-    public RecurringIncomesRepresentation getRecurringIncomes(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
-
-        List<RecurringIncome> recurringIncomes = new ArrayList<>(user.getRecurringIncomes());
-
-        return new RecurringIncomesRepresentation(
-            toAddedRecurringIncomeRepresentationList(recurringIncomes)
-        );
     }
 
     @Transactional
@@ -90,6 +85,29 @@ public class RecurringIncomeService {
         user.removeRecurringIncome(recurringIncomeId);
 
         userRepository.save(user);
+    }
+
+    @Transactional
+    public RecurringIncomesRepresentation getRecurringIncomes(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("User not found"));
+
+        List<RecurringIncome> recurringIncomes = new ArrayList<>(user.getRecurringIncomes());
+
+        return new RecurringIncomesRepresentation(
+            toAddedRecurringIncomeRepresentationList(recurringIncomes)
+        );
+    }
+
+    @Transactional
+    public void applyRecurringIncomes(LocalDate currentDate) {
+        List<RecurringIncome> activeRecurringIncomes = recurringIncomeRepository.findNonStoppedRecurringIncomes();
+        for (RecurringIncome recurringIncome : activeRecurringIncomes) {
+            Income generatedIncome = recurringIncome.apply(currentDate);
+            if (generatedIncome != null) {
+                recurringIncomeRepository.save(recurringIncome);
+            }
+        }
     }
 
     private List<AddedRecurringIncomeRepresentation> toAddedRecurringIncomeRepresentationList(List<RecurringIncome> recurringIncomes) {

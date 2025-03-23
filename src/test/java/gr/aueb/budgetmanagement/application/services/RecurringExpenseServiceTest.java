@@ -3,6 +3,7 @@ package gr.aueb.budgetmanagement.application.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -16,6 +17,7 @@ import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.AddRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
+import gr.aueb.budgetmanagement.application.repositories.RecurringExpenseRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpenseRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
@@ -25,6 +27,7 @@ import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.validation.ConstraintViolationException;
 
 @QuarkusTest
@@ -33,7 +36,13 @@ class RecurringExpenseServiceTest {
     private static final Money VALID_MONEY = new Money(new BigDecimal("1500.00"));
 
     @Inject
+    EntityManager entityManager;
+
+    @Inject
     private UserRepository userRepository;
+
+    @Inject
+    private RecurringExpenseRepository recurringExpenseRepository;
 
     @Inject
     private RecurringExpenseService recurringExpenseService;
@@ -308,5 +317,198 @@ class RecurringExpenseServiceTest {
                 .anyMatch(re -> re.getId().equals(created.id()));
 
         assertFalse(expenseExists, "The recurring expense should no longer exist");
+    }
+
+    @Test
+    @TestTransaction
+    void testApplyRecurringExpensesSuccessful() {
+        // Arrange
+        LocalDate today = LocalDate.now();
+        RecurringExpense recurringExpense = RecurringExpense.create(
+            "New Test Expense",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            today,  // Start date is today
+            today.plusMonths(12),
+            user
+        );
+        recurringExpenseRepository.save(recurringExpense);
+
+        // Act
+        recurringExpenseService.applyRecurringExpenses(today);
+
+        // Assert
+        RecurringExpense updated = entityManager.find(RecurringExpense.class, recurringExpense.getId());
+        assertNotNull(updated.getLastAppliedDate());
+        assertEquals(today, updated.getLastAppliedDate());
+        assertEquals(1, updated.getGeneratedExpenses().size());
+    }
+
+    @Test
+    @TestTransaction
+    void testApplyRecurringExpensesWithoutEligibleExpenses() {
+        // Arrange
+        LocalDate today = LocalDate.now();
+        RecurringExpense futureExpense = RecurringExpense.create(
+            "Future Expense",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            today.plusDays(10),
+            today.plusMonths(12),
+            user
+        );
+        recurringExpenseRepository.save(futureExpense);
+
+        long expenseCountBefore = countExpenses();
+        
+        // Act
+        recurringExpenseService.applyRecurringExpenses(today);
+
+        // Assert
+        long expenseCountAfter = countExpenses();
+        assertEquals(expenseCountBefore, expenseCountAfter);
+        
+        RecurringExpense updated = entityManager.find(RecurringExpense.class, futureExpense.getId());
+        assertNull(updated.getLastAppliedDate());
+        assertTrue(updated.getGeneratedExpenses().isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    void testApplyRecurringExpensesWithMultipleExpenses() {
+        // Arrange
+        LocalDate today = LocalDate.now();
+
+        RecurringExpense applicableExpense = RecurringExpense.create(
+            "Applicable Expense",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            today,
+            today.plusMonths(12),
+            user
+        );
+        recurringExpenseRepository.save(applicableExpense);
+
+        RecurringExpense nonApplicableExpense = RecurringExpense.create(
+            "Non-applicable Expense",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            today.plusDays(10),
+            today.plusMonths(12),
+            user
+        );
+        recurringExpenseRepository.save(nonApplicableExpense);
+        
+        long expenseCountBefore = countExpenses();
+        
+        // Act
+        recurringExpenseService.applyRecurringExpenses(today);
+        
+        // Assert
+        long expenseCountAfter = countExpenses();
+        assertEquals(expenseCountBefore + 1, expenseCountAfter);
+        
+        RecurringExpense updatedApplicable = entityManager.find(RecurringExpense.class, applicableExpense.getId());
+        assertNotNull(updatedApplicable.getLastAppliedDate());
+        assertEquals(1, updatedApplicable.getGeneratedExpenses().size());
+
+        RecurringExpense updatedNonApplicable = entityManager.find(RecurringExpense.class, nonApplicableExpense.getId());
+        assertNull(updatedNonApplicable.getLastAppliedDate());
+        assertTrue(updatedNonApplicable.getGeneratedExpenses().isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    void testApplyRecurringExpensesTwoConsecutiveApplications() {
+        // Arrange
+        LocalDate today = LocalDate.now();
+        LocalDate lastMonth = today.minusMonths(1);
+
+        RecurringExpense recurringExpense = RecurringExpense.create(
+            "Monthly Expense",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            lastMonth,
+            lastMonth.plusMonths(12),
+            user
+        );
+
+        // Manually set up the first month's application
+        recurringExpense.apply(lastMonth); // This will update lastAppliedDate and create an expense
+
+        recurringExpenseRepository.save(recurringExpense);
+
+        // Verify initial state
+        assertEquals(lastMonth, recurringExpense.getLastAppliedDate());
+        assertEquals(1, recurringExpense.getGeneratedExpenses().size());
+
+        long expenseCountBefore = countExpenses();
+
+        // Act - apply for current month
+        recurringExpenseService.applyRecurringExpenses(today);
+
+        // Assert
+        long expenseCountAfter = countExpenses();
+        assertEquals(expenseCountBefore + 1, expenseCountAfter);
+
+        RecurringExpense updated = entityManager.find(RecurringExpense.class, recurringExpense.getId());
+        assertEquals(today, updated.getLastAppliedDate());
+        assertEquals(2, updated.getGeneratedExpenses().size());
+    }
+
+    @Test
+    @TestTransaction
+    void testApplyRecurringExpensesExtraApplicationForPartialMonth() {
+        // Arrange
+        LocalDate startDate = LocalDate.now().minusMonths(2);
+        // This should allow 3 applications (2 full months + partial month)
+        LocalDate endDate = startDate.plusMonths(2).plusDays(5);
+        
+        RecurringExpense recurringExpense = RecurringExpense.create(
+            "Partial Month Expense",
+            VALID_MONEY,
+            VALID_CATEGORY,
+            startDate,
+            endDate,
+            user
+        );
+        
+        // Apply first time for initial month
+        recurringExpense.apply(startDate);
+        recurringExpenseRepository.save(recurringExpense);
+        
+        // Verify first application
+        assertEquals(startDate, recurringExpense.getLastAppliedDate());
+        assertEquals(1, recurringExpense.getGeneratedExpenses().size());
+        
+        // Act - apply for second month
+        recurringExpenseService.applyRecurringExpenses(startDate.plusMonths(1));
+        
+        // Verify second application
+        RecurringExpense afterSecond = entityManager.find(RecurringExpense.class, recurringExpense.getId());
+        assertEquals(startDate.plusMonths(1), afterSecond.getLastAppliedDate());
+        assertEquals(2, afterSecond.getGeneratedExpenses().size());
+        
+        // Apply for third month
+        recurringExpenseService.applyRecurringExpenses(startDate.plusMonths(2));
+        
+        // Assert - verify third application was allowed
+        RecurringExpense afterThird = entityManager.find(RecurringExpense.class, recurringExpense.getId());
+        assertEquals(startDate.plusMonths(2), afterThird.getLastAppliedDate());
+        assertEquals(3, afterThird.getGeneratedExpenses().size());
+        
+        // Try to apply for fourth month (should not be allowed)
+        recurringExpenseService.applyRecurringExpenses(startDate.plusMonths(3));
+        
+        // Assert - verify fourth application was not allowed
+        RecurringExpense afterFourth = entityManager.find(RecurringExpense.class, recurringExpense.getId());
+        assertEquals(startDate.plusMonths(2), afterFourth.getLastAppliedDate());
+        assertEquals(3, afterFourth.getGeneratedExpenses().size());
+    }
+
+    private long countExpenses() {
+        return entityManager
+            .createQuery("SELECT COUNT(e) FROM Expense e", Long.class)
+            .getSingleResult();
     }
 }
