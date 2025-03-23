@@ -1,13 +1,12 @@
 package gr.aueb.budgetmanagement.application.representations;
 
-import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 
 public record AddedExpenseRepresentation(
-        Long id,
-        Money amount,
-        LocalDate date,
-        ExpenseCategory category
-)
-{}
+    Long id,
+    BigDecimal amount,
+    LocalDate date,
+    ExpenseCategory category
+) {}

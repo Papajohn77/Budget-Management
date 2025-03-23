@@ -6,8 +6,12 @@ import gr.aueb.budgetmanagement.domain.entities.User;
 
 public interface UserRepository {
     void save(User user);
+
     boolean existsByUsername(String username);
+
     boolean existsByEmail(String email);
+
     Optional<User> findByEmail(String email);
+
     Optional<User> findById(Long id);
 }
