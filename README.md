@@ -8,8 +8,6 @@ Upon account creation, each user automatically receives a **Savings** Piggy Bank
 
 For collaborative financial planning, users can form or join **Groups**, where an **Admin** creates and manages the group and invites new members. Within a group, members can contribute to **Group Piggy Banks**, allowing collective savings toward shared financial goals. While all members can add funds, only the Admin can dissolve the piggy bank, ensuring structured financial oversight.
 
-To enhance financial awareness, the platform generates **Reports**, offering both individual and group-level insights. Users can analyze monthly and annual spending trends, track savings progress, and optimize their budgeting strategies. This structured yet flexible system supports both personal financial independence and collaborative money management.
-
 ---
 **Core Functionalities**:
 
@@ -20,8 +18,6 @@ To enhance financial awareness, the platform generates **Reports**, offering bot
 **Piggy Bank Creation**: Users can create one or multiple personal piggy banks that serve as dedicated saving accounts
 
 **Savings**: Users can insert money in their savings. Savings piggy bank is automatically created upon registration.
-
-**Reporting**: Users can create and view monthly or annual reports based on their financial entries
 
 ---
 #### **1. User registration, Accounts & Groups**
@@ -44,20 +40,17 @@ A user can add Expense or Income entries to the system, which can be either fixe
 **Expenses** entries can belong to the following categories:
 - Housing
 - Entertainment
-- Health & Medical
+- Health
 - Investments
 - Food
 - Transportation
-- Salary
-- Dividents
-- PassiveIncome
-- Others  
+- Other 
 
 **Income** entries can belong to the following categories:
 - Salary
-- Dividents
+- Dividends
 - PassiveIncome
-- Others
+- Other
 
 ---
 
@@ -72,33 +65,6 @@ A specific type of piggy bank are **Savings**, where users can both add or remov
 
 Users can only add money to Piggy Banks and Savings if they have sufficient available funds. This restriction does not apply when adding expenses.
 
----
-
-#### **4. Reports**
-  Users can generate and view reports for expenses and income entries, either individually or as group reports.
-  
-  **Individual Reports**:
-  Users can generate reports for their own financial entries, filtering by month, year or category. Some report examples are provided below:
-  
-  **Monthly**:
-  - Monthly budget (Income - Expenses)
-  - Income/Expenses by category
-  - Savings goals
-    
-  **Annual**:
-- Income/Expenses by category  
-- Savings goals
-
-**Group Reports**:
-In case a user belongs to a group can also generate reports on the group financial entries. Some report examples are provided below:
-    
-  **Monthly**:
-  - Income/Expenses by category 
-  - Savings goals
-    
-  **Annual**:
-  - Income/Expenses by category  
-  - Savings goals 
 
 ---
 ## Domain Model
