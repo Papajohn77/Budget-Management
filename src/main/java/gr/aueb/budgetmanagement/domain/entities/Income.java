@@ -1,9 +1,11 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
+import gr.aueb.budgetmanagement.domain.interfaces.BalanceImpact;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,7 +21,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "incomes")
-public class Income {
+public class Income implements BalanceImpact {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "income_seq")
     @SequenceGenerator(name = "income_seq", sequenceName = "income_seq", initialValue = 1, allocationSize = 1)
@@ -101,5 +103,10 @@ public class Income {
 
     public User getUser() {
         return user;
+    }
+
+    @Override
+    public BigDecimal applyToBalance() {
+        return getAmount().getValue();
     }
 }

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
+import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InsufficientSavingsException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
@@ -182,6 +183,121 @@ class UserTest {
             InvalidDomainArgumentException.class, 
             () -> user.addInvitation(null)
         );
+    }
+
+    @Test
+    void getCurrentBalanceWithNoFinancialActivityShouldBeZero() {
+        // Act
+        BigDecimal balance = user.getCurrentBalance();
+        
+        // Assert
+        assertEquals(BigDecimal.ZERO, balance);
+    }
+
+    @Test
+    void getCurrentBalanceWithOnlyIncome() {
+        // Arrange
+        Money incomeAmount = new Money(new BigDecimal("500.00"));
+        user.addIncome(incomeAmount, TODAY, IncomeCategory.SALARY);
+        
+        // Act
+        BigDecimal balance = user.getCurrentBalance();
+        
+        // Assert
+        assertEquals(incomeAmount.getValue(), balance);
+    }
+
+    @Test
+    void getCurrentBalanceWithOnlyExpense() {
+        // Arrange
+        Money expenseAmount = new Money(new BigDecimal("300.00"));
+        user.addExpense(expenseAmount, TODAY, ExpenseCategory.HOUSING);
+        
+        // Act
+        BigDecimal balance = user.getCurrentBalance();
+        
+        // Assert
+        assertEquals(expenseAmount.getValue().negate(), balance);
+    }
+
+    @Test
+    void getCurrentBalanceWithSavingsAllocation() {
+        // Arrange
+        Money savingsAmount = new Money(new BigDecimal("200.00"));
+        user.allocateSavings(savingsAmount, TODAY);
+        
+        // Act
+        BigDecimal balance = user.getCurrentBalance();
+        
+        // Assert
+        assertEquals(savingsAmount.getValue().negate(), balance);
+    }
+
+    @Test
+    void getCurrentBalanceWithPiggyBankAllocation() {
+        // Arrange
+        Money targetAmount = new Money(new BigDecimal("1000.00"));
+        PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+            "Vacation Fund",
+            targetAmount,
+            ExpenseCategory.ENTERTAINMENT,
+            user
+        );
+        
+        Money allocationAmount = new Money(new BigDecimal("150.00"));
+        piggyBank.allocate(allocationAmount, TODAY, user);
+        
+        // Act
+        BigDecimal balance = user.getCurrentBalance();
+        
+        // Assert
+        assertEquals(allocationAmount.getValue().negate(), balance);
+    }
+
+    @Test
+    void getCurrentBalanceWithCombinedFinancialActivity() {
+        // Arrange
+        // Add income
+        Money incomeAmount1 = new Money(new BigDecimal("1000.00"));
+        Money incomeAmount2 = new Money(new BigDecimal("500.00"));
+        user.addIncome(incomeAmount1, TODAY, IncomeCategory.SALARY);
+        user.addIncome(incomeAmount2, TODAY, IncomeCategory.OTHER);
+        
+        // Add expenses
+        Money expenseAmount1 = new Money(new BigDecimal("300.00"));
+        Money expenseAmount2 = new Money(new BigDecimal("150.00"));
+        user.addExpense(expenseAmount1, TODAY, ExpenseCategory.FOOD);
+        user.addExpense(expenseAmount2, TODAY, ExpenseCategory.HOUSING);
+        
+        // Allocate to savings
+        Money savingsAmount = new Money(new BigDecimal("200.00"));
+        user.allocateSavings(savingsAmount, TODAY);
+        
+        // Create and allocate to piggy bank
+        PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
+            "Holiday Fund",
+            new Money(new BigDecimal("500.00")),
+            ExpenseCategory.ENTERTAINMENT,
+            user
+        );
+        Money piggyBankAmount = new Money(new BigDecimal("100.00"));
+        piggyBank.allocate(piggyBankAmount, TODAY, user);
+        
+        // Calculate expected balance
+        BigDecimal totalIncome = incomeAmount1.getValue().add(incomeAmount2.getValue());
+        BigDecimal totalExpense = expenseAmount1.getValue().add(expenseAmount2.getValue());
+        BigDecimal totalSavings = savingsAmount.getValue();
+        BigDecimal totalPiggyBank = piggyBankAmount.getValue();
+        BigDecimal expectedBalance = totalIncome
+            .subtract(totalExpense)
+            .subtract(totalSavings)
+            .subtract(totalPiggyBank);
+        
+        // Act
+        BigDecimal actualBalance = user.getCurrentBalance();
+        
+        // Assert
+        assertEquals(expectedBalance, actualBalance);
     }
 
     @Test
