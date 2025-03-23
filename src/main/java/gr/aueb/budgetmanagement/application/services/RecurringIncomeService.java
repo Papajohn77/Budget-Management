@@ -1,22 +1,19 @@
 package gr.aueb.budgetmanagement.application.services;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import gr.aueb.budgetmanagement.application.commands.AddRecurringIncomeCommand;
-import gr.aueb.budgetmanagement.application.commands.UpdateRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateRecurringIncomeCommand;
-import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringIncomeRepresentation;
 import gr.aueb.budgetmanagement.application.representations.RecurringIncomesRepresentation;
-import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.RecurringIncome;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @ApplicationScoped
 public class RecurringIncomeService {
@@ -33,7 +30,7 @@ public class RecurringIncomeService {
         @Valid AddRecurringIncomeCommand command
     ) {
         User user = userRepository.findById(command.userId())
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
         RecurringIncome recurringIncome = user.addRecurringIncome(
             command.name(),
@@ -50,7 +47,7 @@ public class RecurringIncomeService {
 
     public RecurringIncomesRepresentation getRecurringIncomes(Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
         List<RecurringIncome> recurringIncomes = new ArrayList<>(user.getRecurringIncomes());
 
@@ -62,14 +59,15 @@ public class RecurringIncomeService {
     @Transactional
     public void updateRecurringIncome(@Valid UpdateRecurringIncomeCommand command) {
         User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
-        RecurringIncome recurringIncome = userRepository.findRecurringIncomeById(command.recurringIncomeId())
-                .orElseThrow(() -> new NotFoundException("Recurring income not found"));
-
-        if (!recurringIncome.canBeStoppedBy(user)) {
-            throw new ForbiddenException("User is not authorized to update this recurring income.");
-        }
+        RecurringIncome recurringIncome = user.getRecurringIncomes().stream()
+            .filter(re -> re.getId().equals(command.recurringIncomeId()))
+            .findFirst()
+            .orElseThrow(() -> new NotFoundException(
+                "Recurring income with id: " + command.recurringIncomeId() 
+                + " was not found for user with id: " + command.userId()
+            ));
 
         recurringIncome.stop(command.isStopped());
 
@@ -79,12 +77,15 @@ public class RecurringIncomeService {
     @Transactional
     public void deleteRecurringIncome(Long recurringIncomeId, Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
-        RecurringIncome recurringIncome = user.getRecurringIncomes().stream()
+        user.getRecurringIncomes().stream()
             .filter(re -> re.getId().equals(recurringIncomeId))
             .findFirst()
-            .orElseThrow(() -> new NotFoundException("Recurring income not found"));
+            .orElseThrow(() -> new NotFoundException(
+                "Recurring income with id: " + recurringIncomeId 
+                + " was not found for user with id: " + userId
+            ));
 
         user.removeRecurringIncome(recurringIncomeId);
 
@@ -109,6 +110,4 @@ public class RecurringIncomeService {
             recurringIncome.isStopped()
         );
     }
-
 }
-

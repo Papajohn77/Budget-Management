@@ -1,7 +1,9 @@
 package gr.aueb.budgetmanagement.presentation.api.resources;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -10,11 +12,14 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 
-import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
-import gr.aueb.budgetmanagement.presentation.api.requests.*;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.IntegrationBase;
+import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
+import gr.aueb.budgetmanagement.presentation.api.requests.AddIncomeRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.UpdateIncomeRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 
@@ -364,28 +369,6 @@ class IncomeResourceTest extends IntegrationBase {
                 "Response still contains the deleted expense ID");
     }
 
-    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(registerRequest)
-            .when()
-            .post(REGISTER_ENDPOINT)
-            .then()
-            .statusCode(201)
-            .extract().jsonPath().getString("access_token");
-    }
-
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(loginRequest)
-            .when()
-            .post(LOGIN_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract().jsonPath().getString("access_token");
-    }
-
     @Test
     void testSuccessfulIncomeUpdate() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
@@ -670,5 +653,27 @@ class IncomeResourceTest extends IntegrationBase {
             .post(INCOMES_ENDPOINT)
             .then()
             .statusCode(400);
+    }
+
+    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
+        return given()
+            .contentType(ContentType.JSON)
+            .body(registerRequest)
+            .when()
+            .post(REGISTER_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getString("access_token");
+    }
+
+    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
+        return given()
+            .contentType(ContentType.JSON)
+            .body(loginRequest)
+            .when()
+            .post(LOGIN_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .extract().jsonPath().getString("access_token");
     }
 }

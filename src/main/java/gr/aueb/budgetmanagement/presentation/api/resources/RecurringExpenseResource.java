@@ -12,12 +12,15 @@ import gr.aueb.budgetmanagement.application.services.RecurringExpenseService;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.presentation.api.requests.AddRecurringExpenseRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.StopRecurringExpenseRequest;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
-
-import java.util.Map;
 
 @Path("/api/v1/recurring-expenses")
 @SecurityRequirement(name = "JWT")

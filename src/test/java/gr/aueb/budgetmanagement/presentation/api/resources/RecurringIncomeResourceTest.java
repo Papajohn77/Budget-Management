@@ -6,16 +6,26 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Base64;
 
-import gr.aueb.budgetmanagement.presentation.api.requests.*;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
+import gr.aueb.budgetmanagement.presentation.api.requests.AddRecurringIncomeRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.StopRecurringIncomeRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.UpdateRecurringIncomeRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 
@@ -315,28 +325,6 @@ class RecurringIncomeResourceTest extends IntegrationBase {
                 .delete(RECURRING_INCOMES_ENDPOINT + "/" + incomeId)
                 .then()
                 .statusCode(404);
-    }
-
-    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
-        return given()
-                .contentType(ContentType.JSON)
-                .body(registerRequest)
-                .when()
-                .post(REGISTER_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getString("access_token");
-    }
-
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
-                .contentType(ContentType.JSON)
-                .body(loginRequest)
-                .when()
-                .post(LOGIN_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .extract().jsonPath().getString("access_token");
     }
 
     @Test
@@ -725,7 +713,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
     }
 
     @Test
-    void testStopOtherUserRecurringIncome() {
+    void testStopOtherUserRecurringIncome() throws JsonProcessingException {
         AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
                 EXISTING_EMAIL,
                 EXISTING_PASSWORD
@@ -759,14 +747,19 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
         StopRecurringIncomeRequest stopRequest = new StopRecurringIncomeRequest(true);
 
-        given()
+        String message = given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + secondUserToken)
                 .body(stopRequest)
                 .when()
                 .patch(RECURRING_INCOMES_ENDPOINT + "/" + incomeId)
                 .then()
-                .statusCode(403);
+                .statusCode(404)
+                .extract().jsonPath().getString("message");
+
+        String expectedMessage = "Not Found: Recurring income with id: " + incomeId 
+                + " was not found for user with id: " + getUserIdClaim(secondUserToken);
+        assertEquals(expectedMessage, message);
     }
 
     @Test
@@ -971,5 +964,35 @@ class RecurringIncomeResourceTest extends IntegrationBase {
                 .then()
                 .statusCode(200)
                 .body("recurring_incomes.size()", equalTo(0));
+    }
+
+    private String getUserIdClaim(String accessToken) throws JsonProcessingException {
+        String[] parts = accessToken.split("\\.");
+        String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode claims = mapper.readTree(payload);
+        return claims.get("user_id").asText();
+    }
+
+    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
+        return given()
+                .contentType(ContentType.JSON)
+                .body(registerRequest)
+                .when()
+                .post(REGISTER_ENDPOINT)
+                .then()
+                .statusCode(201)
+                .extract().jsonPath().getString("access_token");
+    }
+
+    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
+        return given()
+                .contentType(ContentType.JSON)
+                .body(loginRequest)
+                .when()
+                .post(LOGIN_ENDPOINT)
+                .then()
+                .statusCode(200)
+                .extract().jsonPath().getString("access_token");
     }
 }

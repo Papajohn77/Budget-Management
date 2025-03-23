@@ -1,21 +1,19 @@
 package gr.aueb.budgetmanagement.application.services;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import gr.aueb.budgetmanagement.application.commands.AddRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateRecurringExpenseCommand;
-import gr.aueb.budgetmanagement.application.exceptions.ForbiddenException;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpenseRepresentation;
 import gr.aueb.budgetmanagement.application.representations.RecurringExpensesRepresentation;
-import gr.aueb.budgetmanagement.domain.entities.PiggyBank;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @ApplicationScoped
 public class RecurringExpenseService {
@@ -28,7 +26,7 @@ public class RecurringExpenseService {
     @Transactional
     public AddedRecurringExpenseRepresentation createRecurringExpense(@Valid AddRecurringExpenseCommand command) {
         User user = userRepository.findById(command.userId())
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
         RecurringExpense recurringExpense = user.addRecurringExpense(
             command.name(),
@@ -46,14 +44,15 @@ public class RecurringExpenseService {
     @Transactional
     public void updateRecurringExpense(@Valid UpdateRecurringExpenseCommand command) {
         User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
-        RecurringExpense recurringExpense = userRepository.findRecurringExpenseById(command.recurringExpenseId())
-                .orElseThrow(() -> new NotFoundException("Recurring expense not found"));
-
-        if (!recurringExpense.canBeStoppedBy(user)) {
-            throw new ForbiddenException("User is not authorized to update this recurring expense");
-        }
+        RecurringExpense recurringExpense = user.getRecurringExpenses().stream()
+            .filter(re -> re.getId().equals(command.recurringExpenseId()))
+            .findFirst()
+            .orElseThrow(() -> new NotFoundException(
+                "Recurring expense with id: " + command.recurringExpenseId() 
+                + " was not found for user with id: " + command.userId()
+            ));
 
         recurringExpense.stop(command.isStopped());
 
@@ -63,12 +62,15 @@ public class RecurringExpenseService {
     @Transactional
     public void deleteRecurringExpense(Long recurringExpenseId, Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
-        RecurringExpense recurringExpense = user.getRecurringExpenses().stream()
+        user.getRecurringExpenses().stream()
             .filter(re -> re.getId().equals(recurringExpenseId))
             .findFirst()
-            .orElseThrow(() -> new NotFoundException("Recurring expense not found"));
+            .orElseThrow(() -> new NotFoundException(
+                "Recurring expense with id: " + recurringExpenseId 
+                + " was not found for user with id: " + userId
+            ));
 
         user.removeRecurringExpense(recurringExpenseId);
 
@@ -77,7 +79,7 @@ public class RecurringExpenseService {
 
     public RecurringExpensesRepresentation getRecurringExpenses(Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
         List<RecurringExpense> recurringExpenses = new ArrayList<>(user.getRecurringExpenses());
 

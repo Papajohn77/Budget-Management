@@ -6,16 +6,26 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Base64;
 
-import gr.aueb.budgetmanagement.presentation.api.requests.*;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
+import gr.aueb.budgetmanagement.presentation.api.requests.AddRecurringExpenseRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.StopRecurringExpenseRequest;
+import gr.aueb.budgetmanagement.presentation.api.requests.UpdateRecurringExpenseRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 
@@ -228,7 +238,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
     }
 
     @Test
-    void testStopRecurringExpenseOfAnotherUser() {
+    void testStopRecurringExpenseOfAnotherUser() throws JsonProcessingException {
         AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
                 EXISTING_EMAIL,
                 EXISTING_PASSWORD
@@ -261,14 +271,19 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
         StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
 
-        given()
+        String message = given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + authToken2)
                 .body(stopRequest)
                 .when()
                 .patch(RECURRING_EXPENSES_ENDPOINT + "/" + expenseId)
                 .then()
-                .statusCode(403);
+                .statusCode(404)
+                .extract().jsonPath().getString("message");
+
+        String expectedMessage = "Not Found: Recurring expense with id: " + expenseId 
+                + " was not found for user with id: " + getUserIdClaim(authToken2);
+        assertEquals(expectedMessage, message);
     }
 
     @Test
@@ -359,28 +374,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .delete(RECURRING_EXPENSES_ENDPOINT + "/" + expenseId)
                 .then()
                 .statusCode(404);
-    }
-
-    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
-        return given()
-                .contentType(ContentType.JSON)
-                .body(registerRequest)
-                .when()
-                .post(REGISTER_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getString("access_token");
-    }
-
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
-                .contentType(ContentType.JSON)
-                .body(loginRequest)
-                .when()
-                .post(LOGIN_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .extract().jsonPath().getString("access_token");
     }
 
     @Test
@@ -769,51 +762,6 @@ class RecurringExpenseResourceTest extends IntegrationBase {
     }
 
     @Test
-    void testStopOtherUserRecurringExpense() {
-        AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
-
-        AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
-                "First User Expense",
-                TEST_START_DATE,
-                TEST_END_DATE,
-                TEST_AMOUNT,
-                TEST_CATEGORY
-        );
-
-        Integer expenseId = given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + firstUserToken)
-                .body(createRequest)
-                .when()
-                .post(RECURRING_EXPENSES_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getInt("id");
-
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                "test2@example.com",
-                EXISTING_PASSWORD
-        );
-
-        String secondUserToken = getAuthTokenAuthenticate(loginRequest);
-
-        StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
-
-        given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + secondUserToken)
-                .body(stopRequest)
-                .when()
-                .patch(RECURRING_EXPENSES_ENDPOINT + "/" + expenseId)
-                .then()
-                .statusCode(403);
-    }
-
-    @Test
     void testStopRecurringExpenseWithoutAuthentication() {
         // Try to stop an expense without authentication
         StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
@@ -1017,5 +965,33 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .body("recurring_expenses.size()", equalTo(0));
     }
 
+    private String getUserIdClaim(String accessToken) throws JsonProcessingException {
+        String[] parts = accessToken.split("\\.");
+        String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode claims = mapper.readTree(payload);
+        return claims.get("user_id").asText();
+    }
 
+    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
+        return given()
+                .contentType(ContentType.JSON)
+                .body(registerRequest)
+                .when()
+                .post(REGISTER_ENDPOINT)
+                .then()
+                .statusCode(201)
+                .extract().jsonPath().getString("access_token");
+    }
+
+    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
+        return given()
+                .contentType(ContentType.JSON)
+                .body(loginRequest)
+                .when()
+                .post(LOGIN_ENDPOINT)
+                .then()
+                .statusCode(200)
+                .extract().jsonPath().getString("access_token");
+    }
 }

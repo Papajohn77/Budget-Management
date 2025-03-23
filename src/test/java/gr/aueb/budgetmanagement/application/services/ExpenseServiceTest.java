@@ -1,31 +1,29 @@
 package gr.aueb.budgetmanagement.application.services;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import gr.aueb.budgetmanagement.application.commands.AddIncomeCommand;
-import gr.aueb.budgetmanagement.application.commands.UpdateExpenseCommand;
-import gr.aueb.budgetmanagement.application.commands.UpdateIncomeCommand;
-import gr.aueb.budgetmanagement.application.representations.AddedExpenseRepresentation;
-import gr.aueb.budgetmanagement.application.representations.AddedIncomeRepresentation;
-import gr.aueb.budgetmanagement.application.representations.ExpensesRepresentation;
-import gr.aueb.budgetmanagement.application.representations.IncomesRepresentation;
-import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.AddExpenseCommand;
+import gr.aueb.budgetmanagement.application.commands.UpdateExpenseCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
+import gr.aueb.budgetmanagement.application.representations.AddedExpenseRepresentation;
+import gr.aueb.budgetmanagement.application.representations.ExpensesRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 class ExpenseServiceTest {

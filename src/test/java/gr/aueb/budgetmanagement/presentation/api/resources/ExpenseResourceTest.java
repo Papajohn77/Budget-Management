@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 
-import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.IntegrationBase;
@@ -235,7 +234,7 @@ class ExpenseResourceTest extends IntegrationBase {
             .then()
             .statusCode(201);
 
-        String responseBody = given()
+        given()
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + authToken)
             .when()
@@ -243,8 +242,6 @@ class ExpenseResourceTest extends IntegrationBase {
             .then()
             .statusCode(200)
             .extract().body().asString();
-
-        System.out.println("Response body: " + responseBody);
 
         given()
             .contentType(ContentType.JSON)
@@ -470,28 +467,6 @@ class ExpenseResourceTest extends IntegrationBase {
             "Response still contains the deleted expense ID");
     }
 
-    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(registerRequest)
-            .when()
-            .post(REGISTER_ENDPOINT)
-            .then()
-            .statusCode(201)
-            .extract().jsonPath().getString("access_token");
-    }
-
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(loginRequest)
-            .when()
-            .post(LOGIN_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract().jsonPath().getString("access_token");
-    }
-
     @Test
     void testSuccessfulExpenseUpdate() {
         AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
@@ -713,5 +688,26 @@ class ExpenseResourceTest extends IntegrationBase {
                 .statusCode(401);
     }
 
+    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
+        return given()
+            .contentType(ContentType.JSON)
+            .body(registerRequest)
+            .when()
+            .post(REGISTER_ENDPOINT)
+            .then()
+            .statusCode(201)
+            .extract().jsonPath().getString("access_token");
+    }
+
+    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
+        return given()
+            .contentType(ContentType.JSON)
+            .body(loginRequest)
+            .when()
+            .post(LOGIN_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .extract().jsonPath().getString("access_token");
+    }
 }
 

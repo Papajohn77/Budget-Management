@@ -1,6 +1,5 @@
 package gr.aueb.budgetmanagement.presentation.api.resources;
 
-import gr.aueb.budgetmanagement.application.representations.RecurringIncomesRepresentation;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 
@@ -8,16 +7,20 @@ import gr.aueb.budgetmanagement.application.commands.AddRecurringIncomeCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateRecurringIncomeCommand;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
 import gr.aueb.budgetmanagement.application.representations.AddedRecurringIncomeRepresentation;
+import gr.aueb.budgetmanagement.application.representations.RecurringIncomesRepresentation;
 import gr.aueb.budgetmanagement.application.services.RecurringIncomeService;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.presentation.api.requests.AddRecurringIncomeRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.StopRecurringIncomeRequest;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
-
-import java.util.Map;
 
 @Path("/api/v1/recurring-incomes")
 @SecurityRequirement(name = "JWT")
