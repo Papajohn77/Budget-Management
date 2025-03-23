@@ -9,5 +9,5 @@ public record GroupPiggyBanksRepresentation(
     @JsonProperty("group_id")
     Long groupId,
     @JsonProperty("piggy_banks")
-    List<CreatedGroupPiggyBankRepresentation> piggyBanks
+    List<GroupPiggyBankRepresentation> piggyBanks
 ) {}

@@ -7,7 +7,7 @@ import gr.aueb.budgetmanagement.application.commands.CreateGroupCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.CreatedGroupRepresentation;
+import gr.aueb.budgetmanagement.application.representations.GroupRepresentation;
 import gr.aueb.budgetmanagement.application.representations.GroupsRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.User;
@@ -27,7 +27,7 @@ public class GroupService {
     }
 
     @Transactional
-    public CreatedGroupRepresentation createGroup(@Valid CreateGroupCommand command) {
+    public GroupRepresentation createGroup(@Valid CreateGroupCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -39,7 +39,7 @@ public class GroupService {
 
         groupRepository.save(group);
 
-        return new CreatedGroupRepresentation(
+        return new GroupRepresentation(
             group.getId(),
             group.getName(),
             true
@@ -56,9 +56,9 @@ public class GroupService {
         );
     }
 
-    private List<CreatedGroupRepresentation> toCreatedGroupRepresentationList(Set<Group> groups, User user) {
+    private List<GroupRepresentation> toCreatedGroupRepresentationList(Set<Group> groups, User user) {
         return groups.stream()
-            .map(group -> new CreatedGroupRepresentation(
+            .map(group -> new GroupRepresentation(
                 group.getId(),
                 group.getName(),
                 group.isAdmin(user)

@@ -9,7 +9,7 @@ import gr.aueb.budgetmanagement.application.commands.UpdateRecurringIncomeComman
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.RecurringIncomeRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.AddedRecurringIncomeRepresentation;
+import gr.aueb.budgetmanagement.application.representations.RecurringIncomeRepresentation;
 import gr.aueb.budgetmanagement.application.representations.RecurringIncomesRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Income;
 import gr.aueb.budgetmanagement.domain.entities.RecurringIncome;
@@ -32,7 +32,7 @@ public class RecurringIncomeService {
     }
 
     @Transactional
-    public AddedRecurringIncomeRepresentation createRecurringIncome(
+    public RecurringIncomeRepresentation createRecurringIncome(
         @Valid AddRecurringIncomeCommand command
     ) {
         User user = userRepository.findById(command.userId())
@@ -110,14 +110,14 @@ public class RecurringIncomeService {
         }
     }
 
-    private List<AddedRecurringIncomeRepresentation> toAddedRecurringIncomeRepresentationList(List<RecurringIncome> recurringIncomes) {
+    private List<RecurringIncomeRepresentation> toAddedRecurringIncomeRepresentationList(List<RecurringIncome> recurringIncomes) {
         return recurringIncomes.stream()
             .map(this::toAddedRecurringIncomeRepresentation)
             .toList();
     }
 
-    private AddedRecurringIncomeRepresentation toAddedRecurringIncomeRepresentation(RecurringIncome recurringIncome) {
-        return new AddedRecurringIncomeRepresentation(
+    private RecurringIncomeRepresentation toAddedRecurringIncomeRepresentation(RecurringIncome recurringIncome) {
+        return new RecurringIncomeRepresentation(
             recurringIncome.getId(),
             recurringIncome.getName(),
             recurringIncome.getAmount().getValue(),

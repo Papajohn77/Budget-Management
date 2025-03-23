@@ -5,7 +5,7 @@ import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 
 import gr.aueb.budgetmanagement.application.commands.CreateGroupCommand;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
-import gr.aueb.budgetmanagement.application.representations.CreatedGroupRepresentation;
+import gr.aueb.budgetmanagement.application.representations.GroupRepresentation;
 import gr.aueb.budgetmanagement.application.representations.GroupsRepresentation;
 import gr.aueb.budgetmanagement.application.services.GroupService;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreateGroupRequest;
@@ -34,7 +34,7 @@ public class GroupResource {
         Long authenticatedUserId = Long.valueOf(jwt.getClaim("user_id").toString());
 
         CreateGroupCommand command = new CreateGroupCommand(request.name(), authenticatedUserId);
-        CreatedGroupRepresentation result = groupService.createGroup(command);
+        GroupRepresentation result = groupService.createGroup(command);
 
         return Response
             .status(Response.Status.CREATED)

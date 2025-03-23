@@ -19,7 +19,7 @@ import gr.aueb.budgetmanagement.application.commands.UpdateRecurringExpenseComma
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.RecurringExpenseRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpenseRepresentation;
+import gr.aueb.budgetmanagement.application.representations.RecurringExpenseRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
@@ -72,7 +72,7 @@ class RecurringExpenseServiceTest {
                 user.getId());
 
         // Act
-        AddedRecurringExpenseRepresentation result = recurringExpenseService.createRecurringExpense(command);
+        RecurringExpenseRepresentation result = recurringExpenseService.createRecurringExpense(command);
 
         // Assert
         assertNotNull(result, "Result should not be null");
@@ -263,7 +263,7 @@ class RecurringExpenseServiceTest {
                 endDate,
                 user.getId());
 
-        AddedRecurringExpenseRepresentation created = recurringExpenseService.createRecurringExpense(createCommand);
+        RecurringExpenseRepresentation created = recurringExpenseService.createRecurringExpense(createCommand);
         assertFalse(created.isStopped(), "New expense should not be stopped initially");
 
         // Act - Update to stop the expense
@@ -302,7 +302,7 @@ class RecurringExpenseServiceTest {
                 endDate,
                 user.getId());
 
-        AddedRecurringExpenseRepresentation created = recurringExpenseService.createRecurringExpense(createCommand);
+        RecurringExpenseRepresentation created = recurringExpenseService.createRecurringExpense(createCommand);
         int originalCount = user.getRecurringExpenses().size();
 
         // Act

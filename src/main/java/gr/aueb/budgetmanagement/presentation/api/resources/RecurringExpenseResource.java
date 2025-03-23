@@ -6,7 +6,7 @@ import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 import gr.aueb.budgetmanagement.application.commands.AddRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateRecurringExpenseCommand;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
-import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpenseRepresentation;
+import gr.aueb.budgetmanagement.application.representations.RecurringExpenseRepresentation;
 import gr.aueb.budgetmanagement.application.representations.RecurringExpensesRepresentation;
 import gr.aueb.budgetmanagement.application.services.RecurringExpenseService;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
@@ -64,7 +64,7 @@ public class RecurringExpenseResource {
             authenticatedUserId
         );
 
-        AddedRecurringExpenseRepresentation result = recurringExpenseService.createRecurringExpense(command);
+        RecurringExpenseRepresentation result = recurringExpenseService.createRecurringExpense(command);
 
         return Response
             .status(Response.Status.CREATED)

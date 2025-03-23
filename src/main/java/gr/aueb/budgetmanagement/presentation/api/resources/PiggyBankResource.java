@@ -8,8 +8,8 @@ import gr.aueb.budgetmanagement.application.commands.CreateGroupPiggyBankCommand
 import gr.aueb.budgetmanagement.application.commands.CreatePersonalPiggyBankCommand;
 import gr.aueb.budgetmanagement.application.commands.DissolvePiggyBankCommand;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
-import gr.aueb.budgetmanagement.application.representations.CreatedGroupPiggyBankRepresentation;
-import gr.aueb.budgetmanagement.application.representations.CreatedPersonalPiggyBankRepresentation;
+import gr.aueb.budgetmanagement.application.representations.GroupPiggyBankRepresentation;
+import gr.aueb.budgetmanagement.application.representations.PersonalPiggyBankRepresentation;
 import gr.aueb.budgetmanagement.application.representations.PiggyBankAllocationRepresentation;
 import gr.aueb.budgetmanagement.application.representations.PiggyBanksRepresentation;
 import gr.aueb.budgetmanagement.application.services.PiggyBankAllocationService;
@@ -57,7 +57,7 @@ public class PiggyBankResource {
             authenticatedUserId
         );
 
-        CreatedPersonalPiggyBankRepresentation result = piggyBankService.createPersonalPiggyBank(command);
+        PersonalPiggyBankRepresentation result = piggyBankService.createPersonalPiggyBank(command);
 
         return Response
             .status(Response.Status.CREATED)
@@ -108,7 +108,7 @@ public class PiggyBankResource {
             authenticatedUserId
         );
 
-        CreatedGroupPiggyBankRepresentation result = piggyBankService.createGroupPiggyBank(command);
+        GroupPiggyBankRepresentation result = piggyBankService.createGroupPiggyBank(command);
 
         return Response
             .status(Response.Status.CREATED)

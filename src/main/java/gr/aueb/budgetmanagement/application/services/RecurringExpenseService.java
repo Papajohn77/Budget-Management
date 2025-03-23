@@ -9,7 +9,7 @@ import gr.aueb.budgetmanagement.application.commands.UpdateRecurringExpenseComma
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.RecurringExpenseRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.AddedRecurringExpenseRepresentation;
+import gr.aueb.budgetmanagement.application.representations.RecurringExpenseRepresentation;
 import gr.aueb.budgetmanagement.application.representations.RecurringExpensesRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Expense;
 import gr.aueb.budgetmanagement.domain.entities.RecurringExpense;
@@ -32,7 +32,7 @@ public class RecurringExpenseService {
     }
 
     @Transactional
-    public AddedRecurringExpenseRepresentation createRecurringExpense(@Valid AddRecurringExpenseCommand command) {
+    public RecurringExpenseRepresentation createRecurringExpense(@Valid AddRecurringExpenseCommand command) {
         User user = userRepository.findById(command.userId())
             .orElseThrow(() -> new NotFoundException("User not found with id: " + command.userId()));
 
@@ -108,14 +108,14 @@ public class RecurringExpenseService {
         }
     }
 
-    private List<AddedRecurringExpenseRepresentation> toAddedRecurringExpenseRepresentationList(List<RecurringExpense> recurringExpenses) {
+    private List<RecurringExpenseRepresentation> toAddedRecurringExpenseRepresentationList(List<RecurringExpense> recurringExpenses) {
         return recurringExpenses.stream()
             .map(this::toAddedRecurringExpenseRepresentation)
             .toList();
     }
 
-    private AddedRecurringExpenseRepresentation toAddedRecurringExpenseRepresentation(RecurringExpense recurringExpense) {
-        return new AddedRecurringExpenseRepresentation(
+    private RecurringExpenseRepresentation toAddedRecurringExpenseRepresentation(RecurringExpense recurringExpense) {
+        return new RecurringExpenseRepresentation(
             recurringExpense.getId(),
             recurringExpense.getName(),
             recurringExpense.getAmount().getValue(),

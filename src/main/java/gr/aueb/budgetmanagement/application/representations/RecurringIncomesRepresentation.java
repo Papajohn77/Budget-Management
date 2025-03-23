@@ -6,5 +6,5 @@ import java.util.List;
 
 public record RecurringIncomesRepresentation(
     @JsonProperty("recurring_incomes")
-    List<AddedRecurringIncomeRepresentation> recurringIncomes
+    List<RecurringIncomeRepresentation> recurringIncomes
 ) {}

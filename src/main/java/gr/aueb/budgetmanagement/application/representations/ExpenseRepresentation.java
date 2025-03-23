@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 
-public record AddedExpenseRepresentation(
+public record ExpenseRepresentation(
     Long id,
     BigDecimal amount,
     LocalDate date,

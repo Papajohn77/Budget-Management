@@ -16,7 +16,7 @@ import gr.aueb.budgetmanagement.application.commands.AddExpenseCommand;
 import gr.aueb.budgetmanagement.application.commands.UpdateExpenseCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.AddedExpenseRepresentation;
+import gr.aueb.budgetmanagement.application.representations.ExpenseRepresentation;
 import gr.aueb.budgetmanagement.application.representations.ExpensesRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
@@ -266,7 +266,7 @@ class ExpenseServiceTest {
                 user.getId(), null, null, ExpenseCategory.FOOD);
 
         assertEquals(2, result.expenses().size());
-        for (AddedExpenseRepresentation expense : result.expenses()) {
+        for (ExpenseRepresentation expense : result.expenses()) {
             assertEquals(ExpenseCategory.FOOD, expense.category());
         }
     }
@@ -323,7 +323,7 @@ class ExpenseServiceTest {
                 user.getId()
         );
 
-        AddedExpenseRepresentation createdExpense = expenseService.createExpense(createCommand);
+        ExpenseRepresentation createdExpense = expenseService.createExpense(createCommand);
 
         // Now update it
         BigDecimal updatedAmount = new BigDecimal("200.00");
@@ -338,7 +338,7 @@ class ExpenseServiceTest {
                 updatedCategory
         );
 
-        AddedExpenseRepresentation updatedExpense = expenseService.updateExpense(updateCommand);
+        ExpenseRepresentation updatedExpense = expenseService.updateExpense(updateCommand);
 
         assertNotNull(updatedExpense);
         assertEquals(createdExpense.id(), updatedExpense.id());
@@ -361,7 +361,7 @@ class ExpenseServiceTest {
                 user.getId()
         );
 
-        AddedExpenseRepresentation createdExpense = expenseService.createExpense(createCommand);
+        ExpenseRepresentation createdExpense = expenseService.createExpense(createCommand);
 
         // Now try to update with a non-existent user ID (999L)
         UpdateExpenseCommand updateCommand = new UpdateExpenseCommand(
@@ -441,7 +441,7 @@ class ExpenseServiceTest {
         boolean foundSalary = false;
         boolean foundDividends = false;
 
-        for (AddedExpenseRepresentation expense : result.expenses()) {
+        for (ExpenseRepresentation expense : result.expenses()) {
             if (expense.category() == ExpenseCategory.HOUSING) {
                 assertEquals(EXPENSE_AMOUNT, expense.amount());
                 assertEquals(EXPENSE_DATE, expense.date());

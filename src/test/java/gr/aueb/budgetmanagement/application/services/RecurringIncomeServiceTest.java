@@ -19,7 +19,7 @@ import gr.aueb.budgetmanagement.application.commands.UpdateRecurringIncomeComman
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.RecurringIncomeRepository;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
-import gr.aueb.budgetmanagement.application.representations.AddedRecurringIncomeRepresentation;
+import gr.aueb.budgetmanagement.application.representations.RecurringIncomeRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.RecurringIncome;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
@@ -72,7 +72,7 @@ class RecurringIncomeServiceTest {
                 user.getId());
 
         // Act
-        AddedRecurringIncomeRepresentation result = recurringIncomeService.createRecurringIncome(command);
+        RecurringIncomeRepresentation result = recurringIncomeService.createRecurringIncome(command);
 
         // Assert
         assertNotNull(result, "Result should not be null");
@@ -263,7 +263,7 @@ class RecurringIncomeServiceTest {
                 endDate,
                 user.getId());
 
-        AddedRecurringIncomeRepresentation created = recurringIncomeService.createRecurringIncome(createCommand);
+        RecurringIncomeRepresentation created = recurringIncomeService.createRecurringIncome(createCommand);
         assertFalse(created.isStopped(), "New income should not be stopped initially");
 
         // Act - Update to stop the income
@@ -302,7 +302,7 @@ class RecurringIncomeServiceTest {
                 endDate,
                 user.getId());
 
-        AddedRecurringIncomeRepresentation created = recurringIncomeService.createRecurringIncome(createCommand);
+        RecurringIncomeRepresentation created = recurringIncomeService.createRecurringIncome(createCommand);
         int originalCount = user.getRecurringIncomes().size();
 
         // Act

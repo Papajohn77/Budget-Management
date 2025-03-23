@@ -1,15 +1,16 @@
 package gr.aueb.budgetmanagement.application.representations;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record AddedRecurringIncomeRepresentation(
+import com.fasterxml.jackson.annotation.JsonProperty;
+import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
+
+public record RecurringExpenseRepresentation(
     Long id,
     String name,
     BigDecimal amount,
-    IncomeCategory category,
+    ExpenseCategory category,
     @JsonProperty("start_date")
     LocalDate startDate,
     @JsonProperty("end_date")
