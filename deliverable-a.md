@@ -5,7 +5,7 @@
 | **Course** | Service Oriented Software Development in Cloud Computing |
 | **Instructor** | E. Giakoumakis, V. Zafeiris |
 | **Institution** | Athens University of Economics and Business |
-| **Date** | May 2025 |
+| **Date** | May 2026 |
 | **Authors** | Erika Bairami, Ioannis Papadatos, Chrysa Rizeakou |
 
 ---
