@@ -1,0 +1,48 @@
+services:
+  identity-service:
+    container_name: identity-service
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: identity-service
+    volumes:
+      - identity-data:/data
+    restart: unless-stopped
+
+  piggybank-service:
+    container_name: piggybank-service
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: piggybank-service
+    volumes:
+      - piggybank-data:/data
+    restart: unless-stopped
+
+  budget-service:
+    container_name: budget-service
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: budget-service
+    volumes:
+      - budget-data:/data
+    restart: unless-stopped
+
+  gateway:
+    container_name: gateway
+    build: ./gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - identity-service
+      - piggybank-service
+      - budget-service
+
+volumes:
+  identity-data:
+  piggybank-data:
+  budget-data:
