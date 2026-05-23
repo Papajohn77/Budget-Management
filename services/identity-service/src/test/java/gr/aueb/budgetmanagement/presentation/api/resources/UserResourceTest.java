@@ -8,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Base64;
 
 import org.junit.jupiter.api.Test;
@@ -19,10 +17,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gr.aueb.budgetmanagement.IntegrationBase;
-import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
-import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
-import gr.aueb.budgetmanagement.presentation.api.requests.AddExpenseRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.AddIncomeRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
 import io.quarkus.test.junit.QuarkusTest;
@@ -33,9 +27,6 @@ import io.restassured.response.Response;
 class UserResourceTest extends IntegrationBase {
     private static final String REGISTER_ENDPOINT = "/api/v1/users/register";
     private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
-    private static final String BALANCE_ENDPOINT = "/api/v1/users/balance";
-    private static final String INCOMES_ENDPOINT = "/api/v1/incomes";
-    private static final String EXPENSES_ENDPOINT = "/api/v1/expenses";
     private static final String TEST_USERNAME = "testuser123";
     private static final String TEST_EMAIL = "testuser123@example.com";
     private static final String TEST_PASSWORD = "Password123!";
@@ -226,161 +217,6 @@ class UserResourceTest extends IntegrationBase {
             .post(LOGIN_ENDPOINT)
             .then()
             .statusCode(400);
-    }
-
-    @Test
-    void testGetBalanceAuthenticated() {
-        // First login to get an authentication token
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        
-        String token = given()
-            .contentType(ContentType.JSON)
-            .body(loginRequest)
-            .when()
-            .post(LOGIN_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract()
-            .path("access_token");
-
-        given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + token)
-            .when()
-            .get(BALANCE_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .body("balance", notNullValue());
-    }
-
-    @Test
-    void testGetBalanceUnauthenticated() {
-        given()
-            .contentType(ContentType.JSON)
-            .when()
-            .get(BALANCE_ENDPOINT)
-            .then()
-            .statusCode(401);
-    }
-
-    @Test
-    void testGetBalanceWithInvalidToken() {
-        given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer invalidtoken123")
-            .when()
-            .get(BALANCE_ENDPOINT)
-            .then()
-            .statusCode(401);
-    }
-
-    @Test
-    void testGetBalanceAfterAddingIncome() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        
-        String token = given()
-            .contentType(ContentType.JSON)
-            .body(loginRequest)
-            .when()
-            .post(LOGIN_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract()
-            .path("access_token");
-
-        BigDecimal initialBalance = given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + token)
-            .when()
-            .get(BALANCE_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract().jsonPath().getObject("balance", BigDecimal.class);
-
-        AddIncomeRequest incomeRequest = new AddIncomeRequest(
-            LocalDate.now(),
-            new BigDecimal("500.00"),
-            IncomeCategory.SALARY
-        );
-        
-        given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + token)
-            .body(incomeRequest)
-            .when()
-            .post(INCOMES_ENDPOINT)
-            .then()
-            .statusCode(201);
-
-        BigDecimal updatedBalance = given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + token)
-            .when()
-            .get(BALANCE_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract().jsonPath().getObject("balance", BigDecimal.class);
-
-        assertTrue(updatedBalance.compareTo(initialBalance.add(new BigDecimal("500.00"))) == 0);
-    }
-
-    @Test
-    void testGetBalanceAfterAddingExpense() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        
-        String token = given()
-            .contentType(ContentType.JSON)
-            .body(loginRequest)
-            .when()
-            .post(LOGIN_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract()
-            .path("access_token");
-
-        BigDecimal initialBalance = given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + token)
-            .when()
-            .get(BALANCE_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract().jsonPath().getObject("balance", BigDecimal.class);
-
-        AddExpenseRequest expenseRequest = new AddExpenseRequest(
-            LocalDate.now(),
-            new BigDecimal("200.00"),
-            ExpenseCategory.FOOD
-        );
-        
-        given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + token)
-            .body(expenseRequest)
-            .when()
-            .post(EXPENSES_ENDPOINT)
-            .then()
-            .statusCode(201);
-
-        BigDecimal updatedBalance = given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + token)
-            .when()
-            .get(BALANCE_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract().jsonPath().getObject("balance", BigDecimal.class);
-
-        assertTrue(updatedBalance.compareTo(initialBalance.subtract(new BigDecimal("200.00"))) == 0);
     }
 
     private void assertValidAccessToken(String accessToken) throws JsonProcessingException {
