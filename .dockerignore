@@ -15,8 +15,8 @@ README.md
 deliverable-a.md
 DomainModel.uxf
 DomainModelImage.png
-budget-management.mv.db
-budget-management.trace.db
+*.mv.db
+*.trace.db
 target
 mvnw
 mvnw.cmd
