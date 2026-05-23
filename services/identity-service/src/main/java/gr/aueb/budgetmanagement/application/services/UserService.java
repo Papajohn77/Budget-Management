@@ -4,10 +4,8 @@ import gr.aueb.budgetmanagement.application.commands.AuthenticateUserCommand;
 import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
 import gr.aueb.budgetmanagement.application.exceptions.AlreadyExistsException;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
-import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AccessTokenRepresentation;
-import gr.aueb.budgetmanagement.application.representations.BalanceRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
 import gr.aueb.budgetmanagement.infrastructure.security.JwtTokenService;
@@ -67,13 +65,5 @@ public class UserService {
         String accessToken = jwtTokenService.generateToken(user);
 
         return new AccessTokenRepresentation("Bearer", accessToken);
-    }
-
-    @Transactional
-    public BalanceRepresentation getBalance(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
-
-        return new BalanceRepresentation(user.getCurrentBalance());
     }
 }
