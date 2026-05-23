@@ -15,8 +15,12 @@ COPY --chown=185 services/${SERVICE}/target/quarkus-app/*.jar /deployments/
 COPY --chown=185 services/${SERVICE}/target/quarkus-app/app/ /deployments/app/
 COPY --chown=185 services/${SERVICE}/target/quarkus-app/quarkus/ /deployments/quarkus/
 
-EXPOSE 8080
+USER root
+RUN mkdir -p /data && chown 185 /data
 USER 185
+
+EXPOSE 8080
+
 ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
 
