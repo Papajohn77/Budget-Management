@@ -1,0 +1,26 @@
+name: identity-service
+
+on:
+  push:
+    branches: [microservices]
+    paths:
+      - services/identity-service/**
+      - services/pom.xml
+      - Dockerfile
+      - .github/workflows/identity-service.yml
+      - .github/workflows/service-workflow.yml
+  pull_request:
+    branches: [microservices]
+    paths:
+      - services/identity-service/**
+      - services/pom.xml
+      - Dockerfile
+      - .github/workflows/identity-service.yml
+      - .github/workflows/service-workflow.yml
+
+jobs:
+  run:
+    uses: ./.github/workflows/service-workflow.yml
+    with:
+      service: identity-service
+    secrets: inherit

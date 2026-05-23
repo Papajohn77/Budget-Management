@@ -1,0 +1,26 @@
+name: piggybank-service
+
+on:
+  push:
+    branches: [microservices]
+    paths:
+      - services/piggybank-service/**
+      - services/pom.xml
+      - Dockerfile
+      - .github/workflows/piggybank-service.yml
+      - .github/workflows/service-workflow.yml
+  pull_request:
+    branches: [microservices]
+    paths:
+      - services/piggybank-service/**
+      - services/pom.xml
+      - Dockerfile
+      - .github/workflows/piggybank-service.yml
+      - .github/workflows/service-workflow.yml
+
+jobs:
+  run:
+    uses: ./.github/workflows/service-workflow.yml
+    with:
+      service: piggybank-service
+    secrets: inherit

@@ -1,0 +1,26 @@
+name: budget-service
+
+on:
+  push:
+    branches: [microservices]
+    paths:
+      - services/budget-service/**
+      - services/pom.xml
+      - Dockerfile
+      - .github/workflows/budget-service.yml
+      - .github/workflows/service-workflow.yml
+  pull_request:
+    branches: [microservices]
+    paths:
+      - services/budget-service/**
+      - services/pom.xml
+      - Dockerfile
+      - .github/workflows/budget-service.yml
+      - .github/workflows/service-workflow.yml
+
+jobs:
+  run:
+    uses: ./.github/workflows/service-workflow.yml
+    with:
+      service: budget-service
+    secrets: inherit
