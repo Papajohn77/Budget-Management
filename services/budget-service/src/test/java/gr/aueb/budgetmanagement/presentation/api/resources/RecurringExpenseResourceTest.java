@@ -22,8 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.presentation.api.requests.AddRecurringExpenseRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.StopRecurringExpenseRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.UpdateRecurringExpenseRequest;
 import io.quarkus.test.junit.QuarkusTest;
@@ -31,12 +29,7 @@ import io.restassured.http.ContentType;
 
 @QuarkusTest
 class RecurringExpenseResourceTest extends IntegrationBase {
-    private static final String RECURRING_EXPENSES_ENDPOINT = "/api/v1/recurring-expenses";
-    private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
-    private static final String REGISTER_ENDPOINT = "/api/v1/users/register";
-    private static final String EXISTING_EMAIL = "test@example.com"; // From test fixture
-    private static final String EXISTING_PASSWORD = "Test123!@#"; // From test fixture
-    private static final String TEST_EXPENSE_NAME = "Monthly Rent";
+    private static final String RECURRING_EXPENSES_ENDPOINT = "/api/v1/recurring-expenses";    private static final String TEST_EXPENSE_NAME = "Monthly Rent";
     private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(1200.00);
     private static final ExpenseCategory TEST_CATEGORY = ExpenseCategory.HOUSING;
     private static final LocalDate TEST_START_DATE = LocalDate.now();
@@ -45,11 +38,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testSuccessfulRecurringExpenseCreation() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
                 TEST_EXPENSE_NAME,
@@ -78,11 +67,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringExpenseCreationWithNullName() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
             {
@@ -107,11 +92,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringExpenseCreationWithNullAmount() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
             {
@@ -156,11 +137,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testGetUserRecurringExpenses() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringExpenseRequest expenseRequest = new AddRecurringExpenseRequest(
                 TEST_EXPENSE_NAME,
@@ -192,11 +169,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testStopRecurringExpense() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
                 TEST_EXPENSE_NAME,
@@ -239,11 +212,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testStopRecurringExpenseOfAnotherUser() throws JsonProcessingException {
-        AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
+        String firstUserToken = authTokenForTestUser();
 
         AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
                 TEST_EXPENSE_NAME,
@@ -263,11 +232,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        AuthenticateUserRequest loginRequest2 = new AuthenticateUserRequest(
-                "test2@example.com", // Another user from test fixture
-                EXISTING_PASSWORD
-        );
-        String authToken2 = getAuthTokenAuthenticate(loginRequest2);
+        String authToken2 = authTokenForSecondTestUser();
 
         StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
 
@@ -288,11 +253,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteRecurringExpense() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
                 TEST_EXPENSE_NAME,
@@ -335,11 +296,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteRecurringExpenseOfAnotherUser() {
-        AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
+        String firstUserToken = authTokenForTestUser();
 
         AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
                 TEST_EXPENSE_NAME,
@@ -359,13 +316,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
                 .statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        RegisterUserRequest registerRequest = new RegisterUserRequest(
-                "otheruser2",
-                "otheruser2@example.com",
-                "Test123!@#"
-        );
-
-        String secondUserToken = getAuthTokenRegister(registerRequest);
+        String secondUserToken = authTokenForSecondTestUser();
 
         given()
                 .contentType(ContentType.JSON)
@@ -434,11 +385,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testUpdateNonExistentRecurringExpense() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         Long nonExistentId = 99999L;
         StopRecurringExpenseRequest stopRequest = new StopRecurringExpenseRequest(true);
@@ -455,11 +402,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteNonExistentRecurringExpense() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         Long nonExistentId = 99999L;
 
@@ -474,11 +417,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringExpenseCreationWithNegativeAmount() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
                 TEST_EXPENSE_NAME,
@@ -500,11 +439,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringExpenseCreationWithEndDateBeforeStartDate() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
                 TEST_EXPENSE_NAME,
@@ -548,11 +483,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testMissingRequiredParametersInUpdateRequest() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
                 TEST_EXPENSE_NAME,
@@ -586,11 +517,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringExpenseCreationWithEmptyName() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringExpenseRequest request = new AddRecurringExpenseRequest(
                 "",  // Empty string instead of null
@@ -612,11 +539,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringExpenseCreationWithNullCategory() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
         {
@@ -659,11 +582,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
     @Test
     void testSuccessfulRecurringExpenseStop() {
         // Login and get token
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // First create a recurring expense
         AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
@@ -700,11 +619,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
     @Test
     void testStopRecurringExpenseWithInvalidValue() {
         // Login and get token
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // First create a recurring expense
         AddRecurringExpenseRequest createRequest = new AddRecurringExpenseRequest(
@@ -741,11 +656,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
     @Test
     void testStopNonExistentRecurringExpense() {
         // Login and get token
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // Use a non-existent ID
         Long nonExistentId = 999999L;
@@ -892,11 +803,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringExpenseCreationWithMissingEndDate() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
         {
@@ -919,11 +826,7 @@ class RecurringExpenseResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringExpenseCreationWithMissingStartDate() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
         {
@@ -947,17 +850,11 @@ class RecurringExpenseResourceTest extends IntegrationBase {
     @Test
     void testGetEmptyRecurringExpenses() {
         // Create a new user with no recurring expenses
-        RegisterUserRequest registerRequest = new RegisterUserRequest(
-                "newuser",
-                "newuser@example.com",
-                "Test123!@#"
-        );
-
-        String newUserToken = getAuthTokenRegister(registerRequest);
+        String secondUserToken = authTokenForSecondTestUser();
 
         given()
                 .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + newUserToken)
+                .header("Authorization", "Bearer " + secondUserToken)
                 .when()
                 .get(RECURRING_EXPENSES_ENDPOINT)
                 .then()
@@ -971,27 +868,5 @@ class RecurringExpenseResourceTest extends IntegrationBase {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode claims = mapper.readTree(payload);
         return claims.get("user_id").asText();
-    }
-
-    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
-        return given()
-                .contentType(ContentType.JSON)
-                .body(registerRequest)
-                .when()
-                .post(REGISTER_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getString("access_token");
-    }
-
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
-                .contentType(ContentType.JSON)
-                .body(loginRequest)
-                .when()
-                .post(LOGIN_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .extract().jsonPath().getString("access_token");
     }
 }

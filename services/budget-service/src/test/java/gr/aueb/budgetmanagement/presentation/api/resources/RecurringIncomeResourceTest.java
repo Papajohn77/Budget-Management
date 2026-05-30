@@ -22,8 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.presentation.api.requests.AddRecurringIncomeRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.StopRecurringIncomeRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.UpdateRecurringIncomeRequest;
 import io.quarkus.test.junit.QuarkusTest;
@@ -31,12 +29,7 @@ import io.restassured.http.ContentType;
 
 @QuarkusTest
 class RecurringIncomeResourceTest extends IntegrationBase {
-    private static final String RECURRING_INCOMES_ENDPOINT = "/api/v1/recurring-incomes";
-    private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
-    private static final String REGISTER_ENDPOINT = "/api/v1/users/register";
-    private static final String EXISTING_EMAIL = "test@example.com"; // From test fixture
-    private static final String EXISTING_PASSWORD = "Test123!@#"; // From test fixture
-    private static final String TEST_INCOME_NAME = "Monthly Salary";
+    private static final String RECURRING_INCOMES_ENDPOINT = "/api/v1/recurring-incomes";    private static final String TEST_INCOME_NAME = "Monthly Salary";
     private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(3500.00);
     private static final IncomeCategory TEST_CATEGORY = IncomeCategory.SALARY;
     private static final LocalDate TEST_START_DATE = LocalDate.now();
@@ -45,11 +38,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testSuccessfulRecurringIncomeCreation() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringIncomeRequest request = new AddRecurringIncomeRequest(
                 TEST_INCOME_NAME,
@@ -78,11 +67,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringIncomeCreationWithNullName() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
                 {
@@ -107,11 +92,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringIncomeCreationWithNullAmount() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
                 {
@@ -156,11 +137,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testGetUserRecurringIncomes() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringIncomeRequest incomeRequest = new AddRecurringIncomeRequest(
                 TEST_INCOME_NAME,
@@ -192,11 +169,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testStopRecurringIncome() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringIncomeRequest createRequest = new AddRecurringIncomeRequest(
                 TEST_INCOME_NAME,
@@ -239,11 +212,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteRecurringIncome() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringIncomeRequest createRequest = new AddRecurringIncomeRequest(
                 TEST_INCOME_NAME,
@@ -286,11 +255,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteRecurringIncomeOfAnotherUser() {
-        AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
+        String firstUserToken = authTokenForTestUser();
 
         AddRecurringIncomeRequest createRequest = new AddRecurringIncomeRequest(
                 TEST_INCOME_NAME,
@@ -310,13 +275,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
                 .statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        RegisterUserRequest registerRequest = new RegisterUserRequest(
-                "otheruser2",
-                "otheruser2@example.com",
-                "Test123!@#"
-        );
-
-        String secondUserToken = getAuthTokenRegister(registerRequest);
+        String secondUserToken = authTokenForSecondTestUser();
 
         given()
                 .contentType(ContentType.JSON)
@@ -385,11 +344,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testUpdateNonExistentRecurringIncome() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         Long nonExistentId = 99999L;
         StopRecurringIncomeRequest stopRequest = new StopRecurringIncomeRequest(true);
@@ -406,11 +361,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteNonExistentRecurringIncome() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         Long nonExistentId = 99999L;
 
@@ -425,11 +376,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringIncomeCreationWithNegativeAmount() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringIncomeRequest request = new AddRecurringIncomeRequest(
                 TEST_INCOME_NAME,
@@ -451,11 +398,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringIncomeCreationWithEndDateBeforeStartDate() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringIncomeRequest request = new AddRecurringIncomeRequest(
                 TEST_INCOME_NAME,
@@ -499,11 +442,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testMissingRequiredParametersInUpdateRequest() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringIncomeRequest createRequest = new AddRecurringIncomeRequest(
                 TEST_INCOME_NAME,
@@ -537,11 +476,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringIncomeCreationWithEmptyName() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddRecurringIncomeRequest request = new AddRecurringIncomeRequest(
                 "",  // Empty string instead of null
@@ -563,11 +498,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringIncomeCreationWithNullCategory() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
                 {
@@ -610,11 +541,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
     @Test
     void testSuccessfulRecurringIncomeStop() {
         // Login and get token
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // First create a recurring income
         AddRecurringIncomeRequest createRequest = new AddRecurringIncomeRequest(
@@ -651,11 +578,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
     @Test
     void testStopRecurringIncomeWithInvalidValue() {
         // Login and get token
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // First create a recurring income
         AddRecurringIncomeRequest createRequest = new AddRecurringIncomeRequest(
@@ -692,11 +615,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
     @Test
     void testStopNonExistentRecurringIncome() {
         // Login and get token
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // Use a non-existent ID
         Long nonExistentId = 999999L;
@@ -714,11 +633,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testStopOtherUserRecurringIncome() throws JsonProcessingException {
-        AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
+        String firstUserToken = authTokenForTestUser();
 
         AddRecurringIncomeRequest createRequest = new AddRecurringIncomeRequest(
                 "First User Income",
@@ -738,12 +653,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
                 .statusCode(201)
                 .extract().jsonPath().getInt("id");
 
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                "test2@example.com",
-                EXISTING_PASSWORD
-        );
-
-        String secondUserToken = getAuthTokenAuthenticate(loginRequest);
+        String secondUserToken = authTokenForSecondTestUser();
 
         StopRecurringIncomeRequest stopRequest = new StopRecurringIncomeRequest(true);
 
@@ -893,11 +803,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringIncomeCreationWithMissingEndDate() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
                 {
@@ -920,11 +826,7 @@ class RecurringIncomeResourceTest extends IntegrationBase {
 
     @Test
     void testRecurringIncomeCreationWithMissingStartDate() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
                 {
@@ -948,17 +850,11 @@ class RecurringIncomeResourceTest extends IntegrationBase {
     @Test
     void testGetEmptyRecurringIncomes() {
         // Create a new user with no recurring incomes
-        RegisterUserRequest registerRequest = new RegisterUserRequest(
-                "newuser",
-                "newuser@example.com",
-                "Test123!@#"
-        );
-
-        String newUserToken = getAuthTokenRegister(registerRequest);
+        String secondUserToken = authTokenForSecondTestUser();
 
         given()
                 .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + newUserToken)
+                .header("Authorization", "Bearer " + secondUserToken)
                 .when()
                 .get(RECURRING_INCOMES_ENDPOINT)
                 .then()
@@ -972,27 +868,5 @@ class RecurringIncomeResourceTest extends IntegrationBase {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode claims = mapper.readTree(payload);
         return claims.get("user_id").asText();
-    }
-
-    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
-        return given()
-                .contentType(ContentType.JSON)
-                .body(registerRequest)
-                .when()
-                .post(REGISTER_ENDPOINT)
-                .then()
-                .statusCode(201)
-                .extract().jsonPath().getString("access_token");
-    }
-
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
-                .contentType(ContentType.JSON)
-                .body(loginRequest)
-                .when()
-                .post(LOGIN_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .extract().jsonPath().getString("access_token");
     }
 }

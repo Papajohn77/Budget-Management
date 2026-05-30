@@ -11,48 +11,25 @@ import java.util.Set;
 
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
-import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.NotFoundDomainException;
 import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.interfaces.BalanceImpact;
-import gr.aueb.budgetmanagement.domain.ports.PasswordHasher;
-import gr.aueb.budgetmanagement.domain.valueobjects.EmailAddress;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.domain.valueobjects.Password;
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
-    @SequenceGenerator(name = "user_seq", sequenceName = "user_seq", initialValue = 1, allocationSize = 1)
     private Long id;
-
-    @Column(unique = true, nullable = false)
-    private String username;
-
-    @Column(unique = true, nullable = false)
-    private EmailAddress email;
-
-    @Column(nullable = false)
-    private String password;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Savings savings;
-
-    @ManyToMany(mappedBy = "members", cascade = CascadeType.ALL)
-    private Set<Group> groups = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Expense> expenses = new HashSet<>();
@@ -66,51 +43,19 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecurringIncome> recurringIncomes = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PersonalPiggyBank> piggyBanks = new HashSet<>();
-
-    @OneToMany(mappedBy = "invitee", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Invitation> invitations = new HashSet<>();
-    
     protected User() {
 
     }
 
-    public static User create(
-        String username, 
-        String email, 
-        String rawPassword, 
-        PasswordHasher passwordHasher
-    ) {
-        if (username == null || username.trim().isEmpty()) {
-            throw new InvalidDomainArgumentException("Username cannot be null or empty");
-        }
-        EmailAddress emailAddress = new EmailAddress(email);
-        Password password = new Password(rawPassword);
-        String hashedPassword = passwordHasher.hashPassword(password.getValue());
-
+    public static User create(Long id) {
         User user = new User();
-        user.username = username;
-        user.email = emailAddress;
-        user.password = hashedPassword;
+        user.id = id;
         user.setSavings(Savings.create(user));
         return user;
     }
 
     public Long getId() {
         return id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public EmailAddress getEmail() {
-        return email;
-    }
-
-    public boolean verifyPassword(String rawPassword, PasswordHasher passwordHasher) {
-        return passwordHasher.verifyPassword(rawPassword, this.password);
     }
 
     public Savings getSavings() {
@@ -130,10 +75,6 @@ public class User {
 
     public SavingsOperation deallocateSavings(Money amount, LocalDate date) {
         return savings.deallocate(amount, date);
-    }
-
-    public Set<Group> getGroups() {
-        return Collections.unmodifiableSet(groups);
     }
 
     public Set<Expense> getExpenses() {
@@ -256,42 +197,10 @@ public class User {
         recurringIncomes.removeIf(re -> re.getId().equals(recurringIncomeId));
     }
 
-    public Set<PersonalPiggyBank> getPiggyBanks() {
-        return Collections.unmodifiableSet(piggyBanks);
-    }
-
-    void addPiggyBank(PersonalPiggyBank piggyBank) {
-        if (piggyBank == null) {
-            throw new InvalidDomainArgumentException("PiggyBank cannot be null");
-        }
-        piggyBanks.add(piggyBank);
-    }
-
-    public Set<Invitation> getInvitations() {
-        return Collections.unmodifiableSet(invitations);
-    }
-
-    void addInvitation(Invitation invitation) {
-        if (invitation == null) {
-            throw new InvalidDomainArgumentException("Invitation cannot be null");
-        }
-        invitations.add(invitation);
-    }
-
-    public boolean containsInvitation(Invitation invitation) {
-        return invitations.contains(invitation);
-    }
-
-    boolean hasAlreadyBeenInvitedTo(Group group) {
-        return invitations.stream()
-            .anyMatch(invitation -> invitation.getGroup().equals(group));
-    }
-
     public BigDecimal getCurrentBalance() {
         List<BalanceImpact> financialEntities = new ArrayList<>();
         financialEntities.addAll(incomes);
         financialEntities.addAll(expenses);
-        financialEntities.addAll(piggyBanks);
         financialEntities.add(savings);
 
         return financialEntities.stream()
@@ -310,12 +219,11 @@ public class User {
         }
         
         User user = (User) other;
-        return Objects.equals(username, user.username) && 
-            Objects.equals(email, user.email);
+        return Objects.equals(id, user.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(username, email);
+        return Objects.hash(id);
     }
 }

@@ -12,8 +12,6 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.IntegrationBase;
-import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.SavingsOperationRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
@@ -22,19 +20,12 @@ import io.restassured.http.ContentType;
 class SavingsResourceTest extends IntegrationBase {
     private static final String SAVINGS_ENDPOINT = "/api/v1/savings";
     private static final String ALLOCATIONS_ENDPOINT = "/api/v1/savings/allocations";
-    private static final String DEALLOCATIONS_ENDPOINT = "/api/v1/savings/deallocations";
-    private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
-    private static final String REGISTER_ENDPOINT = "/api/v1/users/register";
-    private static final String EXISTING_EMAIL = "test@example.com"; // From test fixture
-    private static final String TEST_PASSWORD = "Test123!@#"; // From test fixture
-    private static final BigDecimal TEST_AMOUNT = new BigDecimal("100.00");
+    private static final String DEALLOCATIONS_ENDPOINT = "/api/v1/savings/deallocations";    private static final BigDecimal TEST_AMOUNT = new BigDecimal("100.00");
     private static final LocalDate TEST_DATE = LocalDate.now();
     
     @Test
     void testSuccessfulAllocation() {
-        String authToken = getAuthTokenAuthenticate(
-            new AuthenticateUserRequest(EXISTING_EMAIL, TEST_PASSWORD)
-        );
+        String authToken = authTokenForTestUser();
         
         SavingsOperationRequest request = new SavingsOperationRequest(
             TEST_DATE,
@@ -92,9 +83,7 @@ class SavingsResourceTest extends IntegrationBase {
     
     @Test
     void testAllocationWithNegativeAmount() {
-        String authToken = getAuthTokenAuthenticate(
-            new AuthenticateUserRequest(EXISTING_EMAIL, TEST_PASSWORD)
-        );
+        String authToken = authTokenForTestUser();
         
         SavingsOperationRequest request = new SavingsOperationRequest(
             TEST_DATE,
@@ -114,9 +103,7 @@ class SavingsResourceTest extends IntegrationBase {
     
     @Test
     void testAllocationWithNullDate() {
-        String authToken = getAuthTokenAuthenticate(
-            new AuthenticateUserRequest(EXISTING_EMAIL, TEST_PASSWORD)
-        );
+        String authToken = authTokenForTestUser();
         
         SavingsOperationRequest request = new SavingsOperationRequest(
             null,
@@ -136,9 +123,7 @@ class SavingsResourceTest extends IntegrationBase {
     
     @Test
     void testSuccessfulDeallocation() {
-        String authToken = getAuthTokenAuthenticate(
-            new AuthenticateUserRequest(EXISTING_EMAIL, TEST_PASSWORD)
-        );
+        String authToken = authTokenForTestUser();
         
         // First allocate some money
         SavingsOperationRequest allocateRequest = new SavingsOperationRequest(
@@ -212,9 +197,7 @@ class SavingsResourceTest extends IntegrationBase {
     
     @Test
     void testDeallocationWithNegativeAmount() {
-        String authToken = getAuthTokenAuthenticate(
-            new AuthenticateUserRequest(EXISTING_EMAIL, TEST_PASSWORD)
-        );
+        String authToken = authTokenForTestUser();
         
         SavingsOperationRequest request = new SavingsOperationRequest(
             TEST_DATE,
@@ -234,9 +217,7 @@ class SavingsResourceTest extends IntegrationBase {
     
     @Test
     void testDeallocationWithNullDate() {
-        String authToken = getAuthTokenAuthenticate(
-            new AuthenticateUserRequest(EXISTING_EMAIL, TEST_PASSWORD)
-        );
+        String authToken = authTokenForTestUser();
         
         SavingsOperationRequest request = new SavingsOperationRequest(
             null,
@@ -256,9 +237,7 @@ class SavingsResourceTest extends IntegrationBase {
     
     @Test
     void testDeallocationWithInsufficientFunds() {
-        String authToken = getAuthTokenAuthenticate(
-            new AuthenticateUserRequest(EXISTING_EMAIL, TEST_PASSWORD)
-        );
+        String authToken = authTokenForTestUser();
         
         // First allocate a small amount
         SavingsOperationRequest allocateRequest = new SavingsOperationRequest(
@@ -293,26 +272,17 @@ class SavingsResourceTest extends IntegrationBase {
     }
 
     @Test
-    void testGetSavingsForNewUser() {
-        // Create and authenticate as a new user
-        RegisterUserRequest registerRequest = new RegisterUserRequest(
-            "savingsuser", 
-            "savingsuser@example.com", 
-            TEST_PASSWORD
-        );
+    void testGetSavingsForUnknownUser() {
+        String unknownUserToken = authTokenFor(999L);
 
-        String newUserToken = getAuthTokenRegister(registerRequest);
-
-        // Get savings for new user (should start with zero)
         given()
             .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + newUserToken)
+            .header("Authorization", "Bearer " + unknownUserToken)
             .when()
             .get(SAVINGS_ENDPOINT)
             .then()
-            .statusCode(200)
-            .body("id", notNullValue())
-            .body("current_amount", equalTo(0));
+            .statusCode(404)
+            .body("message", containsString("User not found"));
     }
 
     @Test
@@ -339,9 +309,7 @@ class SavingsResourceTest extends IntegrationBase {
 
     @Test
     void testGetSavingsReflectsOperations() {
-        String authToken = getAuthTokenAuthenticate(
-            new AuthenticateUserRequest(EXISTING_EMAIL, TEST_PASSWORD)
-        );
+        String authToken = authTokenForTestUser();
 
         // Get initial savings
         BigDecimal initialAmount = given()
@@ -408,27 +376,5 @@ class SavingsResourceTest extends IntegrationBase {
         // Verify changes
         assertEquals(initialAmount.add(allocationAmount), afterAllocationAmount);
         assertEquals(afterAllocationAmount.subtract(deallocationAmount), finalAmount);
-    }
-
-    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(registerRequest)
-            .when()
-            .post(REGISTER_ENDPOINT)
-            .then()
-            .statusCode(201)
-            .extract().jsonPath().getString("access_token");
-    }
-
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(loginRequest)
-            .when()
-            .post(LOGIN_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract().jsonPath().getString("access_token");
     }
 }

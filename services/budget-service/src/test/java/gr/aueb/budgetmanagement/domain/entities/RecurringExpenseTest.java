@@ -20,10 +20,8 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class RecurringExpenseTest {
-    private static final String TEST_PASSWORD = "Test123!@#";
     private static final String VALID_NAME = "Monthly Rent";
     private static final Money VALID_AMOUNT = new Money(BigDecimal.valueOf(100));
     private static final ExpenseCategory VALID_CATEGORY = ExpenseCategory.HOUSING;
@@ -33,12 +31,7 @@ class RecurringExpenseTest {
 
     @BeforeEach
     void setUp() {
-        user = User.create(
-                "testuser",
-                "test@example.com",
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
-        );
+        user = User.create(1L);
     }
 
     @Test
