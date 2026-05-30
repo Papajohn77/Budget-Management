@@ -4,7 +4,8 @@ on:
   push:
     branches: [microservices]
     paths:
-      - services/budget-service/**
+      - services/budget-service/src/**
+      - services/budget-service/pom.xml
       - services/pom.xml
       - Dockerfile
       - .github/workflows/budget-service.yml
@@ -12,7 +13,8 @@ on:
   pull_request:
     branches: [microservices]
     paths:
-      - services/budget-service/**
+      - services/budget-service/src/**
+      - services/budget-service/pom.xml
       - services/pom.xml
       - Dockerfile
       - .github/workflows/budget-service.yml

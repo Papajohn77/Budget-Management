@@ -4,7 +4,8 @@ on:
   push:
     branches: [microservices]
     paths:
-      - services/identity-service/**
+      - services/identity-service/src/**
+      - services/identity-service/pom.xml
       - services/pom.xml
       - Dockerfile
       - .github/workflows/identity-service.yml
@@ -12,7 +13,8 @@ on:
   pull_request:
     branches: [microservices]
     paths:
-      - services/identity-service/**
+      - services/identity-service/src/**
+      - services/identity-service/pom.xml
       - services/pom.xml
       - Dockerfile
       - .github/workflows/identity-service.yml
