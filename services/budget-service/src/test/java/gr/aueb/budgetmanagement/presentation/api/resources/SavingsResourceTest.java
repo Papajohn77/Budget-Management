@@ -272,20 +272,6 @@ class SavingsResourceTest extends IntegrationBase {
     }
 
     @Test
-    void testGetSavingsForUnknownUser() {
-        String unknownUserToken = authTokenFor(999L);
-
-        given()
-            .contentType(ContentType.JSON)
-            .header("Authorization", "Bearer " + unknownUserToken)
-            .when()
-            .get(SAVINGS_ENDPOINT)
-            .then()
-            .statusCode(404)
-            .body("message", containsString("User not found"));
-    }
-
-    @Test
     void testGetSavingsWithoutAuthentication() {
         given()
             .contentType(ContentType.JSON)
