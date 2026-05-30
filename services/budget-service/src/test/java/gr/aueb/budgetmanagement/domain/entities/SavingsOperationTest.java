@@ -13,10 +13,8 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.domain.enums.SavingsOperationType;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class SavingsOperationTest {
-    private static final String TEST_PASSWORD = "Test123!@#";
     private final LocalDate TODAY = LocalDate.now();
     private final Money AMOUNT = new Money(new BigDecimal("100.00"));
 
@@ -25,12 +23,7 @@ class SavingsOperationTest {
 
     @BeforeEach
     void setUp() {
-        user = User.create(
-            "testuser", 
-            "test@example.com", 
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
+        user = User.create(1L);
         savings = user.getSavings();
     }
 

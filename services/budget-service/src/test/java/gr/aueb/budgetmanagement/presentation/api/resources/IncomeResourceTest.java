@@ -17,8 +17,6 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.domain.enums.IncomeCategory;
 import gr.aueb.budgetmanagement.presentation.api.requests.AddIncomeRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.UpdateIncomeRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
@@ -26,24 +24,14 @@ import io.restassured.http.ContentType;
 @QuarkusTest
 class IncomeResourceTest extends IntegrationBase {
     private static final String INCOMES_ENDPOINT = "/api/v1/incomes";
-    private static final String INCOME_CATEGORIES_ENDPOINT = "/api/v1/incomes/categories";
-    private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
-    private static final String REGISTER_ENDPOINT = "/api/v1/users/register";
-    private static final String EXISTING_EMAIL = "test@example.com"; // From test fixture
-    private static final String EXISTING_PASSWORD = "Test123!@#"; // From test fixture
-    private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(53.75);
+    private static final String INCOME_CATEGORIES_ENDPOINT = "/api/v1/incomes/categories";    private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(53.75);
     private static final LocalDate TEST_DATE = LocalDate.now();
     private static final IncomeCategory TEST_CATEGORY = IncomeCategory.SALARY;
     private static final IncomeCategory TEST_CATEGORY_UPDATE = IncomeCategory.DIVIDENDS;
 
     @Test
     void testGetIncomeCategories() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         given()
             .contentType(ContentType.JSON)
@@ -59,11 +47,7 @@ class IncomeResourceTest extends IntegrationBase {
     }
     @Test
     void testIncomeCreationWithNullCategory() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // Create request with JSON that has null category
         String requestJson = """
@@ -105,11 +89,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testIncomeCreationWithNullAmount() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
         {
@@ -131,9 +111,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testSuccessfulIncomeCreation() {
-       AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(EXISTING_EMAIL, EXISTING_PASSWORD);
-
-       String authToken = getAuthTokenAuthenticate(loginRequest);
+       String authToken = authTokenForTestUser();
 
         AddIncomeRequest request = new AddIncomeRequest(
                 TEST_DATE,
@@ -156,8 +134,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testGetIncomes() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(EXISTING_EMAIL, EXISTING_PASSWORD);
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         given()
             .contentType(ContentType.JSON)
@@ -171,11 +148,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testIncomeCreationWithNullDate() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-                EXISTING_EMAIL,
-                EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // Create request with JSON that has null date
         String requestJson = """
@@ -198,12 +171,7 @@ class IncomeResourceTest extends IntegrationBase {
     @Test
     void testGetIncomesWithCategoryFilter() {
 
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddIncomeRequest incomeRequest = new AddIncomeRequest(
             LocalDate.now(),
@@ -235,11 +203,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testUpdateExpenseWithInvalidData() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
             LocalDate.now(),
@@ -278,11 +242,7 @@ class IncomeResourceTest extends IntegrationBase {
     @Test
     void testUpdateIncomeOfAnotherUser() {
         // Login as the first user and create an income
-        AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
+        String firstUserToken = authTokenForTestUser();
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
             LocalDate.now(),
@@ -300,13 +260,7 @@ class IncomeResourceTest extends IntegrationBase {
             .statusCode(201)
             .extract().jsonPath().getLong("id");
 
-        RegisterUserRequest registerRequest = new RegisterUserRequest(
-                "otheruser",
-                "otheruser@example.com",
-                "Test123!@#"
-        );
-
-        String secondUserToken = getAuthTokenRegister(registerRequest);
+        String secondUserToken = authTokenForSecondTestUser();
 
         UpdateIncomeRequest updateRequest = new UpdateIncomeRequest(
             LocalDate.now(),
@@ -326,11 +280,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteIncome() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
             LocalDate.now(),
@@ -371,11 +321,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testSuccessfulIncomeUpdate() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
             TEST_DATE,
@@ -416,11 +362,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testUpdateNonExistentIncome() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         UpdateIncomeRequest updateRequest = new UpdateIncomeRequest(
             TEST_DATE,
@@ -471,11 +413,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteNonExistentIncome() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         Long nonExistentId = 999999L;
 
@@ -490,11 +428,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testDeleteIncomeOfAnotherUser() {
-        AuthenticateUserRequest firstUserLogin = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String firstUserToken = getAuthTokenAuthenticate(firstUserLogin);
+        String firstUserToken = authTokenForTestUser();
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
             LocalDate.now(),
@@ -512,13 +446,7 @@ class IncomeResourceTest extends IntegrationBase {
             .statusCode(201)
             .extract().jsonPath().getLong("id");
 
-        RegisterUserRequest registerRequest = new RegisterUserRequest(
-                "otheruser3",
-                "otheruser3@example.com",
-                "Test123!@#"
-        );
-
-        String secondUserToken = getAuthTokenRegister(registerRequest);
+        String secondUserToken = authTokenForSecondTestUser();
 
         given()
             .contentType(ContentType.JSON)
@@ -542,11 +470,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testGetIncomesWithInvalidCategory() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         given()
             .contentType(ContentType.JSON)
@@ -560,11 +484,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testGetIncomesWithInvalidDateFormat() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         given()
             .contentType(ContentType.JSON)
@@ -591,11 +511,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testGetIncomesWithDateFilters() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         LocalDate fromDate = LocalDate.now().minusMonths(1);
         LocalDate toDate = LocalDate.now();
@@ -631,11 +547,7 @@ class IncomeResourceTest extends IntegrationBase {
 
     @Test
     void testIncomeCreationWithInvalidCategory() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         String requestJson = """
         {
@@ -653,27 +565,5 @@ class IncomeResourceTest extends IntegrationBase {
             .post(INCOMES_ENDPOINT)
             .then()
             .statusCode(400);
-    }
-
-    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(registerRequest)
-            .when()
-            .post(REGISTER_ENDPOINT)
-            .then()
-            .statusCode(201)
-            .extract().jsonPath().getString("access_token");
-    }
-
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(loginRequest)
-            .when()
-            .post(LOGIN_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract().jsonPath().getString("access_token");
     }
 }

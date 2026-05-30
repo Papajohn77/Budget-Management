@@ -13,10 +13,8 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class ExpenseTest {
-    private static final String TEST_PASSWORD = "Test123!@#";
     private static final Money VALID_AMOUNT = new Money(BigDecimal.valueOf(100));
     private static final ExpenseCategory VALID_CATEGORY = ExpenseCategory.FOOD;
     private static final LocalDate VALID_DATE = LocalDate.now();
@@ -24,12 +22,7 @@ class ExpenseTest {
 
     @BeforeEach
     void setUp() {
-        user = User.create(
-            "testuser",
-            "test@example.com",
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
+        user = User.create(1L);
     }
 
     @Test
