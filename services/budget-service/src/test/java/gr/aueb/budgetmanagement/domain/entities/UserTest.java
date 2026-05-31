@@ -19,7 +19,8 @@ import gr.aueb.budgetmanagement.domain.exceptions.SavingsAlreadyExistsException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
 class UserTest {
-    private static final LocalDate TODAY = LocalDate.now();
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
+    private static final LocalDate TODAY = FIXED_DATE;
 
     private User user;
     private Money amount;

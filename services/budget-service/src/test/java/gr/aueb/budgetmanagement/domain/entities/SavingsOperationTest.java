@@ -15,7 +15,8 @@ import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
 class SavingsOperationTest {
-    private final LocalDate TODAY = LocalDate.now();
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
+    private final LocalDate TODAY = FIXED_DATE;
     private final Money AMOUNT = new Money(new BigDecimal("100.00"));
 
     private User user;

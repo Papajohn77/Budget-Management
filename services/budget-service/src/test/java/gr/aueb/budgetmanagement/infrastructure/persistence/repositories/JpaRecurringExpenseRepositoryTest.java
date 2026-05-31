@@ -29,6 +29,7 @@ import jakarta.persistence.EntityManager;
 
 @QuarkusTest
 class JpaRecurringExpenseRepositoryTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final Money VALID_AMOUNT = new Money(new BigDecimal("150.00"));
     private static final ExpenseCategory VALID_CATEGORY = ExpenseCategory.HOUSING;
 
@@ -53,7 +54,7 @@ class JpaRecurringExpenseRepositoryTest {
     void testSave() {
         // Arrange
         String uniqueName = "Test Recurring Expense " + System.currentTimeMillis();
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
 
         RecurringExpense recurringExpense = RecurringExpense.create(
@@ -87,7 +88,7 @@ class JpaRecurringExpenseRepositoryTest {
     void testFindNonStoppedRecurringExpenses_Empty() {
         // Arrange
         String uniqueName = "Test Recurring Expense " + System.currentTimeMillis();
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
 
         RecurringExpense recurringExpense = RecurringExpense.create(
@@ -115,7 +116,7 @@ class JpaRecurringExpenseRepositoryTest {
         // Arrange
         String uniqueName1 = "Active Expense " + System.currentTimeMillis();
         String uniqueName2 = "Stopped Expense " + System.currentTimeMillis();
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
 
         // Create active recurring expense
@@ -164,7 +165,7 @@ class JpaRecurringExpenseRepositoryTest {
     @TestTransaction
     void testFindNonStoppedRecurringExpenses_MultipleActive() {
         // Arrange
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
 
         // Create multiple active recurring expenses

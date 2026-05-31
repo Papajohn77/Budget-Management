@@ -22,11 +22,12 @@ import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
 class RecurringExpenseTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final String VALID_NAME = "Monthly Rent";
     private static final Money VALID_AMOUNT = new Money(BigDecimal.valueOf(100));
     private static final ExpenseCategory VALID_CATEGORY = ExpenseCategory.HOUSING;
-    private static final LocalDate VALID_START_DATE = LocalDate.now();
-    private static final LocalDate VALID_END_DATE = LocalDate.now().plusMonths(12);
+    private static final LocalDate VALID_START_DATE = FIXED_DATE;
+    private static final LocalDate VALID_END_DATE = FIXED_DATE.plusMonths(12);
     private User user;
 
     @BeforeEach
@@ -350,14 +351,14 @@ class RecurringExpenseTest {
         recurringExpense.stop(true);
 
         // Act & Assert - using reflection to access private method
-        boolean result = callShouldApply(recurringExpense, LocalDate.now());
+        boolean result = callShouldApply(recurringExpense, FIXED_DATE);
         assertFalse(result, "Stopped recurring expense should not apply");
     }
 
     @Test
     void testShouldNotApplyWithNullLastAppliedDateBeforeStartDate() {
         // Arrange
-        LocalDate futureStartDate = LocalDate.now().plusDays(10);
+        LocalDate futureStartDate = FIXED_DATE.plusDays(10);
         RecurringExpense recurringExpense = RecurringExpense.create(
                 VALID_NAME,
                 VALID_AMOUNT,
@@ -368,14 +369,14 @@ class RecurringExpenseTest {
         );
 
         // Act & Assert
-        boolean result = callShouldApply(recurringExpense, LocalDate.now());
+        boolean result = callShouldApply(recurringExpense, FIXED_DATE);
         assertFalse(result, "Should not apply when current date is before start date");
     }
 
     @Test
     void testShouldApplyWithNullLastAppliedDateAtStartDate() {
         // Arrange
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
         RecurringExpense recurringExpense = RecurringExpense.create(
                 VALID_NAME,
                 VALID_AMOUNT,
@@ -393,7 +394,7 @@ class RecurringExpenseTest {
     @Test
     void testShouldApplyWithNullLastAppliedDateAfterStartDate() {
         // Arrange
-        LocalDate pastStartDate = LocalDate.now().minusDays(10);
+        LocalDate pastStartDate = FIXED_DATE.minusDays(10);
         RecurringExpense recurringExpense = RecurringExpense.create(
                 VALID_NAME,
                 VALID_AMOUNT,
@@ -404,15 +405,15 @@ class RecurringExpenseTest {
         );
 
         // Act & Assert
-        boolean result = callShouldApply(recurringExpense, LocalDate.now());
+        boolean result = callShouldApply(recurringExpense, FIXED_DATE);
         assertTrue(result, "Should apply when current date is after start date");
     }
 
     @Test
     void testShouldNotApplyAfterMaximumApplicationsReached() {
         // Arrange
-        LocalDate startDate = LocalDate.now();
-        LocalDate endDate = LocalDate.now().plusMonths(4);
+        LocalDate startDate = FIXED_DATE;
+        LocalDate endDate = FIXED_DATE.plusMonths(4);
         RecurringExpense recurringExpense = RecurringExpense.create(
                 VALID_NAME,
                 VALID_AMOUNT,
@@ -428,17 +429,17 @@ class RecurringExpenseTest {
             addGeneratedExpense(recurringExpense, expense);
         }
 
-        setPrivateField(recurringExpense, "lastAppliedDate", LocalDate.now());
+        setPrivateField(recurringExpense, "lastAppliedDate", FIXED_DATE);
 
         // Act & Assert
-        boolean result = callShouldApply(recurringExpense, LocalDate.now().plusMonths(2));
+        boolean result = callShouldApply(recurringExpense, FIXED_DATE.plusMonths(2));
         assertFalse(result, "Should not apply when maximum applications reached");
     }
 
     @Test
     void testShouldNotApplyLessThanOneMonthSinceLastApplied() {
         // Arrange
-        LocalDate now = LocalDate.now();
+        LocalDate now = FIXED_DATE;
         RecurringExpense recurringExpense = RecurringExpense.create(
                 VALID_NAME,
                 VALID_AMOUNT,
@@ -457,7 +458,7 @@ class RecurringExpenseTest {
     @Test
     void testShouldApplyExactlyOneMonthSinceLastApplied() {
         // Arrange
-        LocalDate now = LocalDate.now();
+        LocalDate now = FIXED_DATE;
         RecurringExpense recurringExpense = RecurringExpense.create(
                 VALID_NAME,
                 VALID_AMOUNT,
@@ -476,7 +477,7 @@ class RecurringExpenseTest {
     @Test
     void testShouldApplyMoreThanOneMonthSinceLastApplied() {
         // Arrange
-        LocalDate now = LocalDate.now();
+        LocalDate now = FIXED_DATE;
         RecurringExpense recurringExpense = RecurringExpense.create(
                 VALID_NAME,
                 VALID_AMOUNT,
@@ -499,13 +500,13 @@ class RecurringExpenseTest {
                 VALID_NAME,
                 VALID_AMOUNT,
                 VALID_CATEGORY,
-                LocalDate.now().plusDays(10), // Future start date
+                FIXED_DATE.plusDays(10), // Future start date
                 VALID_END_DATE,
                 user
         );
 
         // Act
-        Expense result = recurringExpense.apply(LocalDate.now());
+        Expense result = recurringExpense.apply(FIXED_DATE);
 
         // Assert
         assertNull(result, "Apply should return null when shouldApply returns false");
@@ -514,7 +515,7 @@ class RecurringExpenseTest {
     @Test
     void testApplyFirstTimeCreatesExpenseWithStartDate() {
         // Arrange
-        LocalDate startDate = LocalDate.now().minusDays(5);
+        LocalDate startDate = FIXED_DATE.minusDays(5);
         RecurringExpense recurringExpense = RecurringExpense.create(
                 VALID_NAME,
                 VALID_AMOUNT,
@@ -525,7 +526,7 @@ class RecurringExpenseTest {
         );
 
         // Act
-        Expense result = recurringExpense.apply(LocalDate.now());
+        Expense result = recurringExpense.apply(FIXED_DATE);
 
         // Assert
         assertNotNull(result);
@@ -541,7 +542,7 @@ class RecurringExpenseTest {
     @Test
     void testShouldApplyAccountsForPartialMonths() {
         // Arrange
-        LocalDate startDate = LocalDate.now().minusMonths(3);
+        LocalDate startDate = FIXED_DATE.minusMonths(3);
         LocalDate endDate = startDate.plusMonths(2).plusDays(5);
 
         RecurringExpense recurringExpense = RecurringExpense.create(

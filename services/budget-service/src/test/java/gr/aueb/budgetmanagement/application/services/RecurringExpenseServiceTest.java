@@ -34,6 +34,7 @@ import jakarta.validation.ConstraintViolationException;
 class RecurringExpenseServiceTest {
     private static final ExpenseCategory VALID_CATEGORY = ExpenseCategory.HOUSING;
     private static final Money VALID_MONEY = new Money(new BigDecimal("1500.00"));
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
 
     @Inject
     EntityManager entityManager;
@@ -59,7 +60,7 @@ class RecurringExpenseServiceTest {
     void createRecurringExpenseWithValidData() {
         // Arrange
         int originalExpenseCount = user.getRecurringExpenses().size();
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
         String expenseName = "Monthly Rent " + System.currentTimeMillis(); // Ensure unique name
 
@@ -102,7 +103,7 @@ class RecurringExpenseServiceTest {
     @Test
     @TestTransaction
     void createRecurringExpense_WithNonExistentUser() {
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
         AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
                 "Entertainment Subscription",
@@ -122,7 +123,7 @@ class RecurringExpenseServiceTest {
     @Test
     @TestTransaction
     void createRecurringExpense_WithInvalidCommand() {
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
         AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
                 "",
@@ -143,7 +144,7 @@ class RecurringExpenseServiceTest {
     @Test
     @TestTransaction
     void createRecurringExpense_WithInvalidDateRange() {
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.minusMonths(1); // End date before start date
         AddRecurringExpenseCommand command = new AddRecurringExpenseCommand(
                 "Monthly Rent",
@@ -250,7 +251,7 @@ class RecurringExpenseServiceTest {
     @TestTransaction
     void updateRecurringExpense_WithValidData_StopsRecurringExpense() {
         // Arrange
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
         String expenseName = "Expense to Stop " + System.currentTimeMillis();
 
@@ -289,7 +290,7 @@ class RecurringExpenseServiceTest {
     @TestTransaction
     void deleteRecurringExpense_WithValidData_RemovesRecurringExpense() {
         // Arrange
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
         String expenseName = "Expense to Delete " + System.currentTimeMillis();
 
@@ -323,7 +324,7 @@ class RecurringExpenseServiceTest {
     @TestTransaction
     void testApplyRecurringExpensesSuccessful() {
         // Arrange
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
         RecurringExpense recurringExpense = RecurringExpense.create(
             "New Test Expense",
             VALID_MONEY,
@@ -348,7 +349,7 @@ class RecurringExpenseServiceTest {
     @TestTransaction
     void testApplyRecurringExpensesWithoutEligibleExpenses() {
         // Arrange
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
         RecurringExpense futureExpense = RecurringExpense.create(
             "Future Expense",
             VALID_MONEY,
@@ -377,7 +378,7 @@ class RecurringExpenseServiceTest {
     @TestTransaction
     void testApplyRecurringExpensesWithMultipleExpenses() {
         // Arrange
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
 
         RecurringExpense applicableExpense = RecurringExpense.create(
             "Applicable Expense",
@@ -421,7 +422,7 @@ class RecurringExpenseServiceTest {
     @TestTransaction
     void testApplyRecurringExpensesTwoConsecutiveApplications() {
         // Arrange
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
         LocalDate lastMonth = today.minusMonths(1);
 
         RecurringExpense recurringExpense = RecurringExpense.create(
@@ -460,7 +461,7 @@ class RecurringExpenseServiceTest {
     @TestTransaction
     void testApplyRecurringExpensesExtraApplicationForPartialMonth() {
         // Arrange
-        LocalDate startDate = LocalDate.now().minusMonths(2);
+        LocalDate startDate = FIXED_DATE.minusMonths(2);
         // This should allow 3 applications (2 full months + partial month)
         LocalDate endDate = startDate.plusMonths(2).plusDays(5);
         

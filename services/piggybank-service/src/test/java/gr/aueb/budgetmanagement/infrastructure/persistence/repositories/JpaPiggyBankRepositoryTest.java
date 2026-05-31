@@ -31,6 +31,7 @@ import jakarta.persistence.EntityManager;
 
 @QuarkusTest
 class JpaPiggyBankRepositoryTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
 
     @Inject
     private EntityManager entityManager;
@@ -125,7 +126,7 @@ class JpaPiggyBankRepositoryTest {
 
         PiggyBankAllocation allocation = personalPiggyBank.allocate(
             new Money(BigDecimal.valueOf(500)),
-            LocalDate.now(), 
+            FIXED_DATE, 
             user
         );
         entityManager.persist(allocation);
@@ -148,7 +149,7 @@ class JpaPiggyBankRepositoryTest {
 
         PiggyBankAllocation allocation = groupPiggyBank.allocate(
             new Money(BigDecimal.valueOf(500)),
-            LocalDate.now(), 
+            FIXED_DATE, 
             user
         );
         entityManager.persist(allocation);

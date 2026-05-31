@@ -29,6 +29,7 @@ import jakarta.persistence.EntityManager;
 
 @QuarkusTest
 class JpaRecurringIncomeRepositoryTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final Money VALID_AMOUNT = new Money(new BigDecimal("2500.00"));
     private static final IncomeCategory VALID_CATEGORY = IncomeCategory.SALARY;
 
@@ -53,7 +54,7 @@ class JpaRecurringIncomeRepositoryTest {
     void testSave() {
         // Arrange
         String uniqueName = "Test Recurring Income " + System.currentTimeMillis();
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
 
         RecurringIncome recurringIncome = RecurringIncome.create(
@@ -87,7 +88,7 @@ class JpaRecurringIncomeRepositoryTest {
     void testFindNonStoppedRecurringIncomes_Empty() {
         // Arrange
         String uniqueName = "Test Recurring Income " + System.currentTimeMillis();
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
 
         RecurringIncome recurringIncome = RecurringIncome.create(
@@ -115,7 +116,7 @@ class JpaRecurringIncomeRepositoryTest {
         // Arrange
         String uniqueName1 = "Active Income " + System.currentTimeMillis();
         String uniqueName2 = "Stopped Income " + System.currentTimeMillis();
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
 
         // Create active recurring income
@@ -164,7 +165,7 @@ class JpaRecurringIncomeRepositoryTest {
     @TestTransaction
     void testFindNonStoppedRecurringIncomes_MultipleActive() {
         // Arrange
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
 
         // Create multiple active recurring incomes

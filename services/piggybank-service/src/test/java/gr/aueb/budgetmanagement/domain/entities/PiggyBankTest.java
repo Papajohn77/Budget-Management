@@ -20,6 +20,7 @@ import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class PiggyBankTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final String TEST_PASSWORD = "Test123!@#";
     private static final String VALID_NAME = "My Piggy Bank";
     private static final Money VALID_TARGET = new Money(BigDecimal.valueOf(1000));
@@ -382,7 +383,7 @@ class PiggyBankTest {
             );
             PiggyBankAllocation allocation = piggyBank.allocate(
                 new Money(BigDecimal.valueOf(100)),
-                LocalDate.now(), 
+                FIXED_DATE, 
                 user
             );
 
@@ -420,9 +421,9 @@ class PiggyBankTest {
         );
         
         // Act
-        piggyBank.allocate(new Money(BigDecimal.valueOf(50)), LocalDate.now(), user);
-        piggyBank.allocate(new Money(BigDecimal.valueOf(25.50)), LocalDate.now(), user);
-        piggyBank.allocate(new Money(BigDecimal.valueOf(124.50)), LocalDate.now(), user);
+        piggyBank.allocate(new Money(BigDecimal.valueOf(50)), FIXED_DATE, user);
+        piggyBank.allocate(new Money(BigDecimal.valueOf(25.50)), FIXED_DATE, user);
+        piggyBank.allocate(new Money(BigDecimal.valueOf(124.50)), FIXED_DATE, user);
         Money currentAmount = piggyBank.getCurrentAmount();
         
         // Assert
@@ -448,8 +449,8 @@ class PiggyBankTest {
         group.addMember(member);
         
         // Act - both admin and member add allocations
-        piggyBank.allocate(new Money(BigDecimal.valueOf(100)), LocalDate.now(), user);
-        piggyBank.allocate(new Money(BigDecimal.valueOf(75)), LocalDate.now(), member);
+        piggyBank.allocate(new Money(BigDecimal.valueOf(100)), FIXED_DATE, user);
+        piggyBank.allocate(new Money(BigDecimal.valueOf(75)), FIXED_DATE, member);
         Money currentAmount = piggyBank.getCurrentAmount();
         
         // Assert
@@ -477,7 +478,7 @@ class PiggyBankTest {
             ForbiddenOperationDomainException.class,
             () -> piggyBank.allocate(
                 new Money(BigDecimal.valueOf(50)),
-                LocalDate.now(),
+                FIXED_DATE,
                 unauthorizedUser
             )
         );

@@ -27,8 +27,9 @@ import jakarta.inject.Inject;
 
 @QuarkusTest
 class IncomeServiceTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final BigDecimal INCOME_AMOUNT = new BigDecimal("150.00");
-    private static final LocalDate INCOME_DATE = LocalDate.now();
+    private static final LocalDate INCOME_DATE = FIXED_DATE;
 
     @Inject
     private UserRepository userRepository;
@@ -103,7 +104,7 @@ class IncomeServiceTest {
     @TestTransaction
     void testGetIncomesWithDateFilters() {
         // Create incomes with different dates
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
         LocalDate yesterday = today.minusDays(1);
         LocalDate lastWeek = today.minusDays(7);
 
@@ -191,7 +192,7 @@ class IncomeServiceTest {
     @TestTransaction
     void testGetIncomesWithAllFilters() {
         // Create incomes with different dates and categories
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
         LocalDate yesterday = today.minusDays(1);
         LocalDate lastWeek = today.minusDays(7);
 

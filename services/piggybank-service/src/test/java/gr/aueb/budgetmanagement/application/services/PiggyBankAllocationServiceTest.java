@@ -27,7 +27,8 @@ import jakarta.inject.Inject;
 
 @QuarkusTest
 class PiggyBankAllocationServiceTest {
-    private static final LocalDate TODAY = LocalDate.now();
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
+    private static final LocalDate TODAY = FIXED_DATE;
     private static final BigDecimal AMOUNT = new BigDecimal("100.00");
 
     @Inject
