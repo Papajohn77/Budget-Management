@@ -16,9 +16,10 @@ import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class PiggyBankAllocationTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final String TEST_PASSWORD = "Test123!@#";
     private static final Money VALID_AMOUNT = new Money(BigDecimal.valueOf(100));
-    private static final LocalDate VALID_DATE = LocalDate.now();
+    private static final LocalDate VALID_DATE = FIXED_DATE;
 
     private User user;
     private PiggyBank piggyBank;

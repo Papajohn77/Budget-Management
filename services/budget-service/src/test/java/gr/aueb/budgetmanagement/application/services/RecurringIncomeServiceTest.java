@@ -34,6 +34,7 @@ import jakarta.validation.ConstraintViolationException;
 class RecurringIncomeServiceTest {
     private static final IncomeCategory VALID_CATEGORY = IncomeCategory.SALARY;
     private static final Money VALID_MONEY = new Money(new BigDecimal("2500.00"));
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
 
     @Inject
     EntityManager entityManager;
@@ -59,7 +60,7 @@ class RecurringIncomeServiceTest {
     void createRecurringIncomeWithValidData() {
         // Arrange
         int originalIncomeCount = user.getRecurringIncomes().size();
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
         String incomeName = "Monthly Salary " + System.currentTimeMillis(); // Ensure unique name
 
@@ -102,7 +103,7 @@ class RecurringIncomeServiceTest {
     @Test
     @TestTransaction
     void createRecurringIncome_WithNonExistentUser() {
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
         AddRecurringIncomeCommand command = new AddRecurringIncomeCommand(
                 "Freelance Income",
@@ -122,7 +123,7 @@ class RecurringIncomeServiceTest {
     @Test
     @TestTransaction
     void createRecurringIncome_WithInvalidCommand() {
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
         AddRecurringIncomeCommand command = new AddRecurringIncomeCommand(
                 "",
@@ -143,7 +144,7 @@ class RecurringIncomeServiceTest {
     @Test
     @TestTransaction
     void createRecurringIncome_WithInvalidDateRange() {
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.minusMonths(1); // End date before start date
         AddRecurringIncomeCommand command = new AddRecurringIncomeCommand(
                 "Monthly Salary",
@@ -250,7 +251,7 @@ class RecurringIncomeServiceTest {
     @TestTransaction
     void updateRecurringIncome_WithValidData_StopsRecurringIncome() {
         // Arrange
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
         String incomeName = "Income to Stop " + System.currentTimeMillis();
 
@@ -289,7 +290,7 @@ class RecurringIncomeServiceTest {
     @TestTransaction
     void deleteRecurringIncome_WithValidData_RemovesRecurringIncome() {
         // Arrange
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = FIXED_DATE;
         LocalDate endDate = startDate.plusMonths(12);
         String incomeName = "Income to Delete " + System.currentTimeMillis();
 
@@ -323,7 +324,7 @@ class RecurringIncomeServiceTest {
     @TestTransaction
     void testApplyRecurringIncomesSuccessful() {
         // Arrange
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
         RecurringIncome recurringIncome = RecurringIncome.create(
             "New Test Income",
             VALID_MONEY,
@@ -348,7 +349,7 @@ class RecurringIncomeServiceTest {
     @TestTransaction
     void testApplyRecurringIncomesWithoutEligibleIncomes() {
         // Arrange
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
         RecurringIncome futureIncome = RecurringIncome.create(
             "Future Income",
             VALID_MONEY,
@@ -377,7 +378,7 @@ class RecurringIncomeServiceTest {
     @TestTransaction
     void testApplyRecurringIncomesWithMultipleIncomes() {
         // Arrange
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
 
         RecurringIncome applicableIncome = RecurringIncome.create(
             "Applicable Income",
@@ -421,7 +422,7 @@ class RecurringIncomeServiceTest {
     @TestTransaction
     void testApplyRecurringIncomesTwoConsecutiveApplications() {
         // Arrange
-        LocalDate today = LocalDate.now();
+        LocalDate today = FIXED_DATE;
         LocalDate lastMonth = today.minusMonths(1);
 
         RecurringIncome recurringIncome = RecurringIncome.create(
@@ -460,7 +461,7 @@ class RecurringIncomeServiceTest {
     @TestTransaction
     void testApplyRecurringIncomesExtraApplicationForPartialMonth() {
         // Arrange
-        LocalDate startDate = LocalDate.now().minusMonths(2);
+        LocalDate startDate = FIXED_DATE.minusMonths(2);
         // This should allow 3 applications (2 full months + partial month)
         LocalDate endDate = startDate.plusMonths(2).plusDays(5);
         

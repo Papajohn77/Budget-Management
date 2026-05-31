@@ -26,7 +26,8 @@ import jakarta.inject.Inject;
 
 @QuarkusTest
 class SavingsOperationServiceTest {
-    private static final LocalDate TODAY = LocalDate.now();
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
+    private static final LocalDate TODAY = FIXED_DATE;
     private static final Money AMOUNT = new Money(new BigDecimal("100.00"));
 
     @Inject

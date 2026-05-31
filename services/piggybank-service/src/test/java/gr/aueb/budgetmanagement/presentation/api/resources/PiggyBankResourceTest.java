@@ -22,6 +22,7 @@ import io.restassured.http.ContentType;
 
 @QuarkusTest
 class PiggyBankResourceTest extends IntegrationBase {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final String PIGGY_BANKS_ENDPOINT = "/api/v1/piggy-banks";
     private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
     private static final String EXISTING_EMAIL = "test@example.com"; // From test fixture
@@ -391,7 +392,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
         // Then allocate funds to it
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             new BigDecimal("50.00")
         );
 
@@ -417,7 +418,7 @@ class PiggyBankResourceTest extends IntegrationBase {
         String authToken = getAuthTokenAuthenticate(loginRequest);
 
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             new BigDecimal("50.00")
         );
 
@@ -467,7 +468,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
         // Try to allocate to testuser's piggy bank as testuser2
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             new BigDecimal("50.00")
         );
 
@@ -492,7 +493,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
         // Allocate additional funds to the piggy bank that already has an allocation
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             new BigDecimal("50.00")
         );
 
@@ -512,7 +513,7 @@ class PiggyBankResourceTest extends IntegrationBase {
     @Test
     void testAllocateToPiggyBankWithoutAuthentication() {
         AllocateToPiggyBankRequest request = new AllocateToPiggyBankRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             new BigDecimal("50.00")
         );
 

@@ -38,6 +38,7 @@ import jakarta.persistence.EntityManager;
 
 @QuarkusTest
 class PiggyBankServiceTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final BigDecimal TARGET_AMOUNT = new BigDecimal("1000.00");
     private static final String PIGGY_BANK_NAME = "Test Piggy Bank";
 
@@ -209,7 +210,7 @@ class PiggyBankServiceTest {
 
         PiggyBankAllocation allocation = personalPiggyBank.allocate(
             new Money(BigDecimal.valueOf(500)),
-            LocalDate.now(),
+            FIXED_DATE,
             admin
         );
         entityManager.persist(allocation);
@@ -245,7 +246,7 @@ class PiggyBankServiceTest {
 
         PiggyBankAllocation allocation = groupPiggyBank.allocate(
             new Money(BigDecimal.valueOf(500)),
-            LocalDate.now(),
+            FIXED_DATE,
             admin
         );
         entityManager.persist(allocation);
@@ -467,7 +468,7 @@ class PiggyBankServiceTest {
         BigDecimal allocationAmount = new BigDecimal("150.00");
         
         AllocateToPiggyBankCommand command = new AllocateToPiggyBankCommand(
-            LocalDate.now(),
+            FIXED_DATE,
             new Money(allocationAmount),
             piggyBankId,
             admin.getId()

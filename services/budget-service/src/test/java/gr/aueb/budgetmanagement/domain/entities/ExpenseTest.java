@@ -15,9 +15,10 @@ import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
 class ExpenseTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final Money VALID_AMOUNT = new Money(BigDecimal.valueOf(100));
     private static final ExpenseCategory VALID_CATEGORY = ExpenseCategory.FOOD;
-    private static final LocalDate VALID_DATE = LocalDate.now();
+    private static final LocalDate VALID_DATE = FIXED_DATE;
     private User user;
 
     @BeforeEach
@@ -93,8 +94,8 @@ class ExpenseTest {
             "Monthly Subscription",
             VALID_AMOUNT,
             VALID_CATEGORY,
-            LocalDate.now(),
-            LocalDate.now().plusMonths(12),
+            FIXED_DATE,
+            FIXED_DATE.plusMonths(12),
             user
         );
 

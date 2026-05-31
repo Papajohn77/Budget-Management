@@ -23,9 +23,10 @@ import io.restassured.http.ContentType;
 
 @QuarkusTest
 class IncomeResourceTest extends IntegrationBase {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final String INCOMES_ENDPOINT = "/api/v1/incomes";
     private static final String INCOME_CATEGORIES_ENDPOINT = "/api/v1/incomes/categories";    private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(53.75);
-    private static final LocalDate TEST_DATE = LocalDate.now();
+    private static final LocalDate TEST_DATE = FIXED_DATE;
     private static final IncomeCategory TEST_CATEGORY = IncomeCategory.SALARY;
     private static final IncomeCategory TEST_CATEGORY_UPDATE = IncomeCategory.DIVIDENDS;
 
@@ -56,7 +57,7 @@ class IncomeResourceTest extends IntegrationBase {
                 "category": null,
                 "date": "%s"
             }
-            """.formatted(LocalDate.now());
+            """.formatted(FIXED_DATE);
 
         given()
             .contentType(ContentType.JSON)
@@ -97,7 +98,7 @@ class IncomeResourceTest extends IntegrationBase {
             "category": "SALARY",
             "date": "%s"
         }
-        """.formatted(LocalDate.now());
+        """.formatted(FIXED_DATE);
 
         given()
             .contentType(ContentType.JSON)
@@ -174,7 +175,7 @@ class IncomeResourceTest extends IntegrationBase {
         String authToken = authTokenForTestUser();
 
         AddIncomeRequest incomeRequest = new AddIncomeRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -206,7 +207,7 @@ class IncomeResourceTest extends IntegrationBase {
         String authToken = authTokenForTestUser();
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -245,7 +246,7 @@ class IncomeResourceTest extends IntegrationBase {
         String firstUserToken = authTokenForTestUser();
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -263,7 +264,7 @@ class IncomeResourceTest extends IntegrationBase {
         String secondUserToken = authTokenForSecondTestUser();
 
         UpdateIncomeRequest updateRequest = new UpdateIncomeRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY_UPDATE
         );
@@ -283,7 +284,7 @@ class IncomeResourceTest extends IntegrationBase {
         String authToken = authTokenForTestUser();
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -431,7 +432,7 @@ class IncomeResourceTest extends IntegrationBase {
         String firstUserToken = authTokenForTestUser();
 
         AddIncomeRequest createRequest = new AddIncomeRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -513,11 +514,11 @@ class IncomeResourceTest extends IntegrationBase {
     void testGetIncomesWithDateFilters() {
         String authToken = authTokenForTestUser();
 
-        LocalDate fromDate = LocalDate.now().minusMonths(1);
-        LocalDate toDate = LocalDate.now();
+        LocalDate fromDate = FIXED_DATE.minusMonths(1);
+        LocalDate toDate = FIXED_DATE;
 
         AddIncomeRequest incomeRequest = new AddIncomeRequest(
-            LocalDate.now().minusDays(15), // Date between fromDate and toDate
+            FIXED_DATE.minusDays(15), // Date between fromDate and toDate
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -555,7 +556,7 @@ class IncomeResourceTest extends IntegrationBase {
             "category": "INVALID_CATEGORY",
             "date": "%s"
         }
-        """.formatted(LocalDate.now());
+        """.formatted(FIXED_DATE);
 
         given()
             .contentType(ContentType.JSON)

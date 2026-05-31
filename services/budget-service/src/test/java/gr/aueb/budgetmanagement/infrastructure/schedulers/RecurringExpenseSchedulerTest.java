@@ -26,6 +26,7 @@ import jakarta.persistence.EntityManager;
 
 @QuarkusTest
 class RecurringExpenseSchedulerTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     @Inject
     EntityManager entityManager;
 
@@ -49,7 +50,7 @@ class RecurringExpenseSchedulerTest {
     @TestTransaction
     void testExecuteRecurringExpenseJobSuccessful() {
         // Arrange - create a recurring expense eligible for application
-        LocalDate startDate = LocalDate.now().minusDays(10);
+        LocalDate startDate = FIXED_DATE.minusDays(10);
         LocalDate endDate = startDate.plusMonths(12);
 
         RecurringExpense recurringExpense = RecurringExpense.create(

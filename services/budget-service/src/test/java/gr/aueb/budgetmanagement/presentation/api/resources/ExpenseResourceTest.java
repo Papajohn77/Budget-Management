@@ -24,10 +24,11 @@ import io.restassured.http.ContentType;
 
 @QuarkusTest
 class ExpenseResourceTest extends IntegrationBase {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final String EXPENSES_ENDPOINT = "/api/v1/expenses";
     private static final String EXPENSE_CATEGORIES_ENDPOINT = "/api/v1/expenses/categories";    private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(53.75);
     private static final BigDecimal TEST_UPDATE_AMOUNT = BigDecimal.valueOf(150);
-    private static final LocalDate TEST_DATE = LocalDate.now();
+    private static final LocalDate TEST_DATE = FIXED_DATE;
     private static final ExpenseCategory TEST_CATEGORY = ExpenseCategory.HOUSING;
     private static final ExpenseCategory TEST_CATEGORY_UPDATE = ExpenseCategory.ENTERTAINMENT; ;
 
@@ -53,7 +54,7 @@ class ExpenseResourceTest extends IntegrationBase {
         String authToken = authTokenForTestUser();
 
         AddExpenseRequest request = new AddExpenseRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -82,7 +83,7 @@ class ExpenseResourceTest extends IntegrationBase {
                 "category": "FOOD",
                 "date": "%s"
             }
-            """.formatted(LocalDate.now());
+            """.formatted(FIXED_DATE);
 
         given()
             .contentType(ContentType.JSON)
@@ -104,7 +105,7 @@ class ExpenseResourceTest extends IntegrationBase {
                 "category": null,
                 "date": "%s"
             }
-            """.formatted(LocalDate.now());
+            """.formatted(FIXED_DATE);
 
         given()
             .contentType(ContentType.JSON)
@@ -149,7 +150,7 @@ class ExpenseResourceTest extends IntegrationBase {
                 "category": "INVALID_CATEGORY",
                 "date": "%s"
             }
-            """.formatted(LocalDate.now());
+            """.formatted(FIXED_DATE);
 
         given()
             .contentType(ContentType.JSON)
@@ -164,7 +165,7 @@ class ExpenseResourceTest extends IntegrationBase {
     @Test
     void testExpenseCreationWithoutAuthentication() {
         AddExpenseRequest request = new AddExpenseRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -184,7 +185,7 @@ class ExpenseResourceTest extends IntegrationBase {
         String authToken = authTokenForTestUser();
 
         AddExpenseRequest expenseRequest = new AddExpenseRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -222,11 +223,11 @@ class ExpenseResourceTest extends IntegrationBase {
     void testGetExpensesWithDateFilters() {
         String authToken = authTokenForTestUser();
 
-        LocalDate fromDate = LocalDate.now().minusMonths(1);
-        LocalDate toDate = LocalDate.now();
+        LocalDate fromDate = FIXED_DATE.minusMonths(1);
+        LocalDate toDate = FIXED_DATE;
 
         AddExpenseRequest expenseRequest = new AddExpenseRequest(
-            LocalDate.now().minusDays(15), // Date between fromDate and toDate
+            FIXED_DATE.minusDays(15), // Date between fromDate and toDate
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -260,7 +261,7 @@ class ExpenseResourceTest extends IntegrationBase {
         String authToken = authTokenForTestUser();
 
         AddExpenseRequest expenseRequest = new AddExpenseRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -292,7 +293,7 @@ class ExpenseResourceTest extends IntegrationBase {
         String authToken = authTokenForTestUser();
 
         AddExpenseRequest createRequest = new AddExpenseRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -330,7 +331,7 @@ class ExpenseResourceTest extends IntegrationBase {
         String firstUserToken = authTokenForTestUser();
 
         AddExpenseRequest createRequest = new AddExpenseRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -348,7 +349,7 @@ class ExpenseResourceTest extends IntegrationBase {
         String secondUserToken = authTokenForSecondTestUser();
 
         UpdateExpenseRequest updateRequest = new UpdateExpenseRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY_UPDATE
         );
@@ -368,7 +369,7 @@ class ExpenseResourceTest extends IntegrationBase {
         String authToken = authTokenForTestUser();
 
         AddExpenseRequest createRequest = new AddExpenseRequest(
-            LocalDate.now(),
+            FIXED_DATE,
             TEST_AMOUNT,
             TEST_CATEGORY
         );
@@ -517,7 +518,7 @@ class ExpenseResourceTest extends IntegrationBase {
         String firstUserToken = authTokenForTestUser();
 
         AddExpenseRequest createRequest = new AddExpenseRequest(
-                LocalDate.now(),
+                FIXED_DATE,
                 TEST_AMOUNT,
                 TEST_CATEGORY
         );

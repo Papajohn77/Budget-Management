@@ -24,8 +24,9 @@ import jakarta.inject.Inject;
 
 @QuarkusTest
 class SavingsServiceTest {
+    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final BigDecimal TEST_AMOUNT = new BigDecimal("100.00");
-    private static final LocalDate TEST_DATE = LocalDate.now();
+    private static final LocalDate TEST_DATE = FIXED_DATE;
 
     @Inject
     private UserRepository userRepository;
