@@ -17,11 +17,9 @@ import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class PiggyBankTest {
     private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
-    private static final String TEST_PASSWORD = "Test123!@#";
     private static final String VALID_NAME = "My Piggy Bank";
     private static final Money VALID_TARGET = new Money(BigDecimal.valueOf(1000));
     private static final ExpenseCategory VALID_CATEGORY = ExpenseCategory.OTHER;
@@ -31,12 +29,7 @@ class PiggyBankTest {
 
     @BeforeEach
     void setUp() {
-        user = User.create(
-            "testuser", 
-            "test@example.com", 
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
+        user = User.create(1L);
         group = Group.create("testgroup", user);
     }
 
@@ -153,12 +146,7 @@ class PiggyBankTest {
                 VALID_CATEGORY,
                 user
             );
-            User otherUser = User.create(
-                "otheruser",
-                "other@example.com",
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
-            );
+            User otherUser = User.create(2L);
 
             // Assert
             assertFalse(piggyBank.isAuthorizedUser(otherUser));
@@ -187,12 +175,7 @@ class PiggyBankTest {
                 VALID_CATEGORY,
                 user
             );
-            User otherUser = User.create(
-                "otheruser",
-                "other@example.com",
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
-            );
+            User otherUser = User.create(2L);
 
             // Assert
             assertFalse(piggyBank.canBeDissolvedBy(otherUser));
@@ -321,12 +304,7 @@ class PiggyBankTest {
                 group, 
                 group.getAdmin()
             );
-            User nonMember = User.create(
-                "nonmember",
-                "nonmember@example.com",
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
-            );
+            User nonMember = User.create(2L);
 
             // Assert
             assertFalse(piggyBank.isAuthorizedUser(nonMember));
@@ -357,12 +335,7 @@ class PiggyBankTest {
                 group,
                 group.getAdmin()
             );
-            User member = User.create(
-                "member",
-                "member@example.com",
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
-            );
+            User member = User.create(2L);
             group.addMember(member);
 
             // Assert
@@ -440,12 +413,7 @@ class PiggyBankTest {
             group,
             group.getAdmin()
         );
-        User member = User.create(
-            "member",
-            "member@example.com",
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
+        User member = User.create(2L);
         group.addMember(member);
         
         // Act - both admin and member add allocations
@@ -466,12 +434,7 @@ class PiggyBankTest {
             VALID_CATEGORY,
             user
         );
-        User unauthorizedUser = User.create(
-            "unauthorized",
-            "unauthorized@example.com",
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
+        User unauthorizedUser = User.create(2L);
         
         // Act & Assert
         assertThrows(

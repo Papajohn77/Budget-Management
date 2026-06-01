@@ -3,7 +3,6 @@ package gr.aueb.budgetmanagement.application.services;
 import java.util.List;
 
 import gr.aueb.budgetmanagement.application.commands.RespondToInvitationCommand;
-import gr.aueb.budgetmanagement.application.commands.SendInvitationCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.InvitationRepository;
@@ -35,28 +34,28 @@ public class InvitationService {
         this.userRepository = userRepository;
     }
 
-    @Transactional
-    public InvitationRepresentation sendInvitation(@Valid SendInvitationCommand command) {
-        Group group = groupRepository.findById(command.groupId())
-            .orElseThrow(() -> new NotFoundException("Group not found with id: " + command.groupId()));
+    // @Transactional
+    // public InvitationRepresentation sendInvitation(@Valid SendInvitationCommand command) {
+    //     Group group = groupRepository.findById(command.groupId())
+    //         .orElseThrow(() -> new NotFoundException("Group not found with id: " + command.groupId()));
 
-        User invitee = userRepository.findByEmail(command.email())
-            .orElseThrow(() -> new NotFoundException("Invitee not found with email: " + command.email()));
+    //     User invitee = userRepository.findByEmail(command.email())
+    //         .orElseThrow(() -> new NotFoundException("Invitee not found with email: " + command.email()));
 
-        User admin = userRepository.findById(command.userId())
-            .orElseThrow(() -> new NotFoundException("Admin not found with id: " + command.userId()));
+    //     User admin = userRepository.findById(command.userId())
+    //         .orElseThrow(() -> new NotFoundException("Admin not found with id: " + command.userId()));
 
-        Invitation invitation = Invitation.create(group, invitee, admin);
+    //     Invitation invitation = Invitation.create(group, invitee, admin);
 
-        invitationRepository.save(invitation);
+    //     invitationRepository.save(invitation);
 
-        return new InvitationRepresentation(
-            group.getId(),
-            invitee.getId(),
-            invitation.getStatus(),
-            invitation.getCreatedAt()
-        );
-    }
+    //     return new InvitationRepresentation(
+    //         group.getId(),
+    //         invitee.getId(),
+    //         invitation.getStatus(),
+    //         invitation.getCreatedAt()
+    //     );
+    // }
 
     @Transactional
     public InvitationRepresentation respondToInvitation(@Valid RespondToInvitationCommand command) {

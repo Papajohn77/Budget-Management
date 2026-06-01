@@ -13,11 +13,9 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class PiggyBankAllocationTest {
     private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
-    private static final String TEST_PASSWORD = "Test123!@#";
     private static final Money VALID_AMOUNT = new Money(BigDecimal.valueOf(100));
     private static final LocalDate VALID_DATE = FIXED_DATE;
 
@@ -26,12 +24,7 @@ class PiggyBankAllocationTest {
 
     @BeforeEach
     void setUp() {
-        user = User.create(
-            "testuser",
-            "test@example.com",
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
+        user = User.create(1L);
         piggyBank = PersonalPiggyBank.create(
             "Test PiggyBank",
             new Money(new BigDecimal("1000.00")),

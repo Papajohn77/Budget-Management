@@ -6,13 +6,32 @@ import java.util.Scanner;
 
 import org.junit.jupiter.api.BeforeEach;
 
+import io.smallrye.jwt.build.Jwt;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
 public class IntegrationBase {
+    private static final String JWT_ISSUER = "budget-management";
+
     @Inject
     private EntityManager entityManager;
+
+    protected String authTokenFor(Long userId) {
+        return Jwt.subject(userId.toString())
+            .upn(userId.toString())
+            .claim("user_id", userId)
+            .issuer(JWT_ISSUER)
+            .sign();
+    }
+
+    protected String authTokenForTestUser() {
+        return authTokenFor(Fixture.Users.TESTUSER_ID);
+    }
+
+    protected String authTokenForSecondTestUser() {
+        return authTokenFor(Fixture.Users.TESTUSER2_ID);
+    }
 
     @BeforeEach
     @Transactional

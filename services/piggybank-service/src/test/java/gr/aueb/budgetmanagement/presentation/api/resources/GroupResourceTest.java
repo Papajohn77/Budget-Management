@@ -8,29 +8,20 @@ import static org.hamcrest.Matchers.is;
 
 import org.junit.jupiter.api.Test;
 
+import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.IntegrationBase;
-import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreateGroupRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 
 @QuarkusTest
 class GroupResourceTest extends IntegrationBase {
     private static final String GROUPS_ENDPOINT = "/api/v1/groups";
-    private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
-    private static final String REGISTER_ENDPOINT = "/api/v1/users/register";
     private static final String TEST_GROUP_NAME = "Test Group";
-    private static final String EXISTING_EMAIL = "test@example.com"; // From test fixture
-    private static final String EXISTING_PASSWORD = "Test123!@#"; // From test fixture
 
     @Test
     void testSuccessfulGroupCreation() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         CreateGroupRequest request = new CreateGroupRequest(TEST_GROUP_NAME);
 
@@ -50,11 +41,7 @@ class GroupResourceTest extends IntegrationBase {
 
     @Test
     void testGroupCreationWithBlankName() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         CreateGroupRequest request = new CreateGroupRequest("");
 
@@ -71,11 +58,7 @@ class GroupResourceTest extends IntegrationBase {
 
     @Test
     void testGroupCreationWithDuplicateName() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         CreateGroupRequest request = new CreateGroupRequest(TEST_GROUP_NAME);
 
@@ -129,11 +112,7 @@ class GroupResourceTest extends IntegrationBase {
 
     @Test
     void testGetUserGroups() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
         
         given()
             .contentType(ContentType.JSON)
@@ -152,13 +131,7 @@ class GroupResourceTest extends IntegrationBase {
     @Test
     void testGetGroupsForUserWithNoGroups() {
         // Create a new user for this test who doesn't belong to any groups
-        RegisterUserRequest registerRequest = new RegisterUserRequest(
-            "nogroups", 
-            "nogroups@example.com", 
-            "Test123!@#"
-        );
-        
-        String authToken = getAuthTokenRegister(registerRequest);
+        String authToken = authTokenFor(Fixture.Users.TESTUSER4_ID);
         
         // Get groups for the user (should be empty)
         given()
@@ -197,12 +170,7 @@ class GroupResourceTest extends IntegrationBase {
     @Test
     void testGetGroupsForNonAdminMember() {
         // Login as testuser3, who is a member but not an admin of testgroup
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            "test3@example.com",
-            "Test123!@#"
-        );
-        
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenFor(Fixture.Users.TESTUSER3_ID);
         
         given()
             .contentType(ContentType.JSON)
@@ -218,25 +186,4 @@ class GroupResourceTest extends IntegrationBase {
             .body("groups[0].is_admin", equalTo(false));
     }
 
-    private String getAuthTokenRegister(RegisterUserRequest registerRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(registerRequest)
-            .when()
-            .post(REGISTER_ENDPOINT)
-            .then()
-            .statusCode(201)
-            .extract().jsonPath().getString("access_token");
-    }
-
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(loginRequest)
-            .when()
-            .post(LOGIN_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract().jsonPath().getString("access_token");
-    }
 }

@@ -12,20 +12,13 @@ import org.junit.jupiter.api.Test;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class PersonalPiggyBankTest {
-    private static final String TEST_PASSWORD = "Test123!@#";
 
     @Test
     void createPersonalPiggyBankShouldEstablishBidirectionalRelationship() {
         // Arrange
-        User user = User.create(
-            "testuser", 
-            "test@example.com", 
-            TEST_PASSWORD,
-            new BCryptPasswordEncoder()
-        );
+        User user = User.create(1L);
 
         // Act
         PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
