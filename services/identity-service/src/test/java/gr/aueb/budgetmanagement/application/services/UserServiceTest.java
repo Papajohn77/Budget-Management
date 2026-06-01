@@ -19,8 +19,10 @@ import gr.aueb.budgetmanagement.application.commands.AuthenticateUserCommand;
 import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
 import gr.aueb.budgetmanagement.application.exceptions.AlreadyExistsException;
 import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsException;
+import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.AccessTokenRepresentation;
+import gr.aueb.budgetmanagement.application.representations.UserRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidEmailAddressException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidPasswordException;
@@ -234,6 +236,33 @@ class UserServiceTest {
         assertThrows(
             InvalidCredentialsException.class,
             () -> userService.authenticateUser(command)
+        );
+    }
+
+    @Test
+    @TestTransaction
+    void testGetUserByEmailReturnsUserId() {
+        UserRepresentation result = userService.getUserByEmail(user.getEmail().getValue());
+
+        assertNotNull(result);
+        assertEquals(user.getId(), result.userId());
+    }
+
+    @Test
+    @TestTransaction
+    void testGetUserByEmailWithNonexistentEmail() {
+        assertThrows(
+            NotFoundException.class,
+            () -> userService.getUserByEmail("nonexistent@example.com")
+        );
+    }
+
+    @Test
+    @TestTransaction
+    void testGetUserByEmailWithInvalidEmail() {
+        assertThrows(
+            InvalidEmailAddressException.class,
+            () -> userService.getUserByEmail("invalid-email")
         );
     }
 }

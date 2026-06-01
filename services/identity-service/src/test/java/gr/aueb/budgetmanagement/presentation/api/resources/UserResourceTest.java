@@ -16,6 +16,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
@@ -27,6 +28,7 @@ import io.restassured.response.Response;
 class UserResourceTest extends IntegrationBase {
     private static final String REGISTER_ENDPOINT = "/api/v1/users/register";
     private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
+    private static final String USERS_ENDPOINT = "/api/v1/users";
     private static final String TEST_USERNAME = "testuser123";
     private static final String TEST_EMAIL = "testuser123@example.com";
     private static final String TEST_PASSWORD = "Password123!";
@@ -217,6 +219,39 @@ class UserResourceTest extends IntegrationBase {
             .post(LOGIN_ENDPOINT)
             .then()
             .statusCode(400);
+    }
+
+    @Test
+    void testGetUserByEmailReturnsUserId() {
+        given()
+            .queryParam("email", EXISTING_EMAIL)
+            .when()
+            .get(USERS_ENDPOINT)
+            .then()
+            .statusCode(200)
+            .body("user_id", equalTo(Fixture.Users.TESTUSER_ID.intValue()));
+    }
+
+    @Test
+    void testGetUserByEmailWithNonexistentEmail() {
+        given()
+            .queryParam("email", "nonexistent@example.com")
+            .when()
+            .get(USERS_ENDPOINT)
+            .then()
+            .statusCode(404)
+            .body("message", containsString("No user found"));
+    }
+
+    @Test
+    void testGetUserByEmailWithInvalidEmail() {
+        given()
+            .queryParam("email", "invalid-email")
+            .when()
+            .get(USERS_ENDPOINT)
+            .then()
+            .statusCode(400)
+            .body("message", containsString("Invalid email"));
     }
 
     private void assertValidAccessToken(String accessToken) throws JsonProcessingException {
