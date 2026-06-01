@@ -1,15 +1,11 @@
 package gr.aueb.budgetmanagement.domain.entities;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.interfaces.BalanceImpact;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -79,15 +75,6 @@ public class User {
     boolean hasAlreadyBeenInvitedTo(Group group) {
         return invitations.stream()
             .anyMatch(invitation -> invitation.getGroup().equals(group));
-    }
-
-    public BigDecimal getCurrentBalance() {
-        List<BalanceImpact> financialEntities = new ArrayList<>();
-        financialEntities.addAll(piggyBanks);
-
-        return financialEntities.stream()
-            .map(BalanceImpact::applyToBalance)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override

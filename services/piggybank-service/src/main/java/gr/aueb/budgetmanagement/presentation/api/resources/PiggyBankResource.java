@@ -11,6 +11,7 @@ import gr.aueb.budgetmanagement.application.exceptions.InvalidCredentialsExcepti
 import gr.aueb.budgetmanagement.application.representations.GroupPiggyBankRepresentation;
 import gr.aueb.budgetmanagement.application.representations.PersonalPiggyBankRepresentation;
 import gr.aueb.budgetmanagement.application.representations.PiggyBankAllocationRepresentation;
+import gr.aueb.budgetmanagement.application.representations.PiggyBankTotalsRepresentation;
 import gr.aueb.budgetmanagement.application.representations.PiggyBanksRepresentation;
 import gr.aueb.budgetmanagement.application.services.PiggyBankAllocationService;
 import gr.aueb.budgetmanagement.application.services.PiggyBankService;
@@ -157,6 +158,25 @@ public class PiggyBankResource {
         Long authenticatedUserId = Long.valueOf(jwt.getClaim("user_id").toString());
 
         PiggyBanksRepresentation result = piggyBankService.getPiggyBanks(authenticatedUserId, type);
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(result)
+            .build();
+    }
+
+    @GET
+    @Path("/totals")
+    public Response getPiggyBankTotals(
+        @Context SecurityContext ctx,
+        @QueryParam("user_id") Long userId
+    ) {
+        JsonWebToken jwt = (JsonWebToken) ctx.getUserPrincipal();
+        if (jwt == null) {
+            throw new InvalidCredentialsException("Missing Authorization header with JWT token");
+        }
+
+        PiggyBankTotalsRepresentation result = piggyBankService.getTotals(userId);
 
         return Response
             .status(Response.Status.OK)

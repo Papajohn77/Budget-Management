@@ -2,12 +2,10 @@ package gr.aueb.budgetmanagement.domain.entities;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,9 +16,6 @@ import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
 
 class UserTest {
-    private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
-    private static final LocalDate TODAY = FIXED_DATE;
-
     private User user;
 
     @BeforeEach
@@ -74,36 +69,6 @@ class UserTest {
             InvalidDomainArgumentException.class,
             () -> user.addInvitation(null)
         );
-    }
-
-    @Test
-    void getCurrentBalanceWithNoFinancialActivityShouldBeZero() {
-        // Act
-        BigDecimal balance = user.getCurrentBalance();
-
-        // Assert
-        assertEquals(BigDecimal.ZERO, balance);
-    }
-
-    @Test
-    void getCurrentBalanceWithPiggyBankAllocation() {
-        // Arrange
-        Money targetAmount = new Money(new BigDecimal("1000.00"));
-        PersonalPiggyBank piggyBank = PersonalPiggyBank.create(
-            "Vacation Fund",
-            targetAmount,
-            ExpenseCategory.ENTERTAINMENT,
-            user
-        );
-
-        Money allocationAmount = new Money(new BigDecimal("150.00"));
-        piggyBank.allocate(allocationAmount, TODAY, user);
-
-        // Act
-        BigDecimal balance = user.getCurrentBalance();
-
-        // Assert
-        assertEquals(allocationAmount.getValue().negate(), balance);
     }
 
     @Test
