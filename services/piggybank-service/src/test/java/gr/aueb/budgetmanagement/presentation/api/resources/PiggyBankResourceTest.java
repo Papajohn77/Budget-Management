@@ -506,6 +506,65 @@ class PiggyBankResourceTest extends IntegrationBase {
     }
 
     @Test
+    void testGetPiggyBankTotals() {
+        // User 1 has testpersonalpiggy with a 250.00 allocation in the fixture
+        String authToken = authTokenForTestUser();
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("user_id", Fixture.Users.TESTUSER_ID)
+            .when()
+            .get(PIGGY_BANKS_ENDPOINT + "/totals")
+            .then()
+            .statusCode(200)
+            .body("total", equalTo(250.00f));
+    }
+
+    @Test
+    void testGetPiggyBankTotalsForUserWithNoPiggyBanks() {
+        // User 2 has no personal piggy banks
+        String authToken = authTokenForSecondTestUser();
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("user_id", Fixture.Users.TESTUSER2_ID)
+            .when()
+            .get(PIGGY_BANKS_ENDPOINT + "/totals")
+            .then()
+            .statusCode(200)
+            .body("total", equalTo(0));
+    }
+
+    @Test
+    void testGetPiggyBankTotalsWithoutAuthentication() {
+        given()
+            .contentType(ContentType.JSON)
+            .queryParam("user_id", Fixture.Users.TESTUSER_ID)
+            .when()
+            .get(PIGGY_BANKS_ENDPOINT + "/totals")
+            .then()
+            .statusCode(401)
+            .body("message", containsString("Missing Authorization header"));
+    }
+
+    @Test
+    void testGetPiggyBankTotalsForNonExistentUser() {
+        String authToken = authTokenForTestUser();
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + authToken)
+            .queryParam("user_id", 999L)
+            .when()
+            .get(PIGGY_BANKS_ENDPOINT + "/totals")
+            .then()
+            .statusCode(404)
+            .body("message", containsString("User not found with id: 999"));
+    }
+
+    @Test
     void testGetPersonalPiggyBanksOnly() {
         String authToken = authTokenForTestUser();
 

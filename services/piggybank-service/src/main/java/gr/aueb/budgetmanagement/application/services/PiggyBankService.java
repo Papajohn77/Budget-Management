@@ -1,5 +1,6 @@
 package gr.aueb.budgetmanagement.application.services;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import gr.aueb.budgetmanagement.application.commands.CreateGroupPiggyBankCommand;
@@ -13,6 +14,7 @@ import gr.aueb.budgetmanagement.application.repositories.UserRepository;
 import gr.aueb.budgetmanagement.application.representations.GroupPiggyBankRepresentation;
 import gr.aueb.budgetmanagement.application.representations.PersonalPiggyBankRepresentation;
 import gr.aueb.budgetmanagement.application.representations.GroupPiggyBanksRepresentation;
+import gr.aueb.budgetmanagement.application.representations.PiggyBankTotalsRepresentation;
 import gr.aueb.budgetmanagement.application.representations.PiggyBanksRepresentation;
 import gr.aueb.budgetmanagement.domain.entities.Group;
 import gr.aueb.budgetmanagement.domain.entities.GroupPiggyBank;
@@ -151,5 +153,17 @@ public class PiggyBankService {
         }
 
         return new PiggyBanksRepresentation(personalPiggyBanks, groupPiggyBanks);
+    }
+
+    @Transactional
+    public PiggyBankTotalsRepresentation getTotals(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
+
+        BigDecimal total = user.getPiggyBanks().stream()
+            .map(pb -> pb.getCurrentAmount().getValue())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new PiggyBankTotalsRepresentation(total);
     }
 }
