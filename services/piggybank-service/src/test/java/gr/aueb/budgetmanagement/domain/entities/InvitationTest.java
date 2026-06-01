@@ -18,14 +18,8 @@ import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainExcept
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyRespondedToException;
 import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
-import gr.aueb.budgetmanagement.infrastructure.security.BCryptPasswordEncoder;
 
 class InvitationTest {
-    private static final String ADMIN_USERNAME = "admin";
-    private static final String ADMIN_EMAIL = "admin@example.com";
-    private static final String INVITEE_USERNAME = "invitee";
-    private static final String INVITEE_EMAIL = "invitee@example.com";
-    private static final String TEST_PASSWORD = "Test123!@#";
     private static final String GROUP_NAME = "Test Group";
     
     private User admin;
@@ -36,23 +30,11 @@ class InvitationTest {
     @BeforeEach
     void setUp() throws Exception {
         try {
-            admin = User.create(
-                ADMIN_USERNAME,
-                ADMIN_EMAIL,
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
-            );
-            invitee = User.create(
-                INVITEE_USERNAME,
-                INVITEE_EMAIL,
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
-            );
+            admin = User.create(1L);
+            invitee = User.create(2L);
             group = Group.create(GROUP_NAME, admin);
 
             // Set IDs using reflection since we're in a test environment
-            setId(admin, 1L);
-            setId(invitee, 2L);
             setId(group, 3L);
 
             invitation = Invitation.create(group, invitee, admin);
@@ -237,23 +219,11 @@ class InvitationTest {
 
     private Invitation createInvitationForDifferentGroup() throws Exception {
         try {
-            admin = User.create(
-                ADMIN_USERNAME,
-                ADMIN_EMAIL,
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
-            );
-            invitee = User.create(
-                INVITEE_USERNAME,
-                INVITEE_EMAIL,
-                TEST_PASSWORD,
-                new BCryptPasswordEncoder()
-            );
+            admin = User.create(1L);
+            invitee = User.create(2L);
             group = Group.create(GROUP_NAME, admin);
 
             // Set IDs using reflection since we're in a test environment
-            setId(admin, 1L);
-            setId(invitee, 2L);
             setId(group, 4L);
 
             return Invitation.create(group, invitee, admin);

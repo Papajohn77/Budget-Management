@@ -13,7 +13,6 @@ import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.IntegrationBase;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.presentation.api.requests.AllocateToPiggyBankRequest;
-import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreateGroupPiggyBankRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreatePersonalPiggyBankRequest;
 import io.quarkus.test.junit.QuarkusTest;
@@ -24,17 +23,10 @@ import io.restassured.http.ContentType;
 class PiggyBankResourceTest extends IntegrationBase {
     private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final String PIGGY_BANKS_ENDPOINT = "/api/v1/piggy-banks";
-    private static final String LOGIN_ENDPOINT = "/api/v1/users/login";
-    private static final String EXISTING_EMAIL = "test@example.com"; // From test fixture
-    private static final String EXISTING_PASSWORD = "Test123!@#"; // From test fixture
 
     @Test
     void testSuccessfulPersonalPiggyBankCreation() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
     
         CreatePersonalPiggyBankRequest request = new CreatePersonalPiggyBankRequest(
             "Test Piggy Bank",
@@ -87,11 +79,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
     @Test
     void testSuccessfulPersonalPiggyBankDeletion() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // Create a piggy bank first
         CreatePersonalPiggyBankRequest createRequest = new CreatePersonalPiggyBankRequest(
@@ -122,11 +110,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
     @Test
     void testDeletingNonExistentPiggyBank() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         given()
             .contentType(ContentType.JSON)
@@ -154,11 +138,7 @@ class PiggyBankResourceTest extends IntegrationBase {
     @Test
     void testDeletingOtherUsersPiggyBank() {
         // Login as testuser
-        AuthenticateUserRequest loginRequest1 = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken1 = getAuthTokenAuthenticate(loginRequest1);
+        String authToken1 = authTokenForTestUser();
 
         // Create a piggy bank as testuser
         CreatePersonalPiggyBankRequest createRequest = new CreatePersonalPiggyBankRequest(
@@ -178,11 +158,7 @@ class PiggyBankResourceTest extends IntegrationBase {
             .extract().jsonPath().getLong("id");
 
         // Login as testuser2
-        AuthenticateUserRequest loginRequest2 = new AuthenticateUserRequest(
-            "test2@example.com", // Another user from test fixture
-            EXISTING_PASSWORD
-        );
-        String authToken2 = getAuthTokenAuthenticate(loginRequest2);
+        String authToken2 = authTokenForSecondTestUser();
 
         // Try to delete testuser's piggy bank as testuser2
         given()
@@ -197,11 +173,7 @@ class PiggyBankResourceTest extends IntegrationBase {
     
     @Test
     void testSuccessfulGroupPiggyBankCreation() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         CreateGroupPiggyBankRequest request = new CreateGroupPiggyBankRequest(
             "Group Piggy Bank",
@@ -229,11 +201,7 @@ class PiggyBankResourceTest extends IntegrationBase {
     @Test
     void testGroupPiggyBankCreationByNonAdmin() {
         // Login as non-admin user
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            "test3@example.com", // Non-admin user from test fixture
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenFor(Fixture.Users.TESTUSER3_ID);
 
         CreateGroupPiggyBankRequest request = new CreateGroupPiggyBankRequest(
             "Group Piggy Bank",
@@ -256,11 +224,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
     @Test
     void testSuccessfulGroupPiggyBankDeletion() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // Create a group piggy bank first
         CreateGroupPiggyBankRequest createRequest = new CreateGroupPiggyBankRequest(
@@ -292,11 +256,7 @@ class PiggyBankResourceTest extends IntegrationBase {
     @Test
     void testGroupPiggyBankDeletionByNonAdmin() {
         // Login as admin to create the piggy bank
-        AuthenticateUserRequest adminLoginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String adminAuthToken = getAuthTokenAuthenticate(adminLoginRequest);
+        String adminAuthToken = authTokenForTestUser();
 
         // Create a group piggy bank as admin
         CreateGroupPiggyBankRequest createRequest = new CreateGroupPiggyBankRequest(
@@ -316,11 +276,7 @@ class PiggyBankResourceTest extends IntegrationBase {
             .extract().jsonPath().getLong("id");
 
         // Login as non-admin
-        AuthenticateUserRequest nonAdminLoginRequest = new AuthenticateUserRequest(
-            "test3@example.com", // Non-admin user from test fixture
-            EXISTING_PASSWORD
-        );
-        String nonAdminAuthToken = getAuthTokenAuthenticate(nonAdminLoginRequest);
+        String nonAdminAuthToken = authTokenFor(Fixture.Users.TESTUSER3_ID);
 
         // Try to delete as non-admin
         given()
@@ -367,11 +323,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
     @Test
     void testSuccessfulAllocationToPiggyBank() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // Create a personal piggy bank first
         CreatePersonalPiggyBankRequest createRequest = new CreatePersonalPiggyBankRequest(
@@ -411,11 +363,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
     @Test
     void testAllocationToNonExistentPiggyBank() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
             FIXED_DATE,
@@ -436,11 +384,7 @@ class PiggyBankResourceTest extends IntegrationBase {
     @Test
     void testAllocationToOtherUsersPiggyBank() {
         // Login as testuser
-        AuthenticateUserRequest loginRequest1 = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken1 = getAuthTokenAuthenticate(loginRequest1);
+        String authToken1 = authTokenForTestUser();
 
         // Create a piggy bank as testuser
         CreatePersonalPiggyBankRequest createRequest = new CreatePersonalPiggyBankRequest(
@@ -460,11 +404,7 @@ class PiggyBankResourceTest extends IntegrationBase {
             .extract().jsonPath().getLong("id");
 
         // Login as testuser2
-        AuthenticateUserRequest loginRequest2 = new AuthenticateUserRequest(
-            "test2@example.com", // Another user from test fixture
-            EXISTING_PASSWORD
-        );
-        String authToken2 = getAuthTokenAuthenticate(loginRequest2);
+        String authToken2 = authTokenForSecondTestUser();
 
         // Try to allocate to testuser's piggy bank as testuser2
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
@@ -485,11 +425,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
     @Test
     void testAllocateToExistingPiggyBankWithAllocation() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         // Allocate additional funds to the piggy bank that already has an allocation
         AllocateToPiggyBankRequest allocateRequest = new AllocateToPiggyBankRequest(
@@ -527,24 +463,10 @@ class PiggyBankResourceTest extends IntegrationBase {
             .body("message", containsString("Missing Authorization header"));
     }
 
-    private String getAuthTokenAuthenticate(AuthenticateUserRequest loginRequest) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(loginRequest)
-            .when()
-            .post(LOGIN_ENDPOINT)
-            .then()
-            .statusCode(200)
-            .extract().jsonPath().getString("access_token");
-    }
 
     @Test
     void testGetPiggyBanks() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
     
         given()
             .contentType(ContentType.JSON)
@@ -585,11 +507,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
     @Test
     void testGetPersonalPiggyBanksOnly() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         given()
             .contentType(ContentType.JSON)
@@ -607,11 +525,7 @@ class PiggyBankResourceTest extends IntegrationBase {
 
     @Test
     void testGetGroupPiggyBanksOnly() {
-        AuthenticateUserRequest loginRequest = new AuthenticateUserRequest(
-            EXISTING_EMAIL,
-            EXISTING_PASSWORD
-        );
-        String authToken = getAuthTokenAuthenticate(loginRequest);
+        String authToken = authTokenForTestUser();
 
         given()
             .contentType(ContentType.JSON)

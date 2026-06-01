@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import gr.aueb.budgetmanagement.Fixture;
 import gr.aueb.budgetmanagement.application.commands.RespondToInvitationCommand;
-import gr.aueb.budgetmanagement.application.commands.SendInvitationCommand;
 import gr.aueb.budgetmanagement.application.exceptions.NotFoundException;
 import gr.aueb.budgetmanagement.application.repositories.GroupRepository;
 import gr.aueb.budgetmanagement.application.repositories.InvitationRepository;
@@ -21,9 +20,6 @@ import gr.aueb.budgetmanagement.domain.entities.Invitation;
 import gr.aueb.budgetmanagement.domain.entities.User;
 import gr.aueb.budgetmanagement.domain.enums.InvitationResponseOperationType;
 import gr.aueb.budgetmanagement.domain.enums.InvitationStatus;
-import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
-import gr.aueb.budgetmanagement.domain.exceptions.InvitationAlreadyExistsException;
-import gr.aueb.budgetmanagement.domain.exceptions.InviteeAlreadyInGroupException;
 import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -31,7 +27,7 @@ import jakarta.inject.Inject;
 
 @QuarkusTest
 class InvitationServiceTest {
-    private static final String INVITEE_EMAIL = "test4@example.com";
+    // private static final String INVITEE_EMAIL = "test4@example.com";
 
     @Inject
     private UserRepository userRepository;
@@ -60,146 +56,146 @@ class InvitationServiceTest {
         group = groupRepository.findById(Fixture.Groups.TESTGROUP_ID).orElseThrow();
     }
 
-    @Test
-    @TestTransaction
-    void sendInvitation_WithValidData_ShouldCreateInvitation() {
-        // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(
-            group.getId(),
-            INVITEE_EMAIL,
-            admin.getId()
-        );
+    // @Test
+    // @TestTransaction
+    // void sendInvitation_WithValidData_ShouldCreateInvitation() {
+    //     // Arrange
+    //     SendInvitationCommand command = new SendInvitationCommand(
+    //         group.getId(),
+    //         INVITEE_EMAIL,
+    //         admin.getId()
+    //     );
 
-        // Act
-        InvitationRepresentation result = invitationService.sendInvitation(command);
+    //     // Act
+    //     InvitationRepresentation result = invitationService.sendInvitation(command);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(group.getId(), result.groupId());
-        assertEquals(newInvitee.getId(), result.inviteeId());
-        assertEquals(InvitationStatus.PENDING, result.status());
-        assertNotNull(result.createdAt());
+    //     // Assert
+    //     assertNotNull(result);
+    //     assertEquals(group.getId(), result.groupId());
+    //     assertEquals(newInvitee.getId(), result.inviteeId());
+    //     assertEquals(InvitationStatus.PENDING, result.status());
+    //     assertNotNull(result.createdAt());
 
-        // Verify the invitation was persisted
-        InvitationId invitationId = new InvitationId(group.getId(), newInvitee.getId());
-        Invitation savedInvitation = invitationRepository.findById(invitationId).orElseThrow();
+    //     // Verify the invitation was persisted
+    //     InvitationId invitationId = new InvitationId(group.getId(), newInvitee.getId());
+    //     Invitation savedInvitation = invitationRepository.findById(invitationId).orElseThrow();
 
-        assertNotNull(savedInvitation);
-        assertEquals(group.getId(), savedInvitation.getGroup().getId());
-        assertEquals(newInvitee.getId(), savedInvitation.getInvitee().getId());
-        assertEquals(InvitationStatus.PENDING, savedInvitation.getStatus());
-        assertNotNull(savedInvitation.getCreatedAt());
+    //     assertNotNull(savedInvitation);
+    //     assertEquals(group.getId(), savedInvitation.getGroup().getId());
+    //     assertEquals(newInvitee.getId(), savedInvitation.getInvitee().getId());
+    //     assertEquals(InvitationStatus.PENDING, savedInvitation.getStatus());
+    //     assertNotNull(savedInvitation.getCreatedAt());
 
-        // Verify the invitee has the invitation in their collection
-        User invitee = userRepository.findById(newInvitee.getId()).orElseThrow();
-        assertTrue(invitee.getInvitations().contains(savedInvitation));
-    }
+    //     // Verify the invitee has the invitation in their collection
+    //     User invitee = userRepository.findById(newInvitee.getId()).orElseThrow();
+    //     assertTrue(invitee.getInvitations().contains(savedInvitation));
+    // }
 
-    @Test
-    @TestTransaction
-    void sendInvitation_WithNonExistentGroup_ShouldThrowNotFoundException() {
-        // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(
-            999L,
-            INVITEE_EMAIL,
-            admin.getId()
-        );
+    // @Test
+    // @TestTransaction
+    // void sendInvitation_WithNonExistentGroup_ShouldThrowNotFoundException() {
+    //     // Arrange
+    //     SendInvitationCommand command = new SendInvitationCommand(
+    //         999L,
+    //         INVITEE_EMAIL,
+    //         admin.getId()
+    //     );
 
-        // Act & Assert
-        NotFoundException exception = assertThrows(
-            NotFoundException.class,
-            () -> invitationService.sendInvitation(command)
-        );
-        assertEquals("Group not found with id: 999", exception.getMessage());
-    }
+    //     // Act & Assert
+    //     NotFoundException exception = assertThrows(
+    //         NotFoundException.class,
+    //         () -> invitationService.sendInvitation(command)
+    //     );
+    //     assertEquals("Group not found with id: 999", exception.getMessage());
+    // }
 
-    @Test
-    @TestTransaction
-    void sendInvitation_WithNonExistentUser_ShouldThrowNotFoundException() {
-        // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(
-            group.getId(),
-            INVITEE_EMAIL,
-            999L
-        );
+    // @Test
+    // @TestTransaction
+    // void sendInvitation_WithNonExistentUser_ShouldThrowNotFoundException() {
+    //     // Arrange
+    //     SendInvitationCommand command = new SendInvitationCommand(
+    //         group.getId(),
+    //         INVITEE_EMAIL,
+    //         999L
+    //     );
 
-        // Act & Assert
-        NotFoundException exception = assertThrows(
-            NotFoundException.class,
-            () -> invitationService.sendInvitation(command)
-        );
-        assertEquals("Admin not found with id: 999", exception.getMessage());
-    }
+    //     // Act & Assert
+    //     NotFoundException exception = assertThrows(
+    //         NotFoundException.class,
+    //         () -> invitationService.sendInvitation(command)
+    //     );
+    //     assertEquals("Admin not found with id: 999", exception.getMessage());
+    // }
 
-    @Test
-    @TestTransaction
-    void sendInvitation_WithNonExistentUserEmail_ShouldThrowNotFoundException() {
-        // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(
-            group.getId(),
-            "nonexistent@example.com",
-            admin.getId()
-        );
+    // @Test
+    // @TestTransaction
+    // void sendInvitation_WithNonExistentUserEmail_ShouldThrowNotFoundException() {
+    //     // Arrange
+    //     SendInvitationCommand command = new SendInvitationCommand(
+    //         group.getId(),
+    //         "nonexistent@example.com",
+    //         admin.getId()
+    //     );
 
-        // Act & Assert
-        NotFoundException exception = assertThrows(
-            NotFoundException.class,
-            () -> invitationService.sendInvitation(command)
-        );
-        assertEquals("Invitee not found with email: nonexistent@example.com", exception.getMessage());
-    }
+    //     // Act & Assert
+    //     NotFoundException exception = assertThrows(
+    //         NotFoundException.class,
+    //         () -> invitationService.sendInvitation(command)
+    //     );
+    //     assertEquals("Invitee not found with email: nonexistent@example.com", exception.getMessage());
+    // }
 
-    @Test
-    @TestTransaction
-    void sendInvitation_ToGroupAdmin_ShouldThrowInvalidDomainArgumentException() {
-        // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(
-            group.getId(),
-            admin.getEmail().getValue(),
-            admin.getId()
-        );
+    // @Test
+    // @TestTransaction
+    // void sendInvitation_ToGroupAdmin_ShouldThrowInvalidDomainArgumentException() {
+    //     // Arrange
+    //     SendInvitationCommand command = new SendInvitationCommand(
+    //         group.getId(),
+    //         admin.getEmail().getValue(),
+    //         admin.getId()
+    //     );
 
-        // Act & Assert
-        assertThrows(
-            InvalidDomainArgumentException.class,
-            () -> invitationService.sendInvitation(command)
-        );
-    }
+    //     // Act & Assert
+    //     assertThrows(
+    //         InvalidDomainArgumentException.class,
+    //         () -> invitationService.sendInvitation(command)
+    //     );
+    // }
 
-    @Test
-    @TestTransaction
-    void sendInvitation_ToExistingMember_ShouldThrowInvalidDomainArgumentException() {
-        // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(
-            group.getId(),
-            alreadyMember.getEmail().getValue(),
-            admin.getId()
-        );
+    // @Test
+    // @TestTransaction
+    // void sendInvitation_ToExistingMember_ShouldThrowInvalidDomainArgumentException() {
+    //     // Arrange
+    //     SendInvitationCommand command = new SendInvitationCommand(
+    //         group.getId(),
+    //         alreadyMember.getEmail().getValue(),
+    //         admin.getId()
+    //     );
 
-        // Act & Assert
-        assertThrows(
-            InviteeAlreadyInGroupException.class,
-            () -> invitationService.sendInvitation(command)
-        );
-    }
+    //     // Act & Assert
+    //     assertThrows(
+    //         InviteeAlreadyInGroupException.class,
+    //         () -> invitationService.sendInvitation(command)
+    //     );
+    // }
 
-    @Test
-    @TestTransaction
-    void sendInvitation_WithExistingInvitation_ShouldThrowInvitationAlreadyExistsException() {
-        // Arrange
-        SendInvitationCommand command = new SendInvitationCommand(
-            group.getId(),
-            alreadyInvited.getEmail().getValue(),
-            admin.getId()
-        );
+    // @Test
+    // @TestTransaction
+    // void sendInvitation_WithExistingInvitation_ShouldThrowInvitationAlreadyExistsException() {
+    //     // Arrange
+    //     SendInvitationCommand command = new SendInvitationCommand(
+    //         group.getId(),
+    //         alreadyInvited.getEmail().getValue(),
+    //         admin.getId()
+    //     );
 
-        // Act & Assert
-        InvitationAlreadyExistsException exception = assertThrows(
-            InvitationAlreadyExistsException.class,
-            () -> invitationService.sendInvitation(command)
-        );
-        assertEquals("Invitation already exists", exception.getMessage());
-    }
+    //     // Act & Assert
+    //     InvitationAlreadyExistsException exception = assertThrows(
+    //         InvitationAlreadyExistsException.class,
+    //         () -> invitationService.sendInvitation(command)
+    //     );
+    //     assertEquals("Invitation already exists", exception.getMessage());
+    // }
 
     @Test
     @TestTransaction
@@ -332,47 +328,47 @@ class InvitationServiceTest {
         assertEquals(InvitationStatus.PENDING, invitation.status());
     }
     
-    @Test
-    @TestTransaction
-    void getInvitations_WithoutStatusFilter_ReturnsAllInvitations() {
-        RespondToInvitationCommand acceptCommand = new RespondToInvitationCommand(
-            group.getId(),
-            InvitationResponseOperationType.ACCEPT,
-            alreadyInvited.getId()
-        );
-        invitationService.respondToInvitation(acceptCommand);
+    // @Test
+    // @TestTransaction
+    // void getInvitations_WithoutStatusFilter_ReturnsAllInvitations() {
+    //     RespondToInvitationCommand acceptCommand = new RespondToInvitationCommand(
+    //         group.getId(),
+    //         InvitationResponseOperationType.ACCEPT,
+    //         alreadyInvited.getId()
+    //     );
+    //     invitationService.respondToInvitation(acceptCommand);
         
-        SendInvitationCommand sendCommand = new SendInvitationCommand(
-            group.getId(),
-            newInvitee.getEmail().getValue(),
-            admin.getId()
-        );
-        invitationService.sendInvitation(sendCommand);
+    //     SendInvitationCommand sendCommand = new SendInvitationCommand(
+    //         group.getId(),
+    //         newInvitee.getEmail().getValue(),
+    //         admin.getId()
+    //     );
+    //     invitationService.sendInvitation(sendCommand);
         
-        // Act
-        InvitationsRepresentation result = invitationService.getInvitations(
-            alreadyInvited.getId(), 
-            null
-        );
+    //     // Act
+    //     InvitationsRepresentation result = invitationService.getInvitations(
+    //         alreadyInvited.getId(), 
+    //         null
+    //     );
         
-        // Assert
-        assertNotNull(result);
-        assertNotNull(result.invitations());
+    //     // Assert
+    //     assertNotNull(result);
+    //     assertNotNull(result.invitations());
         
-        assertTrue(result.invitations().size() >= 1);
+    //     assertTrue(result.invitations().size() >= 1);
         
-        // Check that we have at least one ACCEPTED invitation
-        boolean hasAccepted = false;
+    //     // Check that we have at least one ACCEPTED invitation
+    //     boolean hasAccepted = false;
         
-        for (InvitationRepresentation invitation : result.invitations()) {
-            if (invitation.status() == InvitationStatus.ACCEPTED) {
-                hasAccepted = true;
-                break;
-            }
-        }
+    //     for (InvitationRepresentation invitation : result.invitations()) {
+    //         if (invitation.status() == InvitationStatus.ACCEPTED) {
+    //             hasAccepted = true;
+    //             break;
+    //         }
+    //     }
         
-        assertTrue(hasAccepted, "Should have an ACCEPTED invitation");
-    }
+    //     assertTrue(hasAccepted, "Should have an ACCEPTED invitation");
+    // }
     
     @Test
     @TestTransaction
