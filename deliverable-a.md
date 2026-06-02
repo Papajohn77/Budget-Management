@@ -1,4 +1,4 @@
-# Deliverable A: Microservices System Design - Budget Management Service
+# Deliverable A: Microservices System Design - Budget Management System
 
 | | |
 |---|---|
@@ -40,13 +40,13 @@ The decomposition follows the DDD-driven approach recommended by the literature:
 
 | Bounded context | Business capability                                                                                 | Entities                                                                                            |
 |---|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| Identity | Account registration, authentication, and identity lookup.                                          | `UserAccount`                                                                                       |
+| Identity | Account registration, authentication, and identity lookup.                                          | `User`                                                                                       |
 | Piggy banks | Forming groups, inviting members, managing personal & group piggy banks and their allocations.      | `Group`, `Invitation`, `PiggyBank` (+ `PersonalPiggyBank`, `GroupPiggyBank`), `PiggyBankAllocation` |
 | Personal budget tracking | Tracking incomes/expenses, recurring incomes/expenses, the savings account, and the user's balance. | `Income`, `Expense`, `RecurringIncome`, `RecurringExpense`, `Savings`, `SavingsOperation`           |
 
 ### 2.2 The shadow-entity pattern
 
-The monolith's `User` entity is a god aggregate that holds direct relationships to almost every other entity, spanning all three bounded contexts. Upon reflection, modelling `User` as the aggregate root for nearly every other entity was a mistake. After getting more experienced with the concept of aggregates, we realized that the real purpose of an aggregate is to enforce invariants that must remain consistent within a single transaction. There is no such invariant binding a user's incomes, expenses, savings, group memberships, and piggy banks into one unit, so each belongs in its own aggregate that would simply reference `User` by id. The split would address this with minimal changes through the shadow-entity pattern: Identity will own the canonical `UserAccount`, and the other two services will keep an id-only shadow `User` entity that will exist solely to satisfy the existing JPA annotations. This is a well-established pattern for monolith-to-microservices migrations, and it has the additional pragmatic benefit of keeping the diff against the existing codebase (and its ~700 tests) minimal.
+The monolith's `User` entity is a god aggregate that holds direct relationships to almost every other entity, spanning all three bounded contexts. Upon reflection, modelling `User` as the aggregate root for nearly every other entity was a mistake. After getting more experienced with the concept of aggregates, we realized that the real purpose of an aggregate is to enforce invariants that must remain consistent within a single transaction. There is no such invariant binding a user's incomes, expenses, savings, group memberships, and piggy banks into one unit, so each belongs in its own aggregate that would simply reference `User` by id. The split would address this with minimal changes through the shadow-entity pattern: Identity will own the canonical `User`, and the other two services will keep an id-only shadow `User` entity that will exist solely to satisfy the existing JPA annotations. This is a well-established pattern for monolith-to-microservices migrations, and it has the additional pragmatic benefit of keeping the diff against the existing codebase (and its ~700 tests) minimal.
 
 The pattern has two main benefits:
 - It preserves every JPA mapping from the monolith.
@@ -56,7 +56,7 @@ A separate implementation decision concerns *when* the shadow row is created. We
 
 ### 2.3 Anatomy of the split
 
-**Identity Service:** Registration, login, and identity lookup all read and write the same data (`UserAccount`). Also, it is a widely accepted best practice for authentication to live in its own dedicated service following the *Single Responsibility* principle. Concretely, the MicroProfile JWT specification pushes the design in the same direction by mandating **asymmetric cryptography**. The private key used to *sign* tokens lives in a single issuer service and never leaves it, while every other service holds only the public key needed to *verify* signatures. The credential store is contained in the same way: password hashes exist only in Identity's database. Together this draws a real security boundary, since even if PiggyBank or Budget services were ever compromised, the attacker would gain neither the ability to forge tokens nor access to the credentials.
+**Identity Service:** Registration, login, and identity lookup all read and write the same data (`User`). Also, it is a widely accepted best practice for authentication to live in its own dedicated service following the *Single Responsibility* principle. Concretely, the MicroProfile JWT specification pushes the design in the same direction by mandating **asymmetric cryptography**. The private key used to *sign* tokens lives in a single issuer service and never leaves it, while every other service holds only the public key needed to *verify* signatures. The credential store is contained in the same way: password hashes exist only in Identity's database. Together this draws a real security boundary, since even if PiggyBank or Budget services were ever compromised, the attacker would gain neither the ability to forge tokens nor access to the credentials.
 
 **PiggyBank Service:** The piggy bank hierarchy has to stay together in a single service: `PersonalPiggyBank` and `GroupPiggyBank` are subclasses of `PiggyBank`, and inheritance is the strongest form of coupling between two classes, so splitting the three across services is not really an option. `Group` must then sit alongside `GroupPiggyBank` because the two are extremely **chatty**: every write to a group piggy bank requires verifying that the caller is the admin of the owning group, and every read requires verifying that the caller is a member of it. If they sat in different services, each of these checks would become a synchronous cross-service call (temporal coupling, the worst kind of synchronous coupling for availability). Finally, `Invitation` naturally belongs in the same service, since it only exists as a request to join a specific group, which makes `Group` its anchor at both the data level and the business level. The service then covers a set of closely related business capabilities: forming groups, inviting members, and managing the savings those members share.
 
@@ -68,9 +68,9 @@ Every inter-service call after the split is **domain coupling**, which is the we
 
 | Caller | Callee | Endpoint                              | Purpose                                                                                                         |
 |---|---|---------------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| All clients | Identity | `POST /register`, `POST /login`       | Register or authenticate a user, returning a JWT carrying their `user_id` for use on subsequent requests.       |
+| All clients | Identity | `POST /users/register`, `POST /users/login`       | Register or authenticate a user, returning a JWT carrying their `user_id` for use on subsequent requests.       |
 | Budget | PiggyBank | `GET /piggy-banks/totals?user_id=...` | Fetch the user's piggy bank totals so the Budget service can include them in the composite balance computation. |
-| PiggyBank | Identity | `GET /accounts?email=...`             | Resolve the invitee's email to a `User.id` when creating an invitation.                                         |
+| PiggyBank | Identity | `GET /users?email=...`             | Resolve the invitee's email to a `User.id` when creating an invitation.                                         |
 
 There is **no common coupling** (each service will have its own H2 schema and JPA persistence unit), **no content coupling** (no service writes to another's database), and **no pass-through coupling** (no service forwards data it doesn't itself need). JWT verification in PiggyBank and Budget services use the issuer's public key, so token validation is local and there is no temporal coupling on Identity per request.
 
@@ -88,15 +88,15 @@ All endpoints below are versioned under `/api/v1` and return/accept `application
 
 **Role:** Handles registration, login, and email-to-user-id resolution. Issues JWTs whose `user_id` claim is the canonical `User` identifier consumed by every other service.
 
-**Owned aggregate:** `UserAccount`.
+**Owned aggregate:** `User`.
 
 **Endpoints:**
 
 | Method | Path                         | Auth | Description                                                                              |
 |---|------------------------------|---|------------------------------------------------------------------------------------------|
-| `POST` | `/api/v1/register`           | None | Register a new user; returns a JWT.                                                      |
-| `POST` | `/api/v1/login`              | None | Authenticate the user; returns a JWT.                                                    |
-| `GET`  | `/api/v1/accounts?email=...` | JWT (service-to-service) | Resolve an email to a `UserAccount.id`. Used by **PiggyBank** for invitation resolution. |
+| `POST` | `/api/v1/users/register`     | None | Register a new user; returns a JWT.                                                      |
+| `POST` | `/api/v1/users/login`        | None | Authenticate the user; returns a JWT.                                                    |
+| `GET`  | `/api/v1/users?email=...`    | JWT (service-to-service) | Resolve an email to a `User.id`. Used by **PiggyBank** for invitation resolution. |
 
 ### 3.2 PiggyBank Service
 
@@ -126,7 +126,7 @@ Holds a shadow `User(id)` so existing `@ManyToOne User` mappings work with minim
 | `GET`    | `/api/v1/piggy-banks` | JWT | List the caller's piggy banks.                                                                       |group`. |
 | `GET`    | `/api/v1/piggy-banks/totals` | JWT (service-to-service) | Sum of caller's allocations across personal piggy banks. Used by **Budget** for balance composition. |
 
-**Outbound REST calls:** `GET /api/v1/accounts?email=...` against Identity Service (only on `POST /invitations`).
+**Outbound REST calls:** `GET /api/v1/users?email=...` against Identity Service (only on `POST /invitations`).
 
 ### 3.3 Budget Service
 
@@ -179,7 +179,7 @@ Synchronous request-response is used throughout: every flow needs the result bef
 
 ### 4.1 Independent JWT verification
 
-A successful `POST /register` or `POST /login` returns a JWT signed by the Identity service. From that point on, every call to PiggyBank or Budget services carry the bearer token; both services verify the signature locally against Identity's published public key. There is **no per-request callback to Identity**, which keeps the system loosely coupled in the temporal sense.
+A successful `POST /users/register` or `POST /users/login` returns a JWT signed by the Identity service. From that point on, every call to PiggyBank or Budget services carry the bearer token; both services verify the signature locally against Identity's published public key. There is **no per-request callback to Identity**, which keeps the system loosely coupled in the temporal sense.
 
 ```mermaid
 sequenceDiagram
@@ -188,7 +188,7 @@ sequenceDiagram
     participant Budget
     participant PiggyBank
 
-    Client->>Identity: POST /api/v1/register or /login
+    Client->>Identity: POST /api/v1/users/register or /users/login
     Identity->>Identity: Issue JWT signed with private key
     Identity-->>Client: 200/201 {access_token}
 
@@ -203,7 +203,7 @@ sequenceDiagram
 
 ### 4.2 Lazy shadow provisioning
 
-Identity service returns the JWT immediately on `POST /register` or `POST /login`, with no synchronous fan-out to PiggyBank or Budget services. Instead, on the user's first authenticated call to a downstream service (in the example below: a `GET /balance`), that service's `EnsureUserShadowFilter` will notice it has no row for `user_id`, it will materialize a shadow `User` (and, for Budget, the per-user `Savings` row), and then proceed with the resource handler.
+Identity service returns the JWT immediately on `POST /users/register` or `POST /users/login`, with no synchronous fan-out to PiggyBank or Budget services. Instead, on the user's first authenticated call to a downstream service (in the example below: a `GET /balance`), that service's `EnsureUserShadowFilter` will notice it has no row for `user_id`, it will materialize a shadow `User` (and, for Budget, the per-user `Savings` row), and then proceed with the resource handler.
 
 ```mermaid
 sequenceDiagram
@@ -212,7 +212,7 @@ sequenceDiagram
     participant Budget
     participant PiggyBank
 
-    Client->>Identity: POST /api/v1/register or /login
+    Client->>Identity: POST /api/v1/users/register or /users/login
     Identity-->>Client: 200/201 {access_token}
 
     Note over Budget,PiggyBank: No synchronous fan-out. Shadows provisioned on first use.
@@ -258,7 +258,7 @@ sequenceDiagram
 
     Admin->>PiggyBank: POST /api/v1/invitations {group_id, email} (Bearer JWT)
     PiggyBank->>PiggyBank: Verify caller is admin of group_id
-    PiggyBank->>Identity: GET /api/v1/accounts?email=... (Bearer JWT)
+    PiggyBank->>Identity: GET /api/v1/users?email=... (Bearer JWT)
     alt account exists
         Identity-->>PiggyBank: 200 {id, username, email}
         PiggyBank->>PiggyBank: Insert Invitation(group_id, invitee_id=id, status=PENDING)
