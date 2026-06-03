@@ -30,7 +30,8 @@ import io.restassured.http.ContentType;
 @QuarkusTest
 class RecurringExpenseResourceTest extends IntegrationBase {
     private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
-    private static final String RECURRING_EXPENSES_ENDPOINT = "/api/v1/recurring-expenses";    private static final String TEST_EXPENSE_NAME = "Monthly Rent";
+    private static final String RECURRING_EXPENSES_ENDPOINT = "/api/v1/recurring-expenses";
+    private static final String TEST_EXPENSE_NAME = "Monthly Rent";
     private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(1200.00);
     private static final ExpenseCategory TEST_CATEGORY = ExpenseCategory.HOUSING;
     private static final LocalDate TEST_START_DATE = FIXED_DATE;

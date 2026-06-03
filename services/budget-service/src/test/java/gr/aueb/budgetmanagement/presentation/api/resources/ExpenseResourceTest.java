@@ -26,7 +26,8 @@ import io.restassured.http.ContentType;
 class ExpenseResourceTest extends IntegrationBase {
     private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final String EXPENSES_ENDPOINT = "/api/v1/expenses";
-    private static final String EXPENSE_CATEGORIES_ENDPOINT = "/api/v1/expenses/categories";    private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(53.75);
+    private static final String EXPENSE_CATEGORIES_ENDPOINT = "/api/v1/expenses/categories";
+    private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(53.75);
     private static final BigDecimal TEST_UPDATE_AMOUNT = BigDecimal.valueOf(150);
     private static final LocalDate TEST_DATE = FIXED_DATE;
     private static final ExpenseCategory TEST_CATEGORY = ExpenseCategory.HOUSING;

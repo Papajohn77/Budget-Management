@@ -25,7 +25,8 @@ import io.restassured.http.ContentType;
 class IncomeResourceTest extends IntegrationBase {
     private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final String INCOMES_ENDPOINT = "/api/v1/incomes";
-    private static final String INCOME_CATEGORIES_ENDPOINT = "/api/v1/incomes/categories";    private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(53.75);
+    private static final String INCOME_CATEGORIES_ENDPOINT = "/api/v1/incomes/categories";
+    private static final BigDecimal TEST_AMOUNT = BigDecimal.valueOf(53.75);
     private static final LocalDate TEST_DATE = FIXED_DATE;
     private static final IncomeCategory TEST_CATEGORY = IncomeCategory.SALARY;
     private static final IncomeCategory TEST_CATEGORY_UPDATE = IncomeCategory.DIVIDENDS;

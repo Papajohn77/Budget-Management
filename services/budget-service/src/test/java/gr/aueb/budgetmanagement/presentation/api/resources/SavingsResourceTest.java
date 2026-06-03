@@ -21,7 +21,8 @@ class SavingsResourceTest extends IntegrationBase {
     private static final LocalDate FIXED_DATE = LocalDate.of(2024, 1, 15);
     private static final String SAVINGS_ENDPOINT = "/api/v1/savings";
     private static final String ALLOCATIONS_ENDPOINT = "/api/v1/savings/allocations";
-    private static final String DEALLOCATIONS_ENDPOINT = "/api/v1/savings/deallocations";    private static final BigDecimal TEST_AMOUNT = new BigDecimal("100.00");
+    private static final String DEALLOCATIONS_ENDPOINT = "/api/v1/savings/deallocations";
+    private static final BigDecimal TEST_AMOUNT = new BigDecimal("100.00");
     private static final LocalDate TEST_DATE = FIXED_DATE;
     
     @Test
