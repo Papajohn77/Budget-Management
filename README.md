@@ -78,3 +78,4 @@ The documents below extend the original monolith into a cloud-native, microservi
 
 - [Deliverable A — Microservices System Design](deliverable-a.md)
 - [Deliverable B — Microservices Implementation & Testing](deliverable-b.md)
+- [Deliverable C — Cloud Deployment on Kubernetes](deliverable-c.md)
