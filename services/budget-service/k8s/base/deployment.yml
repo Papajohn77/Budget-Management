@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: budget-data
+  labels:
+    app: budget-service
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: budget-service
+  labels:
+    app: budget-service
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: budget-service
+  template:
+    metadata:
+      labels:
+        app: budget-service
+    spec:
+      containers:
+        - name: budget-service
+          image: papajohn77/budget-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: budget-data
+              mountPath: /data
+      volumes:
+        - name: budget-data
+          persistentVolumeClaim:
+            claimName: budget-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: budget-service
+  labels:
+    app: budget-service
+spec:
+  type: ClusterIP
+  selector:
+    app: budget-service
+  ports:
+    - port: 8080
+      targetPort: http

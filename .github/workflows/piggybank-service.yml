@@ -4,7 +4,8 @@ on:
   push:
     branches: [microservices]
     paths:
-      - services/piggybank-service/**
+      - services/piggybank-service/src/**
+      - services/piggybank-service/pom.xml
       - services/pom.xml
       - Dockerfile
       - .github/workflows/piggybank-service.yml
@@ -12,7 +13,8 @@ on:
   pull_request:
     branches: [microservices]
     paths:
-      - services/piggybank-service/**
+      - services/piggybank-service/src/**
+      - services/piggybank-service/pom.xml
       - services/pom.xml
       - Dockerfile
       - .github/workflows/piggybank-service.yml
