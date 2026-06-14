@@ -16,7 +16,8 @@
 2. [From Docker Compose to Kubernetes](#2-from-docker-compose-to-kubernetes)
 3. [Kubernetes Manifests and the Image-Tag Problem](#3-kubernetes-manifests-and-the-image-tag-problem)
 4. [The Recreate Strategy and the H2 Single-Writer Constraint](#4-the-recreate-strategy-and-the-h2-single-writer-constraint)
-5. [Bringing the Cluster Up and Verifying It](#5-bringing-the-cluster-up-and-verifying-it)
+5. [Health Checks and Kubernetes Probes](#5-health-checks-and-kubernetes-probes)
+6. [Bringing the Cluster Up and Verifying It](#6-bringing-the-cluster-up-and-verifying-it)
 
 ---
 
@@ -216,9 +217,115 @@ With the replica count pinned to one, exactly one scheduler instance exists, so 
 
 ---
 
-## 5. Bringing the Cluster Up and Verifying It
+## 5. Health Checks and Kubernetes Probes
 
-### 5.1 Bring the system up
+Kubernetes needs three operational signals from each pod: whether it has finished booting up, whether the running container is broken and must be restarted, and whether it is ready to serve traffic. The services expose these through the **MicroProfile Health API** (implemented by the Quarkus `smallrye-health` extension), which publishes one endpoint per signal, and each Deployment consumes the per-signal endpoints through **probes**.
+
+### 5.1 What we did not write, and why
+
+The `smallrye-health` extension exposes three endpoints out of the box:
+- `/q/health/started` - The application is started.
+- `/q/health/live` - The application is up and running.
+- `/q/health/ready` - The application is ready to serve requests.
+
+Each behaves sensibly by default:
+- **Startup:** The default behavior is to aggregate checks with a logical AND, and that AND over an empty set is UP, so `/q/health/started` reports UP the moment the endpoint is reachable, which is the moment Quarkus has finished booting up.
+- **Liveness:** The default behavior is to aggregate checks with a logical AND, and that AND over an empty set is UP, so `/q/health/live` reports UP for as long as the process can answer the probe requests.
+- **Database readiness:** The Agroal extension already contributes a readiness check named `Database connections health check`, which validates a pooled connection on every `/q/health/ready` probe.
+
+The `/q/health/started` and `/q/health/live` endpoints never report DOWN explicitly. Failure is inferred by the fact that the process cannot answer UP at all (a timeout or a refused connection), which is exactly the signal we want from them.
+
+### 5.2 The one check worth adding: JWT keys (readiness)
+
+The only custom check we added checks if the JWT keys can be loaded. The **identity-service** both issues and verifies tokens, so it loads a private signing key and a public verification key (`smallrye.jwt.sign.key.location` and `mp.jwt.verify.publickey.location`), while the **piggybank-service** and **budget-service** only verify the tokens on the requests they receive, so each loads the public verification key alone (`mp.jwt.verify.publickey.location`). In every case, if the required key material cannot be loaded, the service is running yet unable to perform authentication, something the framework has no built-in check for.
+
+The custom check surfaces as `JWT keys` in the `/q/health/ready` response, next to the Agroal `Database connections health check`. When both checks pass, the aggregate is UP and the pod stays in rotation:
+
+```json
+{
+    "status": "UP",
+    "checks": [
+        {
+            "name": "JWT keys",
+            "status": "UP"
+        },
+        {
+            "name": "Database connections health check",
+            "status": "UP",
+            "data": {
+                "<default>": "UP"
+            }
+        }
+    ]
+}
+```
+
+However, if the key material cannot be loaded, `JWT keys` reports DOWN with the underlying error in its `data`. Readiness aggregates with a logical AND, so that single DOWN check flips the whole response to DOWN and pulls the pod from rotation, while the database check stays UP and localizes the failure:
+
+```json
+{
+    "status": "DOWN",
+    "checks": [
+        {
+            "name": "JWT keys",
+            "status": "DOWN",
+            "data": {
+                "error": "Cannot invoke \"java.io.InputStream.read(byte[])\" because \"contentIS\" is null"
+            }
+        },
+        {
+            "name": "Database connections health check",
+            "status": "UP",
+            "data": {
+                "<default>": "UP"
+            }
+        }
+    ]
+}
+```
+
+### 5.3 The probes and their timing
+
+Each service's container declares all three probes. Only the **Startup** probe carries an `initialDelaySeconds`, a brief head start for the JVM before the first check. **Liveness** and **Readiness** probes begin only after the **Startup** has already reported the application up, which also shields a slow boot from being restarted before it is ready.
+
+```yaml
+startupProbe:
+  httpGet:
+    path: /q/health/started
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 12
+livenessProbe:
+  httpGet:
+    path: /q/health/live
+    port: http
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+readinessProbe:
+  httpGet:
+    path: /q/health/ready
+    port: http
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 2
+```
+
+Each value follows from what a failure of that probe actually costs:
+
+| Probe | Endpoint | Window | Rationale |
+|---|---|---|---|
+| startup | `/q/health/started` | ~65s to boot (5s delay + 5s × 12) | Generous against the typical 5-20s Quarkus boot. The budget covers application startup only; the image pull happens before the container starts and is not counted. |
+| liveness | `/q/health/live` | restart after 30s (10s × 3) | Conservative by design. The remedy is a disruptive restart, so a single transient stall or a long GC pause must not trigger it. |
+| readiness | `/q/health/ready` | out of rotation in 10s (5s × 2), back within 5s | Aggressive by design. The remedy is "stop sending traffic", which is cheap and immediately reversible, so reacting quickly is preferred. With the default `successThreshold` of 1, the pod rejoins rotation on the first success after recovery. |
+
+---
+
+## 6. Bringing the Cluster Up and Verifying It
+
+### 6.1 Bring the system up
 
 Beyond the Deliverable B prerequisites (**Java 17**, **Maven**, **Docker**), the cluster also requires **Minikube** and **kubectl**. With those in place, three commands are sufficient to bring the whole system up:
 
@@ -238,7 +345,7 @@ The *second* is the Kubernetes counterpart of the Deliverable B convenience scri
 
 The *third* command prints the externally reachable URL of the gateway's NodePort Service. That URL is the single entry point to the system, exactly as the published gateway port was under Docker Compose.
 
-### 5.2 Verifying with the Postman collection
+### 6.2 Verifying with the Postman collection
 
 Because the migration from Docker Compose to Kubernetes changed how the system is deployed and not what it does, the Deliverable B Postman collection is the acceptance test. We take the URL printed by `minikube service gateway --url` and set it as the `{{baseUrl}}` variable of the [`Budget Management.postman_collection.json`](Budget%20Management.postman_collection.json) collection.
 
