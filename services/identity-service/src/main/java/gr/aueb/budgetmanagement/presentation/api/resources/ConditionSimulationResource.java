@@ -11,7 +11,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 
-@Path("/api/v1/simulate")
+@Path("/api/v1/identity/simulate")
 public class ConditionSimulationResource {
 
     @ConfigProperty(name = "feature.condition-simulation.enabled", defaultValue = "false")
