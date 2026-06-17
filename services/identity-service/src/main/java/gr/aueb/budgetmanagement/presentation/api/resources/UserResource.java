@@ -5,8 +5,10 @@ import gr.aueb.budgetmanagement.application.commands.RegisterUserCommand;
 import gr.aueb.budgetmanagement.application.representations.AccessTokenRepresentation;
 import gr.aueb.budgetmanagement.application.representations.UserRepresentation;
 import gr.aueb.budgetmanagement.application.services.UserService;
+import gr.aueb.budgetmanagement.infrastructure.simulation.ConditionSimulator;
 import gr.aueb.budgetmanagement.presentation.api.requests.AuthenticateUserRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.RegisterUserRequest;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -16,6 +18,9 @@ import jakarta.ws.rs.core.Response;
 @Path("/api/v1/users")
 public class UserResource {
     private final UserService userService;
+
+    @Inject
+    ConditionSimulator conditionSimulator;
 
     public UserResource(UserService userService) {
         this.userService = userService;
@@ -56,6 +61,8 @@ public class UserResource {
 
     @GET
     public Response getUserByEmail(@QueryParam("email") String email) {
+        conditionSimulator.simulate();
+
         UserRepresentation result = userService.getUserByEmail(email);
 
         return Response
