@@ -1,0 +1,209 @@
+{
+  "info": {
+    "_postman_id": "781508e0-16bc-4cea-8eb7-b8ac572a86a1",
+    "name": "Budget Management Fault Tolerance",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "16408890"
+  },
+  "item": [
+    {
+      "name": "01) Seed User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\":\"demo\",\"email\":\"demo@example.com\",\"password\":\"Password123!\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/users/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "users",
+            "register"
+          ]
+        },
+        "description": "Generated from cURL:   curl -X POST \"{{baseUrl}}/api/v1/users/register\" \\\r\n    -H \"Content-Type: application/json\" \\\r\n    -d '{\"username\":\"demo\",\"email\":\"demo@example.com\",\"password\":\"Password123!\"}'"
+      },
+      "response": []
+    },
+    {
+      "name": "02) Simulate",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/users?email=demo@example.com",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "users"
+          ],
+          "query": [
+            {
+              "key": "email",
+              "value": "demo@example.com"
+            }
+          ]
+        },
+        "description": "Generated from cURL: curl \"{{baseUrl}}/api/v1/users?email=demo@example.com\""
+      },
+      "response": []
+    },
+    {
+      "name": "03) Condition Healthy",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"strategy\":\"HEALTHY\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/identity/simulate/strategy",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "identity",
+            "simulate",
+            "strategy"
+          ]
+        },
+        "description": "Generated from cURL:   curl -X PUT \"{{baseUrl}}/api/v1/simulate/strategy\" \\\r\n    -H \"Content-Type: application/json\" \\\r\n    -d '{\"strategy\":\"HEALTHY\"}'"
+      },
+      "response": []
+    },
+    {
+      "name": "04) Condition Slow 10s",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"strategy\":\"SLOW\",\"delaySeconds\":10}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/identity/simulate/strategy",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "identity",
+            "simulate",
+            "strategy"
+          ]
+        },
+        "description": "Generated from cURL:   curl -X PUT \"{{baseUrl}}/api/v1/simulate/strategy\" \\\r\n    -H \"Content-Type: application/json\" \\\r\n    -d '{\"strategy\":\"SLOW\",\"delaySeconds\":8}'"
+      },
+      "response": []
+    },
+    {
+      "name": "05) Condition Failing",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"strategy\":\"FAILING\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/identity/simulate/strategy",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "identity",
+            "simulate",
+            "strategy"
+          ]
+        },
+        "description": "Generated from cURL:  curl -X PUT \"{{baseUrl}}/api/v1/simulate/strategy\" \\\r\n    -H \"Content-Type: application/json\" \\\r\n    -d '{\"strategy\":\"FAILING\"}'"
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    }
+  ]
+}
