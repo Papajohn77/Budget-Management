@@ -16,9 +16,11 @@ import gr.aueb.budgetmanagement.application.representations.PiggyBanksRepresenta
 import gr.aueb.budgetmanagement.application.services.PiggyBankAllocationService;
 import gr.aueb.budgetmanagement.application.services.PiggyBankService;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import gr.aueb.budgetmanagement.infrastructure.simulation.ConditionSimulator;
 import gr.aueb.budgetmanagement.presentation.api.requests.AllocateToPiggyBankRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreateGroupPiggyBankRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreatePersonalPiggyBankRequest;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -34,6 +36,9 @@ import jakarta.ws.rs.core.SecurityContext;
 public class PiggyBankResource {
     private final PiggyBankService piggyBankService;
     private final PiggyBankAllocationService piggyBankAllocationService;
+
+    @Inject
+    ConditionSimulator conditionSimulator;
 
     public PiggyBankResource(
         PiggyBankService piggyBankService,
@@ -171,6 +176,8 @@ public class PiggyBankResource {
         @Context SecurityContext ctx,
         @QueryParam("user_id") Long userId
     ) {
+        conditionSimulator.simulate();
+
         JsonWebToken jwt = (JsonWebToken) ctx.getUserPrincipal();
         if (jwt == null) {
             throw new InvalidCredentialsException("Missing Authorization header with JWT token");
