@@ -1,6 +1,6 @@
 package gr.aueb.budgetmanagement.infrastructure.simulation;
 
 @FunctionalInterface
-public interface HealthSimulator {
+public interface SimulatedCondition {
     void apply();
 }

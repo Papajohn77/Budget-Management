@@ -16,7 +16,7 @@ import gr.aueb.budgetmanagement.application.representations.PiggyBanksRepresenta
 import gr.aueb.budgetmanagement.application.services.PiggyBankAllocationService;
 import gr.aueb.budgetmanagement.application.services.PiggyBankService;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
-import gr.aueb.budgetmanagement.infrastructure.simulation.HealthSimulator;
+import gr.aueb.budgetmanagement.infrastructure.simulation.ConditionSimulator;
 import gr.aueb.budgetmanagement.presentation.api.requests.AllocateToPiggyBankRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreateGroupPiggyBankRequest;
 import gr.aueb.budgetmanagement.presentation.api.requests.CreatePersonalPiggyBankRequest;
@@ -38,7 +38,7 @@ public class PiggyBankResource {
     private final PiggyBankAllocationService piggyBankAllocationService;
 
     @Inject
-    HealthSimulator healthSimulator;
+    ConditionSimulator conditionSimulator;
 
     public PiggyBankResource(
         PiggyBankService piggyBankService,
@@ -176,7 +176,7 @@ public class PiggyBankResource {
         @Context SecurityContext ctx,
         @QueryParam("user_id") Long userId
     ) {
-        healthSimulator.apply();
+        conditionSimulator.simulate();
 
         JsonWebToken jwt = (JsonWebToken) ctx.getUserPrincipal();
         if (jwt == null) {
