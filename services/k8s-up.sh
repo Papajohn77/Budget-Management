@@ -14,6 +14,7 @@ docker build --build-arg SERVICE=piggybank-service -t papajohn77/piggybank-servi
 docker build --build-arg SERVICE=budget-service    -t papajohn77/budget-service:dev    ..
 docker build -t papajohn77/gateway:dev gateway
 
+kubectl apply -k jaeger/k8s/overlays/dev
 kubectl apply -k identity-service/k8s/overlays/dev
 kubectl apply -k piggybank-service/k8s/overlays/dev
 kubectl apply -k budget-service/k8s/overlays/dev
@@ -26,4 +27,6 @@ kubectl rollout restart \
   deployment/gateway
 
 echo
-echo "Cluster up. Get the gateway URL with: minikube service gateway --url"
+echo "Cluster up!"
+echo "Get the gateway URL with: minikube service gateway --url"
+echo "View distributed traces with: minikube service jaeger-query --url"
