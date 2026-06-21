@@ -349,7 +349,7 @@ The *third* command prints the externally reachable URL of the gateway's NodePor
 
 ### 6.2 Verifying with the Postman collection
 
-Because the migration from Docker Compose to Kubernetes changed how the system is deployed and not what it does, the Deliverable B Postman collection is the acceptance test. We take the URL printed by `minikube service gateway --url` and set it as the `{{baseUrl}}` variable of the [`Budget Management.postman_collection.json`](Budget%20Management.postman_collection.json) collection.
+Because the migration from Docker Compose to Kubernetes changed how the system is deployed and not what it does, the Deliverable B Postman collection is the acceptance test. We take the URL printed by `minikube service gateway --url` and set it as the `{{baseUrl}}` variable of the [`Budget Management.postman_collection.json`](../Budget%20Management.postman_collection.json) collection.
 
 Executing the Postman collection against the Minikube cluster passes all the assertions. That is the concrete proof of the migration: the same client, the same requests, and the same assertions that validated the Docker Compose stack now validate the system running on Kubernetes, with the only change being the single `baseUrl` value.
 
@@ -475,7 +475,7 @@ The **dev** overlay patches only `jaeger-query` to `NodePort`, so the UI is reac
 
 Running the Deliverable B Postman collection (§6.2) produces traces like this one for `GET /api/v1/balance`:
 
-![Get balance trace](Get-Balance-Trace.png)
+![Get balance trace](images/Get-Balance-Trace.png)
 
 The root span is budget-service's `GET /api/v1/balance`, and nested inside it is the Rest Client call out to piggybank-service's `GET /api/v1/piggy-banks/totals`, with each service's SQL statements as their own child spans. One request, two services, one timeline.
 
@@ -485,7 +485,7 @@ Upon looking more carefully, someone might notice something that seems weird at 
 
 The `POST /api/v1/invitations` trace shows the second documented cross-service call, the email-to-`user_id` resolution (§4.4 of Deliverable A):
 
-![Send invitation trace](Send-Invitation-Trace.png)
+![Send invitation trace](images/Send-Invitation-Trace.png)
 
 Again the cross-service shape is clear: piggybank-service's `POST /api/v1/invitations` is the root, and nested within it is the outbound `GET /api/v1/users` to identity-service, with identity's own `SELECT` underneath.
 
