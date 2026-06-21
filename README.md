@@ -76,6 +76,6 @@ Users can only add money to Piggy Banks and Savings if they have sufficient avai
 
 The documents below extend the original monolith into a cloud-native, microservices-based system using Java, Quarkus, and MicroProfile, delivered in three stages: system design, implementation & testing, and cloud deployment with observability & fault tolerance.
 
-- [Deliverable A — Microservices System Design](deliverable-a.md)
-- [Deliverable B — Microservices Implementation & Testing](deliverable-b.md)
-- [Deliverable C — Cloud Deployment on Kubernetes](deliverable-c.md)
+- [Deliverable A — Microservices System Design](docs/deliverable-a.md)
+- [Deliverable B — Microservices Implementation & Testing](docs/deliverable-b.md)
+- [Deliverable C — Cloud Deployment on Kubernetes](docs/deliverable-c.md)

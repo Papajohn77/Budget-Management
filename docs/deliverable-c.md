@@ -19,6 +19,7 @@
 5. [Health Checks and Kubernetes Probes](#5-health-checks-and-kubernetes-probes)
 6. [Bringing the Cluster Up and Verifying It](#6-bringing-the-cluster-up-and-verifying-it)
 7. [Fault Tolerance for the Cross-Service Calls](#7-fault-tolerance-for-the-cross-service-calls)
+8. [Distributed Tracing with OpenTelemetry and Jaeger](#8-distributed-tracing-with-opentelemetry-and-jaeger)
 
 ---
 
@@ -348,7 +349,7 @@ The *third* command prints the externally reachable URL of the gateway's NodePor
 
 ### 6.2 Verifying with the Postman collection
 
-Because the migration from Docker Compose to Kubernetes changed how the system is deployed and not what it does, the Deliverable B Postman collection is the acceptance test. We take the URL printed by `minikube service gateway --url` and set it as the `{{baseUrl}}` variable of the [`Budget Management.postman_collection.json`](Budget%20Management.postman_collection.json) collection.
+Because the migration from Docker Compose to Kubernetes changed how the system is deployed and not what it does, the Deliverable B Postman collection is the acceptance test. We take the URL printed by `minikube service gateway --url` and set it as the `{{baseUrl}}` variable of the [`Budget Management.postman_collection.json`](../Budget%20Management.postman_collection.json) collection.
 
 Executing the Postman collection against the Minikube cluster passes all the assertions. That is the concrete proof of the migration: the same client, the same requests, and the same assertions that validated the Docker Compose stack now validate the system running on Kubernetes, with the only change being the single `baseUrl` value.
 
@@ -411,5 +412,81 @@ Because an endpoint that can make a service fail on command must never be reacha
 feature.condition-simulation.enabled=false
 ```
 
---
+---
 
+## 8. Distributed Tracing with OpenTelemetry and Jaeger
+
+### 8.1 Why tracing, and the two pieces that provide it
+
+Once a request spans across multiple services, individual service logs stop being enough. A `GET /balance` now runs partly in **budget-service** and partly in **piggybank-service**, and a `POST /invitations` runs partly in **piggybank-service** and partly in **identity-service**. Each service logs to its own stdout, so reconstructing "what happened during *this one request*, across every service it touched, and where the time went" by hand is tedious and error-prone. **Distributed tracing** solves exactly this: it stitches the per-service work of a single request into one timeline.
+
+Two pieces provide it, and they live in different places:
+- **OpenTelemetry (OTel)** is the producer side: a vendor-neutral standard (an API, an SDK, and a wire protocol called **OTLP**) for generating and exporting telemetry. Telemetry comes in three kinds, traces, metrics, and logs; we focus on **traces**. A trace is a tree of **spans**, where the **root span** is the whole request and each child span is one operation it triggered (an SQL statement, an outbound REST call, etc). Because the code is instrumented against the OTel API, the choice of backend stays a configuration detail, not a code dependency.
+- **Jaeger** is the backend side. It receives spans over OTLP, stores them, and renders the searchable waterfall view shown below. We run the `jaegertracing/all-in-one` image, which bundles the OTLP collector, storage, and query UI in one process.
+
+The two connect over OTLP: the services export spans to Jaeger, Jaeger draws the picture.
+
+### 8.2 Instrumenting the services
+
+Instrumentation centers on a single extension, `quarkus-opentelemetry`, added to all three services (a small `opentelemetry-jdbc` companion library is added alongside it so that database telemetry can emit SQL spans, see below). Quarkus pre-instruments the parts that matter for us out of the box: the **JAX-RS endpoints** (each inbound request becomes a span) and the **MicroProfile Rest Client** (each outbound cross-service call becomes a span and carries the trace context forward in the `traceparent` header). This automatic context propagation is why a single trace can span two services with **no code changes**: when budget-service calls piggybank-service, the child spans land in the same trace as the parent.
+
+The rest is configuration, identical in shape across the three services:
+
+```properties
+# OpenTelemetry & distributed tracing (traces exported to Jaeger over OTLP/gRPC)
+quarkus.application.name=service-name
+quarkus.otel.exporter.otlp.traces.endpoint=${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://jaeger-collector:4317}
+quarkus.datasource.jdbc.telemetry=true
+quarkus.log.console.format=%d{HH:mm:ss} %-5p traceId=%X{traceId}, spanId=%X{spanId} [%c{2.}] (%t) %s%e%n
+%dev.quarkus.otel.sdk.disabled=true
+%test.quarkus.otel.sdk.disabled=true
+```
+
+Line by line:
+- **`quarkus.application.name`** is the name the service reports in every trace (the `budget-service` / `piggybank-service` / `identity-service` labels in the screenshots below).
+- **`quarkus.otel.exporter.otlp.traces.endpoint`** points at the cluster internal Jaeger Service over gRPC (port 4317), through the same `${VAR:default}` override idiom used for the Rest Client URLs (§4.1 of Deliverable B), so the same image can be repointed at a different collector using an environment variable.
+- **`quarkus.datasource.jdbc.telemetry=true`** turns every SQL statement into its own span. This is what produces the `SELECT` and `INSERT` rows nested under each service in the traces, and it is what makes the two readings below possible.
+- **`quarkus.log.console.format`** injects the `traceId` into each console line, so a log can be pivoted to its trace and back.
+- **The two `%dev` / `%test` lines** disable the SDK where there is no collector to reach. In the cluster (the default profile) the SDK is on.
+
+### 8.3 Deploying Jaeger, and where it sits relative to the gateway
+
+Jaeger has two ports that matter the most for us: **4317** (OTLP ingest, where the services push spans) and **16686** (the query UI, where we can read them). The deployment runs a single replica with `COLLECTOR_OTLP_ENABLED=true` and **in-memory storage**: traces are ephemeral and lost on a Jaeger restart, which a production deployment would fix by backing Jaeger with Elasticsearch or Cassandra.
+
+The **ingest path** (services to `jaeger-collector:4317`) is cluster internal traffic, so that Service stays **ClusterIP** forever. The **UI** is the only Jaeger part we reach, and it's deliberately **not** routed through the Nginx API Gateway. The gateway's role is to be the single front door for the *client-facing product API* (§5.1 of Deliverable B), whereas the trace UI is an *ops* tool with a different audience.
+
+That intent is encoded with the same Kustomize base/overlay split as the services (§3). The `base` keeps **both** Jaeger Services `ClusterIP`, the secure default, so nothing is exposed unless an overlay opts in:
+
+```yaml
+# overlays/dev: expose only the UI, only in dev
+patches:
+  - target:
+      kind: Service
+      name: jaeger-query
+    patch: |-
+      - op: replace
+        path: /spec/type
+        value: NodePort
+```
+
+The **dev** overlay patches only `jaeger-query` to `NodePort`, so the UI is reachable with `minikube service jaeger-query --url`. The **prod** overlay adds no such patch, so in production the UI stays `ClusterIP` and is reached only over an authenticated tunnel (`kubectl port-forward` or a VPN), never publicly. `k8s-up.sh` applies the dev overlay alongside the services.
+
+### 8.4 Reading the balance trace
+
+Running the Deliverable B Postman collection (§6.2) produces traces like this one for `GET /api/v1/balance`:
+
+![Get balance trace](images/Get-Balance-Trace.png)
+
+The root span is budget-service's `GET /api/v1/balance`, and nested inside it is the Rest Client call out to piggybank-service's `GET /api/v1/piggy-banks/totals`, with each service's SQL statements as their own child spans. One request, two services, one timeline.
+
+Upon looking more carefully, someone might notice something that seems weird at first: the user is read twice, on two separate connections (two `DataSource.getConnection` spans, each followed by its own user `SELECT`). This is the **`EnsureUserShadowFilter`** (§4.2 of Deliverable A) at work. The filter runs as a request filter, *before* the request reaches the resource method and *outside* any transaction, so to check whether the shadow `User` row exists it borrows its own short-lived connection for that one `SELECT`, then returns it. When the resource method then runs inside its own transactional unit of work, it borrows a *second* connection and reads the user again as part of the handler's logic. The doubled connection-and-select is the filter and the handler each doing their own bounded piece of work, not a leak.
+
+### 8.5 Reading the invitation trace, and Hibernate's flush order
+
+The `POST /api/v1/invitations` trace shows the second documented cross-service call, the email-to-`user_id` resolution (§4.4 of Deliverable A):
+
+![Send invitation trace](images/Send-Invitation-Trace.png)
+
+Again the cross-service shape is clear: piggybank-service's `POST /api/v1/invitations` is the root, and nested within it is the outbound `GET /api/v1/users` to identity-service, with identity's own `SELECT` underneath.
+
+The instructive detail here is *ordering*. The two **`INSERT`** spans (the shadow `User` and the `Invitation`) sit at the very bottom of the trace, after every `SELECT`, even though the shadow user is created earlier in the code than some of those reads. This is **Hibernate's write-behind**: it does not send an `INSERT` to the database the moment `persist` is called, it queues the change and **flushes at transaction commit**. The trace plots SQL by its actual execution time, so every write the transaction accumulated lands together at the end, after the reads. The trace is therefore showing the database's view of the request.
