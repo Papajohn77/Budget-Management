@@ -2,7 +2,7 @@ name: identity-service
 
 on:
   push:
-    branches: [microservices]
+    branches: [main]
     paths:
       - services/identity-service/src/**
       - services/identity-service/pom.xml
@@ -11,7 +11,7 @@ on:
       - .github/workflows/identity-service.yml
       - .github/workflows/service-workflow.yml
   pull_request:
-    branches: [microservices]
+    branches: [main]
     paths:
       - services/identity-service/src/**
       - services/identity-service/pom.xml

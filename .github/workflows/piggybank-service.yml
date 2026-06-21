@@ -2,7 +2,7 @@ name: piggybank-service
 
 on:
   push:
-    branches: [microservices]
+    branches: [main]
     paths:
       - services/piggybank-service/src/**
       - services/piggybank-service/pom.xml
@@ -11,7 +11,7 @@ on:
       - .github/workflows/piggybank-service.yml
       - .github/workflows/service-workflow.yml
   pull_request:
-    branches: [microservices]
+    branches: [main]
     paths:
       - services/piggybank-service/src/**
       - services/piggybank-service/pom.xml

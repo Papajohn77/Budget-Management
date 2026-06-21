@@ -2,7 +2,7 @@ name: budget-service
 
 on:
   push:
-    branches: [microservices]
+    branches: [main]
     paths:
       - services/budget-service/src/**
       - services/budget-service/pom.xml
@@ -11,7 +11,7 @@ on:
       - .github/workflows/budget-service.yml
       - .github/workflows/service-workflow.yml
   pull_request:
-    branches: [microservices]
+    branches: [main]
     paths:
       - services/budget-service/src/**
       - services/budget-service/pom.xml
