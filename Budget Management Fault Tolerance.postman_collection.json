@@ -1,179 +1,1073 @@
 {
   "info": {
-    "_postman_id": "781508e0-16bc-4cea-8eb7-b8ac572a86a1",
+    "_postman_id": "bb43a0fb-1497-4067-ad99-01d8570107de",
     "name": "Budget Management Fault Tolerance",
+    "description": "Demonstrates the MicroProfile Fault Tolerance annotations (Timeout and Circuit Breaker) that guard the two synchronous cross-service Rest Client calls (Deliverable C, section 7):\n\n- budget-service -> piggybank-service (GET /piggy-banks/totals), exercised through GET /api/v1/balance. @Timeout(2s) sits on PiggyBankClient.getTotals, @CircuitBreaker on BalanceService.getBalance.\n- piggybank-service -> identity-service (GET /users?email), exercised through POST /api/v1/invitations. @Timeout(2s) sits on IdentityClient.findByEmail, @CircuitBreaker on InvitationService.sendInvitation.\n\nEach downstream provider exposes a runtime-switchable fault simulator (PUT /api/v1/{piggybank|identity}/simulate/strategy) with three strategies: HEALTHY (no-op), SLOW (sleeps, drives the caller's Timeout), FAILING (throws 503, drives the caller's Circuit Breaker).\n\nThis collection is standalone: the '0) Setup' folder provisions its own user (faulttester@example.com) and group ('Fault Tolerance Demo'), both named so they do not collide with the 'Budget Management' collection (erika/ioannis/Flatmates). It can therefore run on the same cluster and databases after that collection without conflicts, and is safe to re-run (register tolerates 409, the group is looked up by name).\n\nThe circuit breaker is configured with requestVolumeThreshold=4, failureRatio=0.5 and a 3 second cool-down delay. Run with the Collection Runner using no (0 ms) delay between requests, so the OPEN-state checks land inside the 3 second cool-down window.\n\nSet {{baseUrl}} to the gateway URL (e.g. the output of 'minikube service gateway --url').",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "16408890"
   },
   "item": [
     {
-      "name": "01) Seed User",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\"username\":\"demo\",\"email\":\"demo@example.com\",\"password\":\"Password123!\"}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/users/register",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "users",
-            "register"
-          ]
-        },
-        "description": "Generated from cURL:   curl -X POST \"{{baseUrl}}/api/v1/users/register\" \\\r\n    -H \"Content-Type: application/json\" \\\r\n    -d '{\"username\":\"demo\",\"email\":\"demo@example.com\",\"password\":\"Password123!\"}'"
-      },
-      "response": []
-    },
-    {
-      "name": "02) Simulate",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/users?email=demo@example.com",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "users"
-          ],
-          "query": [
+      "name": "0) Setup",
+      "item": [
+        {
+          "name": "01) Register fault-tolerance user",
+          "event": [
             {
-              "key": "email",
-              "value": "demo@example.com"
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"registered (201) or already exists (409)\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"faulttester\",\"email\":\"faulttester@example.com\",\"password\":\"S3cur3Pass!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "register"
+              ]
+            }
+          },
+          "response": []
         },
-        "description": "Generated from cURL: curl \"{{baseUrl}}/api/v1/users?email=demo@example.com\""
-      },
-      "response": []
+        {
+          "name": "02) Login fault-tolerance user (capture token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var body = pm.response.json();",
+                  "if (body && body.access_token) {",
+                  "    pm.collectionVariables.set(\"token\", body.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"faulttester@example.com\",\"password\":\"S3cur3Pass!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03) Create group 'Fault Tolerance Demo'",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"group created (201) or already exists (409)\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Fault Tolerance Demo\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "groups"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04) Look up groupId by name (capture groupId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "var group = (data.groups || []).find(function (g) { return g.name === \"Fault Tolerance Demo\"; });",
+                  "if (group && group.id !== undefined && group.id !== null) {",
+                  "    pm.collectionVariables.set(\"groupId\", group.id);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "groups"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Provisions the data the scenarios need, with names that do not collide with the 'Budget Management' collection. Re-runnable: registration tolerates a 409 (user already created on a previous run), login always refreshes the token, and the group is looked up by name whether it was just created or already existed."
     },
     {
-      "name": "03) Condition Healthy",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\"strategy\":\"HEALTHY\"}",
-          "options": {
-            "raw": {
-              "language": "json"
+      "name": "1) Timeout - Balance (budget -> piggybank)",
+      "item": [
+        {
+          "name": "a) GET /balance baseline (healthy, fast 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/identity/simulate/strategy",
-          "host": [
-            "{{baseUrl}}"
           ],
-          "path": [
-            "api",
-            "v1",
-            "identity",
-            "simulate",
-            "strategy"
-          ]
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/balance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "balance"
+              ]
+            }
+          },
+          "response": []
         },
-        "description": "Generated from cURL:   curl -X PUT \"{{baseUrl}}/api/v1/simulate/strategy\" \\\r\n    -H \"Content-Type: application/json\" \\\r\n    -d '{\"strategy\":\"HEALTHY\"}'"
-      },
-      "response": []
+        {
+          "name": "b) Set piggybank SLOW (5s)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204 (strategy set)\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"strategy\":\"SLOW\",\"delaySeconds\":5}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/piggybank/simulate/strategy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "piggybank",
+                "simulate",
+                "strategy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "c) GET /balance fails fast at ~2s (Timeout)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/balance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "balance"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "d) Set piggybank HEALTHY (cleanup)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204 (strategy set)\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"strategy\":\"HEALTHY\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/piggybank/simulate/strategy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "piggybank",
+                "simulate",
+                "strategy"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Drives @Timeout(value = 2, unit = SECONDS) on PiggyBankClient.getTotals. With the piggybank provider sleeping for 5 seconds, GET /api/v1/balance fails fast at ~2 seconds instead of waiting on the stalled dependency (which, without the timeout, would block up to the 30 second default Rest Client read timeout)."
     },
     {
-      "name": "04) Condition Slow 10s",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\"strategy\":\"SLOW\",\"delaySeconds\":10}",
-          "options": {
-            "raw": {
-              "language": "json"
+      "name": "2) Circuit Breaker - Balance (budget -> piggybank)",
+      "item": [
+        {
+          "name": "a) GET /balance baseline (closed, 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
             }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/identity/simulate/strategy",
-          "host": [
-            "{{baseUrl}}"
           ],
-          "path": [
-            "api",
-            "v1",
-            "identity",
-            "simulate",
-            "strategy"
-          ]
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/balance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "balance"
+              ]
+            }
+          },
+          "response": []
         },
-        "description": "Generated from cURL:   curl -X PUT \"{{baseUrl}}/api/v1/simulate/strategy\" \\\r\n    -H \"Content-Type: application/json\" \\\r\n    -d '{\"strategy\":\"SLOW\",\"delaySeconds\":8}'"
-      },
-      "response": []
+        {
+          "name": "b) Set piggybank FAILING",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204 (strategy set)\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"strategy\":\"FAILING\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/piggybank/simulate/strategy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "piggybank",
+                "simulate",
+                "strategy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "c) GET /balance failing (multiple times)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/balance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "balance"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "d) Set piggybank HEALTHY (dependency recovers)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204 (strategy set)\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"strategy\":\"HEALTHY\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/piggybank/simulate/strategy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "piggybank",
+                "simulate",
+                "strategy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "e) Wait out cool-down, GET /balance (recovered 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/balance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "balance"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Drives @CircuitBreaker on BalanceService.getBalance. With the piggybank provider returning 503 (FAILING), repeated GET /api/v1/balance calls feed failures into the breaker's rolling window. Once it reaches requestVolumeThreshold=4 with failureRatio>=0.5, the breaker trips to OPEN: subsequent calls fast-fail with CircuitBreakerOpenException without touching the dependency. The OPEN-state check sets the provider back to HEALTHY and shows the call still fails (the breaker, not the dependency, is rejecting it). After the 3 second cool-down the breaker half-opens, a trial call succeeds, and it closes again."
     },
     {
-      "name": "05) Condition Failing",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\"strategy\":\"FAILING\"}",
-          "options": {
-            "raw": {
-              "language": "json"
+      "name": "3) Timeout - Invitation (piggybank -> identity)",
+      "item": [
+        {
+          "name": "a) POST /invitations baseline (healthy, fast 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 404 (healthy round-trip, unknown invitee)\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/identity/simulate/strategy",
-          "host": [
-            "{{baseUrl}}"
           ],
-          "path": [
-            "api",
-            "v1",
-            "identity",
-            "simulate",
-            "strategy"
-          ]
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"groupId\": {{groupId}}, \"email\": \"ghost@example.com\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations"
+              ]
+            }
+          },
+          "response": []
         },
-        "description": "Generated from cURL:  curl -X PUT \"{{baseUrl}}/api/v1/simulate/strategy\" \\\r\n    -H \"Content-Type: application/json\" \\\r\n    -d '{\"strategy\":\"FAILING\"}'"
-      },
-      "response": []
+        {
+          "name": "b) Set identity SLOW (5s)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204 (strategy set)\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"strategy\":\"SLOW\",\"delaySeconds\":5}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/identity/simulate/strategy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identity",
+                "simulate",
+                "strategy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "c) POST /invitations fails fast at ~2s (Timeout)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"groupId\": {{groupId}}, \"email\": \"ghost@example.com\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "d) Set identity HEALTHY (cleanup)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204 (strategy set)\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"strategy\":\"HEALTHY\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/identity/simulate/strategy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identity",
+                "simulate",
+                "strategy"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Drives @Timeout(value = 2, unit = SECONDS) on IdentityClient.findByEmail. With the identity provider sleeping for 5 seconds, POST /api/v1/invitations fails fast at ~2 seconds instead of waiting on the stalled email-to-user_id lookup. The invitee email (ghost@example.com) does not exist, so the healthy round-trip returns a clean, repeatable 404 with no side effects; under SLOW the call never reaches that point because the timeout fires first."
+    },
+    {
+      "name": "4) Circuit Breaker - Invitation (piggybank -> identity)",
+      "item": [
+        {
+          "name": "a) POST /invitations baseline (closed, 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 404 (healthy round-trip, unknown invitee)\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"groupId\": {{groupId}}, \"email\": \"ghost@example.com\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "b) Set identity FAILING",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204 (strategy set)\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"strategy\":\"FAILING\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/identity/simulate/strategy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identity",
+                "simulate",
+                "strategy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "c) POST /invitations failing (multiple times)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"groupId\": {{groupId}}, \"email\": \"ghost@example.com\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "d) Set identity HEALTHY (dependency recovers)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204 (strategy set)\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"strategy\":\"HEALTHY\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/identity/simulate/strategy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identity",
+                "simulate",
+                "strategy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "e) Wait out cool-down, POST /invitations recovered (404)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"groupId\": {{groupId}}, \"email\": \"ghost@example.com\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Drives @CircuitBreaker on InvitationService.sendInvitation. With the identity provider returning 503 (FAILING), repeated POST /api/v1/invitations calls feed failures into the breaker's rolling window. Once it reaches requestVolumeThreshold=4 with failureRatio>=0.5, the breaker trips to OPEN and subsequent calls fast-fail with CircuitBreakerOpenException without calling identity. The OPEN-state check sets identity back to HEALTHY and shows the call still fails (the breaker, not the dependency, rejects it). After the 3 second cool-down the breaker half-opens, a trial call succeeds (reaches identity, returns a business 404 for the unknown invitee), and it closes again. The invitee email (ghost@example.com) does not exist, so no invitation is ever persisted and the calls stay repeatable."
     }
   ],
   "event": [
@@ -203,6 +1097,14 @@
   "variable": [
     {
       "key": "baseUrl",
+      "value": "http://localhost"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "groupId",
       "value": ""
     }
   ]
