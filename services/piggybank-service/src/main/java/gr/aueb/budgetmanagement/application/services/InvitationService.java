@@ -4,6 +4,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
+import org.eclipse.microprofile.faulttolerance.exceptions.TimeoutException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import gr.aueb.budgetmanagement.application.clients.IdentityClient;
@@ -24,6 +25,7 @@ import gr.aueb.budgetmanagement.domain.valueobjects.InvitationId;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
 
 @ApplicationScoped
@@ -46,7 +48,7 @@ public class InvitationService {
     }
 
     @Transactional
-    @CircuitBreaker(requestVolumeThreshold = 4, failureRatio = 0.5, delay = 3, delayUnit = ChronoUnit.SECONDS, failOn = {WebApplicationException.class})
+    @CircuitBreaker(requestVolumeThreshold = 4, failureRatio = 0.5, delay = 3, delayUnit = ChronoUnit.SECONDS, failOn = {WebApplicationException.class, TimeoutException.class, ProcessingException.class})
     public InvitationRepresentation sendInvitation(@Valid SendInvitationCommand command) {
         Group group = groupRepository.findById(command.groupId())
             .orElseThrow(() -> new NotFoundException("Group not found with id: " + command.groupId()));
