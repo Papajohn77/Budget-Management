@@ -18,6 +18,7 @@
 4. [The Recreate Strategy and the H2 Single-Writer Constraint](#4-the-recreate-strategy-and-the-h2-single-writer-constraint)
 5. [Health Checks and Kubernetes Probes](#5-health-checks-and-kubernetes-probes)
 6. [Bringing the Cluster Up and Verifying It](#6-bringing-the-cluster-up-and-verifying-it)
+7. [Fault Tolerance for the Cross-Service Calls](#7-fault-tolerance-for-the-cross-service-calls)
 
 ---
 
@@ -350,3 +351,65 @@ The *third* command prints the externally reachable URL of the gateway's NodePor
 Because the migration from Docker Compose to Kubernetes changed how the system is deployed and not what it does, the Deliverable B Postman collection is the acceptance test. We take the URL printed by `minikube service gateway --url` and set it as the `{{baseUrl}}` variable of the [`Budget Management.postman_collection.json`](Budget%20Management.postman_collection.json) collection.
 
 Executing the Postman collection against the Minikube cluster passes all the assertions. That is the concrete proof of the migration: the same client, the same requests, and the same assertions that validated the Docker Compose stack now validate the system running on Kubernetes, with the only change being the single `baseUrl` value.
+
+---
+
+## 7. Fault Tolerance for the Cross-Service Calls
+
+Two calls cross a service boundary at runtime, and both are synchronous, blocking Rest Client calls (§2 diagram):
+- **budget-service → piggybank-service** => `GET /piggy-banks/totals`
+- **piggybank-service → identity-service** => `GET /users?email`
+
+Communication with external systems is inherently unreliable, and that raises the resiliency demands on the application. So we must not let a remote call hang, because a blocking call left waiting pins the resources it runs on, the request's worker thread and a connection from the pool, and one slow or unreachable dependency can drain both. **Timeout** and **Circuit Breaker** (MicroProfile Fault Tolerance, via the Quarkus `smallrye-fault-tolerance` extension) make these calls **fail fast** instead.
+
+### 7.1 The patterns we left out, and the ones we used
+
+**Retry was deliberately not used.** Each remote call runs inside a `@Transactional` service method, so a JDBC connection from the pool is **pinned** for the whole duration of the method, including the remote call. A retry policy would stack several attempts plus back-off onto that same pinned connection, multiplying how long it is held and making **connection-pool starvation** likely even under light concurrency. Dropping retries removes that amplifier.
+
+> Note: Both calls are read-only, so in principle we could restructure each method to perform the remote call first, outside of any transaction, and only then open a short transaction for the local work, keeping the connection out of the pool while waiting on the network. However, for our current situation, the two patterns we have applied are more than sufficient, so we note it as the clean next step if traffic grows.
+
+**Fallback was not applicable.** Neither remote call has a sensible degraded answer:
+- For the invitation, there is no way to guess the invitee's id, and without it the invitation cannot be created.
+- For the balance, returning a partially correct number would be a silent, **wrong** financial figure. It is obviously better to report that the balance could not be computed than to report an inaccurate one.
+
+**Why Timeout and Circuit Breaker.** Both reinforce **fail-fast**, which is what frees our resources (the request thread and the pinned connection) quickly rather than letting them block on a dependency that cannot answer. The circuit breaker adds one thing a timeout alone cannot: when a dependency is already failing, often because it is overloaded, it stops sending it traffic for a while instead of piling more load onto a service that is already struggling.
+
+### 7.2 The circuit breaker, and why it sits on the service method
+
+A circuit breaker is a state machine over a rolling window of recent outcomes:
+- **Closed** (normal): calls pass through. Once the window has enough calls (`requestVolumeThreshold = 4`) and the failure ratio reaches the threshold (`failureRatio = 0.5`, half or more failing), it changes to Open.
+- **Open**: calls return immediately with `CircuitBreakerOpenException` without calling the dependency, giving it room to recover. After a cool-down `delay` it moves to Half-Open.
+- **Half-Open**: a single trial call is allowed through. If it succeeds the breaker closes, if it fails it opens again.
+
+We placed `@CircuitBreaker` on the **service methods** (`getBalance`, `sendInvitation`), not on the Rest Client interfaces, and the reason was the distinction between a failing dependency and an ordinary business outcome. The Rest Client collapses every non-2xx response into a single `WebApplicationException`, so on the Rest Client side a `404` (the invitee does not exist) is indistinguishable by exception type from a `503`. If the breaker watched the Rest Client directly, those expected business responses would count as failures and could change its state. By keeping the breaker on the service method, the surrounding `try/catch` first translates the business statuses into our own exceptions, `404 → NotFoundException`, which are **not** in the breaker's `failOn` set, so they never count as failures as far as the breaker is concerned. The breaker only ever sees genuine unavailability of the remote dependency.
+
+### 7.3 What counts as "unavailable": the three failOn types
+
+The breaker counts exactly three exception types (`failOn = {WebApplicationException, TimeoutException, ProcessingException}`). Everything else, including the translated business exceptions and the local "not found" lookups, is treated as a normal outcome:
+- **`WebApplicationException`** - once the expected business statuses have been caught and translated away, the only responses left in this type are ones a healthy service would not return, chiefly `5xx` server errors. The service answered, but with a server-side failure.
+- **`TimeoutException`** (MicroProfile Fault Tolerance) - the call exceeded its time budget. Under normal conditions the response arrives well within that budget, so exceeding it likely points to a deeper issue that may let us waiting for the much longer default read timeout (30 seconds).
+- **`ProcessingException`** (JAX-RS) - the call never completed at the transport layer: connection refused, host unreachable, or DNS failure. The failure is at the transport layer rather than in a response, so the service is unreachable, the clearest of the three signals that it is unavailable.
+
+All three mean "the dependency cannot serve this call right now," which is exactly what should drive the breaker to Open. Business exceptions says nothing about the dependency's health, which is exactly why they were excluded.
+
+### 7.4 The timeout duration
+
+Each client method carries `@Timeout(value = 2, unit = SECONDS)` (`IdentityClient.findByEmail`, `PiggyBankClient.getTotals`). Both are trivial reads, a single indexed lookup and a small sum, whose healthy latency is in the tens of milliseconds. The timeout is therefore sized to bound how long we should wait on a **stalled** remote dependency and, because the call is inside `@Transactional`, how long the pooled connection stays pinned. Two seconds is a deliberate, generous multiple over healthy latency, large enough that a transient pause (a GC pause, a cold connection, cluster network jitter) won't reach it falsely, yet small enough to release the connection and feed the breaker within a few seconds.
+
+### 7.5 Exercising the patterns: runtime-switchable fault simulation
+
+To simulate the downstream dependencies misbehaving on demand, we used a textbook **Strategy Pattern**:
+- A `SimulatedCondition` interface with a single `apply()` operation.
+- Three strategies: `HealthyCondition` (a no-op, the service behaves normally), `SlowCondition` (sleeps for a configurable delay, default 5 seconds, to drive the caller's timeout), and `FailingCondition` (throws a `503`, to drive the caller's circuit breaker).
+- A `ConditionSimulator` holds the current strategy in an `AtomicReference`, defaulting to `HealthyCondition`. The instrumented endpoint calls `simulate()`, which applies whatever strategy is currently selected, before doing its real work.
+
+The benefit of using this pattern is that it allow us to switch strategies at **runtime**. A `PUT` endpoint under the provider's `/simulate` path takes an enum (`HEALTHY`, `SLOW`, `FAILING`) and swaps the live strategy at runtime. Changing the simulated condition requires no restart, no redeploy, and no configuration reload.
+
+Because an endpoint that can make a service fail on command must never be reachable in production, it is guarded by a **feature flag that is closed by default**:
+
+```properties
+feature.condition-simulation.enabled=false
+```
+
+--
+
